@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="26" height="29.905" viewBox="0 0 26 29.905">
+  <g id="Group_24" data-name="Group 24" transform="translate(0.398 0.424)">
+    <g id="Rectangle_33" data-name="Rectangle 33" transform="translate(-0.398 -0.424)" fill="none" stroke="#000" stroke-width="2">
+      <path d="M13,0h0A13,13,0,0,1,26,13V26a0,0,0,0,1,0,0H0a0,0,0,0,1,0,0V13A13,13,0,0,1,13,0Z" stroke="none"/>
+      <path d="M13,1h0A12,12,0,0,1,25,13V25a0,0,0,0,1,0,0H1a0,0,0,0,1,0,0V13A12,12,0,0,1,13,1Z" fill="none"/>
+    </g>
+    <path id="Path_84" data-name="Path 84" d="M2400.176,84.712h10.561" transform="translate(-2392.104 -56.231)" fill="none" stroke="#000" stroke-linecap="round" stroke-width="2"/>
+  </g>
+</svg>

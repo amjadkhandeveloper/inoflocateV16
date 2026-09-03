@@ -1,0 +1,90 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'dev.flutter.flutter-gradle-plugin'
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+android {
+    namespace "com.infotrack.infolocatev14"
+    compileSdk = 36
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId "com.infotrack.infolocatev14"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        minSdkVersion 24
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode 1
+        versionName "1.0.0"
+
+        println "minSdkVersion: $minSdkVersion"
+        println "targetSdkVersion: $targetSdkVersion"
+        println "versionCode: $versionCode and $versionName"
+    }
+
+    signingConfigs {
+        release {
+            def releaseKeystore = file('D:\\Amjad Work\\Keystores\\my-release-key.keystore')
+            if (releaseKeystore.exists()) {
+                keyAlias 'alias_name'
+                keyPassword 'sujithu@123#'
+                storeFile releaseKeystore
+                storePassword 'sujithu@123#'
+            }
+        }
+    }
+
+
+    buildTypes {
+        release {
+            // Use the release keystore when present; otherwise debug so the APK still builds.
+            signingConfig signingConfigs.release.storeFile != null
+                    ? signingConfigs.release
+                    : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.10"
+}
