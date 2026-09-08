@@ -1,11 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:infolocate/screens/dashboard/view/dashboard_view.dart';
 import 'package:infolocate/screens/intro/view/intro_view.dart';
 import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
+import 'package:infolocate/utils/app_routes.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
@@ -303,7 +303,7 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                                     // }
                                     widget.inDrawer
                                         ? Navigator.of(context).pushNamedAndRemoveUntil(
-                                            HomeScreen.routeName, (route) => false)
+                                            AppRoutes.dashboardRoute(), (route) => false)
                                         : Navigator.of(context).pushNamedAndRemoveUntil(
                                             IntroScreen.routeName, (route) => false);
                                   },

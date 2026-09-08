@@ -25,18 +25,32 @@ class VehicleStatusService {
           vehicleStatusWiseListRequestModel}) async {
     try {
       AppHelper.configureDio(dio, tag: 'VehicleStatusService.getVehicleList');
-      log(Global.savedClientAuthData!.clientUrl! + app_const.vehicleStatus);
-      log(jsonEncode(vehicleStatusWiseListRequestModel));
+      final isSequel = Global.isSequelClient;
+      final url = isSequel
+          ? app_const.sequelVehicleStatusUrl
+          : Global.savedClientAuthData!.clientUrl! + app_const.vehicleStatus;
+      final body = isSequel
+          ? vehicleStatusWiseListRequestModel.toSequelJson()
+          : vehicleStatusWiseListRequestModel.toJson();
       final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! + app_const.vehicleStatus,
-          data: vehicleStatusWiseListRequestModel.toJson(),
+          url,
+          data: body,
           options: Options(contentType: Headers.jsonContentType));
-      log(response.data.toString());
+      AppHelper.logApiCall(
+        tag: 'VehicleStatusService.getVehicleList',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
 
       // final json = jsonDecode(.toString());
 
-      if (response.statusCode == 200) {
-        return VehicleStatusResponseModel.fromJson(response.data).data;
+      if (response.statusCode == 200 && response.data is Map) {
+        return VehicleStatusResponseModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        ).data;
       }
       return VehicleStatusResponseModelData();
     } on DioException catch (e) {
@@ -65,21 +79,41 @@ class VehicleStatusService {
       {required HistoryTrackRequestModel
           vehicleHistoryTrackRequestModel}) async {
     try {
-      AppHelper.configureDio(dio, tag: 'VehicleStatusService.vehicleHistoryTrackApi');
-      log(Global.savedClientAuthData!.clientUrl! +
-          app_const.historyTrackVehicle);
-      log(jsonEncode(vehicleHistoryTrackRequestModel));
+      AppHelper.configureDio(
+          dio, tag: 'VehicleStatusService.vehicleHistoryTrackApi');
+      final isSequel = Global.isSequelClient;
+      final url = isSequel
+          ? app_const.sequelHistoryTrackUrl
+          : '${Global.savedClientAuthData!.clientUrl}${app_const.historyTrackVehicle}';
+      final body = isSequel
+          ? {
+              'userId': vehicleHistoryTrackRequestModel.UserId,
+              'vehicleId': vehicleHistoryTrackRequestModel.VehicleID,
+              'fromDatetime': vehicleHistoryTrackRequestModel.FromDatetime,
+              'toDatetime': vehicleHistoryTrackRequestModel.ToDatetime,
+            }
+          : vehicleHistoryTrackRequestModel.toJson();
+      log('History track $url');
+      log(jsonEncode(body));
       final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! +
-              app_const.historyTrackVehicle,
-          data: vehicleHistoryTrackRequestModel.toJson(),
-          options: Options(contentType: Headers.jsonContentType));
-      // log(response.data.toString());
+        url,
+        data: body,
+        options: Options(contentType: Headers.jsonContentType),
+      );
+      AppHelper.logApiCall(
+        tag: 'VehicleStatusService.vehicleHistoryTrackApi',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
 
-      // final json = jsonDecode(.toString());
-
-      if (response.statusCode == 200) {
-        return VehicleHistoryTrackModel.fromJson(response.data).data;
+      if (response.statusCode == 200 && response.data is Map) {
+        final parsed = VehicleHistoryTrackModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        );
+        return parsed.data ?? VehicleHistoryTrackModelData();
       }
       return VehicleHistoryTrackModelData();
     } on DioException catch (e) {

@@ -19,15 +19,21 @@ class DashboardService {
       {required DashboardRequestModel dashboardRequestModel}) async {
     try {
       AppHelper.configureDio(dio, tag: 'DashboardService.getDashboardData');
-      log(Global.savedClientAuthData!.clientUrl! + app_const.dashboardUrl);
-      log(jsonEncode(dashboardRequestModel));
-      // For testing shimmer effect
-      // await Future.delayed(const Duration(seconds: 8));
+      final url =
+          Global.savedClientAuthData!.clientUrl! + app_const.dashboardUrl;
+      final body = dashboardRequestModel.toJson();
       final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! + app_const.dashboardUrl,
-          data: dashboardRequestModel.toJson(),
+          url,
+          data: body,
           options: Options(contentType: Headers.jsonContentType));
-      log(response.data.toString());
+      AppHelper.logApiCall(
+        tag: 'DashboardService.getDashboardData',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
 
       // final json = jsonDecode(.toString());
 

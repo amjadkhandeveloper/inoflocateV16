@@ -30,18 +30,28 @@ class VehicleStatusWiseListRequestModel {
   factory VehicleStatusWiseListRequestModel.fromJson(
           Map<String, dynamic> json) =>
       VehicleStatusWiseListRequestModel(
-        userId: json["UserId"],
-        statusId: json["StatusId"],
+        userId: json["UserId"] ?? json["userId"],
+        statusId: json["StatusId"] ?? json["statusId"],
         pSize: json["pSize"],
-        pNo: json["PNo"],
-        sSearch: json["sSearch"],
+        pNo: json["PNo"] ?? json["pNo"],
+        sSearch: json["sSearch"] ?? json["search"] ?? '',
       );
 
+  /// Common tenant body (PascalCase + `sSearch`).
   Map<String, dynamic> toJson() => {
         "UserId": userId,
         "StatusId": statusId,
         "pSize": pSize,
         "PNo": pNo,
         "sSearch": sSearch
+      };
+
+  /// Sequel swagger `vehicleStatusRequest`.
+  Map<String, dynamic> toSequelJson() => {
+        "userId": userId,
+        "statusId": statusId,
+        "pSize": pSize,
+        "pNo": pNo,
+        "search": sSearch,
       };
 }

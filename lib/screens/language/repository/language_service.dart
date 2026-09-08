@@ -21,9 +21,14 @@ class LanguageService {
         getCountryListUrl,
         options: Options(contentType: Headers.jsonContentType),
       );
-      log(response.data.toString());
-
-      print("Get countries: ${response.data}");
+      AppHelper.logApiCall(
+        tag: 'LanguageService.getCountriesList',
+        method: 'GET',
+        url: getCountryListUrl,
+        request: null,
+        status: response.statusCode,
+        response: response.data,
+      );
 
       if (response.statusCode == 200) {
         return GetCountriesResponseModel.fromJson(response.data).data;
@@ -56,13 +61,20 @@ class LanguageService {
       {required int? countryId}) async {
     try {
       AppHelper.configureDio(dio, tag: 'LanguageService.getLanguageList');
+      final body = {"CountryId": countryId};
       final response = await dio.post(
         getLanguageListUrl,
-        data: {"CountryId": countryId},
+        data: body,
         options: Options(contentType: Headers.jsonContentType),
       );
-
-      print("Get language: $countryId, ${response.data}");
+      AppHelper.logApiCall(
+        tag: 'LanguageService.getLanguageList',
+        method: 'POST',
+        url: getLanguageListUrl,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
 
       if (response.statusCode == 200) {
         return LanguageResponseModel.fromJson(response.data).data;

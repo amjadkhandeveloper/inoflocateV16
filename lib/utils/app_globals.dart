@@ -19,6 +19,13 @@ class Global {
   static Color? savedPrimeryColor;
   static UserLoginResponseModelDataUser? savedUserAuthData;
   static ClientModelDataClient? savedClientAuthData;
+
+  /// True when the stored client login name or tenant URL is Sequel.
+  static bool get isSequelClient {
+    final name = (savedClientAuthData?.clientName ?? '').toLowerCase();
+    final url = (savedClientAuthData?.clientUrl ?? '').toLowerCase();
+    return name.contains('sequel') || url.contains('sequel');
+  }
   // static CardTypeSetting? cardTypeSetting;
 
   static String? savedLanguageCode;

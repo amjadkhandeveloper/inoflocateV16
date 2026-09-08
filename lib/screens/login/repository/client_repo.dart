@@ -31,9 +31,14 @@ class ClientService {
       final response = await dio.post(app_const.authClient,
           data: payload,
           options: Options(contentType: Headers.jsonContentType));
-      log(response.data.toString());
-
-      print("Login Response: $response");
+      AppHelper.logApiCall(
+        tag: 'ClientService.clientLoginService',
+        method: 'POST',
+        url: app_const.authClient,
+        request: payload,
+        status: response.statusCode,
+        response: response.data,
+      );
 
       if (response.statusCode == 200 && response.data is Map) {
         return _parseEncryptedClientResponse(

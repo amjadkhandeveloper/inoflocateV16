@@ -24,12 +24,18 @@ class ForgotPasswordService {
       print(
           'Forgot Password request body--> ${forgotPasswordRequestModel.toJson()}');
       AppHelper.configureDio(dio, tag: 'ForgotPasswordService.forgotPasswordService');
-      print(forgotPasswordRequestModel.toJson());
-
-      final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! + app_const.forgotPassword,
-          data: forgotPasswordRequestModel.toJson());
-      print(response.data);
+      final url =
+          Global.savedClientAuthData!.clientUrl! + app_const.forgotPassword;
+      final body = forgotPasswordRequestModel.toJson();
+      final response = await dio.post(url, data: body);
+      AppHelper.logApiCall(
+        tag: 'ForgotPasswordService.forgotPasswordService',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
       // final json = jsonDecode(.toString());
 
       if (response.statusCode == 200) {

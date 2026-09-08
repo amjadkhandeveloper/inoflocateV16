@@ -19,13 +19,21 @@ class PinVehicleService {
       {required PinVehicleRequestModel pinVehicleRequestModel}) async {
     try {
       AppHelper.configureDio(dio, tag: 'PinVehicleService.pinUnpinVehicle');
+      final url =
+          Global.savedClientAuthData!.clientUrl! + app_const.pinVehicle;
+      final body = pinVehicleRequestModel.toJson();
       final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! + app_const.pinVehicle,
-          data: pinVehicleRequestModel.toJson(),
+          url,
+          data: body,
           options: Options(contentType: Headers.jsonContentType));
-      log(Global.savedClientAuthData!.clientUrl! + app_const.pinVehicle);
-      log(pinVehicleRequestModel.toJson().toString());
-      log(response.data.toString());
+      AppHelper.logApiCall(
+        tag: 'PinVehicleService.pinUnpinVehicle',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
 
       // final json = jsonDecode(.toString());
 

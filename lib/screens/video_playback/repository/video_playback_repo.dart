@@ -18,16 +18,23 @@ class VideoPlayBackService {
   Future<VideoVehicleListData?> getVehicleList({required int userId}) async {
     try {
       AppHelper.configureDio(dio, tag: 'VideoPlayBackService.getVehicleList');
-      log(Global.savedClientAuthData!.clientUrl! + app_const.videoVehicleList);
-
+      final url =
+          Global.savedClientAuthData!.clientUrl! + app_const.videoVehicleList;
       Map<String, dynamic> data = {
         "UserId": userId,
       };
       final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! + app_const.videoVehicleList,
+          url,
           data: data,
           options: Options(contentType: Headers.jsonContentType));
-      log(response.data.toString());
+      AppHelper.logApiCall(
+        tag: 'VideoPlayBackService.getVehicleList',
+        method: 'POST',
+        url: url,
+        request: data,
+        status: response.statusCode,
+        response: response.data,
+      );
       if (response.statusCode == 200) {
         return VideoVehicleList.fromJson(response.data).data;
       }
@@ -63,13 +70,18 @@ class VideoPlayBackService {
       print(
           'VideoPlayBack request body--> ${videoPlayBackRequestModel.toJson()}');
       AppHelper.configureDio(dio, tag: 'VideoPlayBackService.generateVideoPlayback');
-      print(videoPlayBackRequestModel.toJson());
-
-      final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! +
-              app_const.vehicleVideoPlayback,
-          data: videoPlayBackRequestModel.toJson());
-      print(response.data);
+      final url = Global.savedClientAuthData!.clientUrl! +
+          app_const.vehicleVideoPlayback;
+      final body = videoPlayBackRequestModel.toJson();
+      final response = await dio.post(url, data: body);
+      AppHelper.logApiCall(
+        tag: 'VideoPlayBackService.generateVideoPlayback',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
       // final json = jsonDecode(.toString());
 
       if (response.statusCode == 200) {

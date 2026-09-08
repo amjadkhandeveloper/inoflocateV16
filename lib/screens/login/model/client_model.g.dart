@@ -20,19 +20,22 @@ class ClientModelDataClientAdapter extends TypeAdapter<ClientModelDataClient> {
       clientId: fields[0] as int?,
       clientUrl: fields[1] as String?,
       currentVersion: fields[2] as int?,
+      clientName: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ClientModelDataClient obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.clientId)
       ..writeByte(1)
       ..write(obj.clientUrl)
       ..writeByte(2)
-      ..write(obj.currentVersion);
+      ..write(obj.currentVersion)
+      ..writeByte(3)
+      ..write(obj.clientName);
   }
 
   @override

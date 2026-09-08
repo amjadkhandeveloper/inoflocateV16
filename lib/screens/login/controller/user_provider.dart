@@ -50,25 +50,35 @@ class UserProvider extends ChangeNotifier with StateInterface {
           .userLoginService(userLoginRequestModel: loginRequestdata);
       // print(jsonEncode(result));
       _authData = result;
-
-      if (_authData != null) {
-        print("Global ${Global.savedClientAuthData!.clientId} and ${authData?.data?.user?.clientid}");
-        if (Global.savedClientAuthData!.clientId !=
-            authData!.data!.user!.clientid) {
+      final user = result?.data?.user;
+      if (user != null) {
+        print("Global ${Global.savedClientAuthData?.clientId} and ${user.clientid}");
+        final savedClient = Global.savedClientAuthData;
+        final skipClientCheck = Global.isSequelClient ||
+            savedClient?.clientId == null ||
+            savedClient?.clientId == 0;
+        if (!skipClientCheck && savedClient!.clientId != user.clientid) {
           _authData = null;
           customToast(
             message: LocaliazationKey.user_does_not_exist_for_this_client.tr(),
           );
         } else {
-          print("Saving user data: ${_authData!.data!.user!.toJson()}");
-          await Global.box.put(userAuthBoxKey, _authData!.data!.user);
-          await Global.box.put(userAdvertisement, _authData!.data!.user?.showAdvertise);
-
+          print("Saving user data: ${user.toJson()}");
+          await Global.box.put(userAuthBoxKey, user);
+          await Global.box.put(userAdvertisement, user.showAdvertise);
+          if (Global.isSequelClient &&
+              savedClient != null &&
+              user.clientid != null) {
+            savedClient.clientId = user.clientid;
+            await Global.box.put(clientAuthBoxKey, savedClient);
+          }
         }
       }
       await AppHelper.getHiveBoxData();
     } on Failure catch (failure) {
       setFailure(failure);
+    } catch (err) {
+      setFailure(Failure(err.toString()));
     }
     setState(NotifierState.loaded);
   }

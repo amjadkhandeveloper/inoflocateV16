@@ -44,7 +44,8 @@ class ClientLoginProvider extends ChangeNotifier with StateInterface {
           .clientLoginService(loginRequestdata: loginRequestdata);
       print(jsonEncode(result));
       _authData = result;
-      if (_authData != null) {
+      if (_authData != null && _authData!.client != null) {
+        _authData!.client!.clientName = loginRequestdata.loginName;
         await Global.box.put(clientAuthBoxKey, _authData!.client);
       }
       await AppHelper.getHiveBoxData();

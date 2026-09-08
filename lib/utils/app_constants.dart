@@ -94,6 +94,15 @@ const String forgotPassword = "auth/verifyUser"; // password reset email
 const String adsUrl = "auth/getAdv"; // dashboard banner ads
 const String getCountry = "client/cntList"; // legacy path (prefer [getCountryListUrl])
 
+//* Sequel client APIs
+const String sequelApiBaseUrl = "https://sequelmobapi.infotracktelematics.com/";
+const String sequelDashDataUrl = "${sequelApiBaseUrl}api/Vehicle/GetDashData";
+const String sequelUserLoginUrl = "${sequelApiBaseUrl}api/Auth/UserLogin";
+const String sequelHistoryTrackUrl =
+    "${sequelApiBaseUrl}api/Vehicle/historyTrackVehicle";
+const String sequelVehicleStatusUrl =
+    "${sequelApiBaseUrl}api/Vehicle/vehicleStatusWiseList";
+
 /// Sample JSON only — not used at runtime (see grep). Kept for API contract reference.
 const Map<String, dynamic> pinVehicleListJson = {
   "cardType": "D3",

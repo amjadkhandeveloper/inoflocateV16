@@ -3,6 +3,69 @@ import 'package:hive/hive.dart';
 
 part 'user_login_response_model.g.dart';
 
+int? _asInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString());
+}
+
+Map<String, dynamic>? _asMap(dynamic value) {
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return null;
+}
+
+bool _hasUserId(Map<String, dynamic> json) {
+  return json['userid'] != null ||
+      json['userId'] != null ||
+      json['UserId'] != null ||
+      json['UserID'] != null;
+}
+
+Map<String, dynamic>? _extractUserMap(Map<String, dynamic> json) {
+  for (final key in [
+    'user',
+    'User',
+    'userData',
+    'UserData',
+    'userInfo',
+    'result',
+    'Result',
+  ]) {
+    final map = _asMap(json[key]);
+    if (map != null) {
+      if (_hasUserId(map) ||
+          map['Username'] != null ||
+          map['userName'] != null ||
+          map['username'] != null) {
+        return map;
+      }
+      final nested = _extractUserMap(map);
+      if (nested != null) return nested;
+    }
+    final list = json[key];
+    if (list is List && list.isNotEmpty) {
+      final first = _asMap(list.first);
+      if (first != null && _hasUserId(first)) return first;
+    }
+  }
+  for (final key in ['data', 'Data']) {
+    final map = _asMap(json[key]);
+    if (map != null) {
+      final nested = _extractUserMap(map);
+      if (nested != null) return nested;
+      if (_hasUserId(map)) return map;
+    }
+    final list = json[key];
+    if (list is List && list.isNotEmpty) {
+      final first = _asMap(list.first);
+      if (first != null && _hasUserId(first)) return first;
+    }
+  }
+  if (_hasUserId(json)) return json;
+  return null;
+}
+
 @HiveType(typeId: 0)
 class UserLoginResponseModelDataUser {
 /*
@@ -32,12 +95,23 @@ class UserLoginResponseModelDataUser {
       {this.userid, this.username, this.theme, this.language, this.clientid, this.showAdvertise});
 
   UserLoginResponseModelDataUser.fromJson(Map<String, dynamic> json) {
-    userid = json['userid']?.toInt();
-    username = json['Username']?.toString();
-    theme = json['Theme']?.toInt();
-    language = json['Language']?.toString();
-    clientid = json['ClientId']?.toInt();
-    showAdvertise = json['IsAdvertise'] ?? false;
+    userid = _asInt(json['userid'] ??
+        json['userId'] ??
+        json['UserId'] ??
+        json['UserID']);
+    username = (json['Username'] ??
+            json['username'] ??
+            json['userName'] ??
+            json['UserName'])
+        ?.toString();
+    theme = _asInt(json['Theme'] ?? json['theme']);
+    language = (json['Language'] ?? json['language'])?.toString();
+    clientid = _asInt(
+        json['ClientId'] ?? json['clientId'] ?? json['clientid']);
+    showAdvertise = json['IsAdvertise'] ??
+        json['isAdvertise'] ??
+        json['showAdvertise'] ??
+        false;
   }
 
   Map<String, dynamic> toJson() {
@@ -73,8 +147,11 @@ class UserLoginResponseModelData {
   UserLoginResponseModelData({this.status, this.user, this.error});
 
   UserLoginResponseModelData.fromJson(Map<String, dynamic> json) {
-    status = json['status']?.toInt();
-    user = (json['user'] != null) ? UserLoginResponseModelDataUser.fromJson(json['user']) : null;
+    status = _asInt(json['status'] ?? json['Status']);
+    final userJson = _extractUserMap(json);
+    if (userJson != null) {
+      user = UserLoginResponseModelDataUser.fromJson(userJson);
+    }
     if (json['error'] != null) {
       final v = json['error'];
       final arr0 = <DataError>[];
@@ -117,7 +194,25 @@ class UserLoginResponseModel {
   });
 
   UserLoginResponseModel.fromJson(Map<String, dynamic> json) {
-    data = (json['data'] != null) ? UserLoginResponseModelData.fromJson(json['data']) : null;
+    final userJson = _extractUserMap(json);
+    final nestedData = _asMap(json['data']) ?? _asMap(json['Data']);
+    data = UserLoginResponseModelData(
+      status: _asInt(json['status'] ??
+          json['Status'] ??
+          nestedData?['status'] ??
+          nestedData?['Status']),
+      user: userJson == null
+          ? null
+          : UserLoginResponseModelDataUser.fromJson(userJson),
+    );
+    if (nestedData != null && nestedData['error'] != null) {
+      final v = nestedData['error'];
+      final arr0 = <DataError>[];
+      v.forEach((item) {
+        arr0.add(DataError.fromJson(item));
+      });
+      data!.error = arr0;
+    }
   }
 
   Map<String, dynamic> toJson() {

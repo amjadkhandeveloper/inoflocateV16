@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -7,6 +8,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -236,18 +238,27 @@ class AppHelper {
 
   // --- Dio request/response logging (debugging support) ---
 
-  static const int _maxLogChars = 4000;
+  static int _apiTraceId = 0;
 
-  /// Attaches a lightweight logger to [dio] that prints:
-  /// - request URL + method
-  /// - request body (redacted for password fields)
-  /// - response status + body (truncated)
-  /// - error type + response (if any)
+  /// Prints URL, request, and response without Flutter's debugPrint throttle.
+  static void logApiTrace(String message) {
+    debugPrintSynchronously(message, wrapWidth: 1024);
+    print(message);
+    dev.log(message, name: 'API');
+  }
+
+  /// Attaches a logger to [dio] that prints the full call:
+  /// method, URL, query, request headers, request body, status, duration,
+  /// response headers, and response body. Password fields are redacted.
   ///
-  /// Safe to call multiple times; logger is added only once per Dio instance.
+  /// Safe to call multiple times. Tag is updated so reused Dio instances
+  /// still show the correct API name.
   static void attachApiLogger(Dio dio, {String tag = 'API'}) {
-    final alreadyAdded = dio.interceptors.any((i) => i is _ApiLogInterceptor);
-    if (alreadyAdded) return;
+    final existing = dio.interceptors.whereType<_ApiLogInterceptor>();
+    if (existing.isNotEmpty) {
+      existing.first.tag = tag;
+      return;
+    }
     dio.interceptors.add(_ApiLogInterceptor(tag: tag));
   }
 
@@ -274,14 +285,66 @@ class AppHelper {
     return data;
   }
 
-  static String _truncate(String value) {
-    if (value.length <= _maxLogChars) return value;
-    return '${value.substring(0, _maxLogChars)}…(truncated ${value.length - _maxLogChars} chars)';
+  static String _prettyJson(Object? data) {
+    if (data == null) return '(null)';
+    try {
+      Object? value = data;
+      if (data is String) {
+        final trimmed = data.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          value = jsonDecode(trimmed);
+        } else {
+          return data;
+        }
+      }
+      if (value is Map || value is List) {
+        return const JsonEncoder.withIndent('  ').convert(value);
+      }
+    } catch (_) {}
+    return data.toString();
   }
 
-  static void _logLine(String msg) {
-    // Use developer.log so it appears consistently in debug console.
-    dev.log(msg);
+  static String _formatHeaders(Map<String, dynamic> headers) {
+    if (headers.isEmpty) return '  (none)';
+    final lines = <String>[];
+    headers.forEach((key, value) {
+      lines.add('  $key: $value');
+    });
+    return lines.join('\n');
+  }
+
+  static void _logBlock(String msg) {
+    logApiTrace(msg);
+  }
+
+  static String _compactJson(Object? data) {
+    if (data == null) return '(null)';
+    try {
+      return jsonEncode(_redact(data));
+    } catch (_) {
+      return data.toString();
+    }
+  }
+
+  /// Trace helper for repositories: URL + request + response/error.
+  static void logApiCall({
+    required String tag,
+    required String method,
+    required String url,
+    Object? request,
+    int? status,
+    Object? response,
+    Object? error,
+  }) {
+    logApiTrace('API_CALL [$tag] $method $url');
+    logApiTrace('API_CALL [$tag] REQUEST: ${_compactJson(request)}');
+    if (error != null) {
+      logApiTrace('API_CALL [$tag] ERROR: $error');
+      logApiTrace('API_CALL [$tag] ERROR BODY: ${_compactJson(response)}');
+    } else {
+      logApiTrace('API_CALL [$tag] STATUS: $status');
+      logApiTrace('API_CALL [$tag] RESPONSE: ${_compactJson(response)}');
+    }
   }
 
   /// Dio 5.x+ SSL hook — [onHttpClientCreate] is deprecated and may not apply
@@ -510,8 +573,13 @@ class AppHelper {
         path = 'assets/icons/working.svg';
         break;
       case 'Over Speed':
+      case 'OverSpeed':
+      case 'Over Speed - Hwy':
+      case 'Over Speed - NonHwy':
         path = "assets/icons/overspeed.svg";
-        // 'assets/icons/over_speed.svg';
+        break;
+      case 'Stop':
+        path = 'assets/icons/stopped.svg';
         break;
       case 'tilt end':
         path = 'assets/icons/tilt_end.svg';
@@ -1034,45 +1102,106 @@ class AppHelper {
 }
 
 class _ApiLogInterceptor extends Interceptor {
-  final String tag;
+  String tag;
+  static const _startKey = 'apiLogStartMs';
+  static const _idKey = 'apiLogId';
   _ApiLogInterceptor({required this.tag});
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final uri = options.uri.toString();
-    AppHelper._logLine('[$tag] → ${options.method} $uri');
-    if (options.headers.isNotEmpty) {
-      AppHelper._logLine('[$tag] headers: ${AppHelper._truncate(options.headers.toString())}');
-    }
-    if (options.data != null) {
-      final redacted = AppHelper._redact(options.data);
-      AppHelper._logLine('[$tag] body: ${AppHelper._truncate(redacted.toString())}');
-    }
+    final id = ++AppHelper._apiTraceId;
+    options.extra[_startKey] = DateTime.now().millisecondsSinceEpoch;
+    options.extra[_idKey] = id;
+    final fullUrl = options.uri.toString();
+    final query = options.queryParameters.isEmpty
+        ? '(none)'
+        : AppHelper._prettyJson(options.queryParameters);
+    final body = options.data == null
+        ? '(empty)'
+        : AppHelper._prettyJson(AppHelper._redact(options.data));
+    AppHelper.logApiTrace(
+      'API_TRACE #$id REQUEST [$tag] ${options.method} $fullUrl',
+    );
+    AppHelper.logApiTrace(
+      'API_TRACE #$id REQUEST BODY [$tag]: ${AppHelper._compactJson(options.data)}',
+    );
+    AppHelper._logBlock('''
+========== API REQUEST #$id [$tag] ==========
+METHOD : ${options.method}
+URL    : $fullUrl
+QUERY  : $query
+CONTENT-TYPE : ${options.contentType}
+REQUEST HEADERS:
+${AppHelper._formatHeaders(options.headers)}
+REQUEST BODY:
+$body
+========================================''');
     handler.next(options);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    final uri = response.requestOptions.uri.toString();
-    AppHelper._logLine('[$tag] ← ${response.statusCode} ${response.requestOptions.method} $uri');
-    if (response.data != null) {
-      AppHelper._logLine('[$tag] response: ${AppHelper._truncate(response.data.toString())}');
-    }
+    final started = response.requestOptions.extra[_startKey];
+    final id = response.requestOptions.extra[_idKey];
+    final duration = started is int
+        ? '${DateTime.now().millisecondsSinceEpoch - started}ms'
+        : '(unknown)';
+    final fullUrl = response.requestOptions.uri.toString();
+    AppHelper.logApiTrace(
+      'API_TRACE #$id RESPONSE [$tag] ${response.statusCode} $fullUrl ($duration)',
+    );
+    AppHelper.logApiTrace(
+      'API_TRACE #$id RESPONSE BODY [$tag]: ${AppHelper._compactJson(response.data)}',
+    );
+    AppHelper._logBlock('''
+========== API RESPONSE #$id [$tag] ==========
+STATUS   : ${response.statusCode} ${response.statusMessage ?? ''}
+URL      : $fullUrl
+DURATION : $duration
+RESPONSE HEADERS:
+${AppHelper._formatHeaders(Map<String, dynamic>.from(response.headers.map))}
+RESPONSE BODY:
+${AppHelper._prettyJson(response.data)}
+=========================================''');
     handler.next(response);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    final uri = err.requestOptions.uri.toString();
-    AppHelper._logLine('[$tag] ✕ ${err.type} ${err.requestOptions.method} $uri');
-    if (err.response != null) {
-      AppHelper._logLine('[$tag] errorStatus: ${err.response?.statusCode}');
-      if (err.response?.data != null) {
-        AppHelper._logLine('[$tag] errorBody: ${AppHelper._truncate(err.response!.data.toString())}');
-      }
-    } else if (err.error != null) {
-      AppHelper._logLine('[$tag] error: ${AppHelper._truncate(err.error.toString())}');
-    }
+    final started = err.requestOptions.extra[_startKey];
+    final id = err.requestOptions.extra[_idKey];
+    final duration = started is int
+        ? '${DateTime.now().millisecondsSinceEpoch - started}ms'
+        : '(unknown)';
+    final responseHeaders = err.response?.headers.map;
+    final fullUrl = err.requestOptions.uri.toString();
+    AppHelper.logApiTrace(
+      'API_TRACE #$id ERROR [$tag] ${err.response?.statusCode ?? err.type} $fullUrl',
+    );
+    AppHelper.logApiTrace(
+      'API_TRACE #$id REQUEST BODY [$tag]: ${AppHelper._compactJson(err.requestOptions.data)}',
+    );
+    AppHelper.logApiTrace(
+      'API_TRACE #$id RESPONSE BODY [$tag]: ${AppHelper._compactJson(err.response?.data)}',
+    );
+    AppHelper._logBlock('''
+========== API ERROR #$id [$tag] ==========
+TYPE     : ${err.type}
+MESSAGE  : ${err.message}
+URL      : $fullUrl
+METHOD   : ${err.requestOptions.method}
+DURATION : $duration
+STATUS   : ${err.response?.statusCode} ${err.response?.statusMessage ?? ''}
+REQUEST HEADERS:
+${AppHelper._formatHeaders(err.requestOptions.headers)}
+REQUEST BODY:
+${err.requestOptions.data == null ? '(empty)' : AppHelper._prettyJson(AppHelper._redact(err.requestOptions.data))}
+RESPONSE HEADERS:
+${responseHeaders == null ? '  (none)' : AppHelper._formatHeaders(Map<String, dynamic>.from(responseHeaders))}
+RESPONSE BODY:
+${err.response?.data == null ? '(none)' : AppHelper._prettyJson(err.response!.data)}
+ERROR    : ${err.error}
+======================================''');
     handler.next(err);
   }
 }

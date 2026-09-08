@@ -48,9 +48,17 @@ class SplashService {
     try {
       ForceUpdateModelData forceUpdateResponseModel;
       AppHelper.configureDio(dio, tag: 'SplashService.forceUpdateService');
-      final response = await dio.post(app_const.forceUpdateUrl,
-          data: forceUpdateRequestModel.toJson());
-      print(response.data);
+      final body = forceUpdateRequestModel.toJson();
+      final response =
+          await dio.post(app_const.forceUpdateUrl, data: body);
+      AppHelper.logApiCall(
+        tag: 'SplashService.forceUpdateService',
+        method: 'POST',
+        url: app_const.forceUpdateUrl,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
       if (response.statusCode == 200) {
         forceUpdateResponseModel = ForceUpdateModelData.fromJson(response.data);
         return forceUpdateResponseModel;

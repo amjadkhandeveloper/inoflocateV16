@@ -38,22 +38,27 @@ class ClientModelDataClient {
   String? clientUrl;
   @HiveField(2)
   int? currentVersion;
+  @HiveField(3)
+  String? clientName;
 
   ClientModelDataClient({
     this.clientId,
     this.clientUrl,
     this.currentVersion,
+    this.clientName,
   });
   ClientModelDataClient.fromJson(Map<String, dynamic> json) {
     clientId = json['ClientId']?.toInt();
     clientUrl = json['clientUrl']?.toString();
     currentVersion = json['currentVersion']?.toInt();
+    clientName = json['clientName']?.toString();
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['ClientId'] = clientId;
     data['clientUrl'] = clientUrl;
     data['currentVersion'] = currentVersion;
+    data['clientName'] = clientName;
     return data;
   }
 }

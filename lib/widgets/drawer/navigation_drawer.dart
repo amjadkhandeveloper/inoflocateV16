@@ -3,13 +3,13 @@ import 'dart:developer';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:infolocate/screens/alerts/view/alert_screen.dart';
-import 'package:infolocate/screens/dashboard/view/dashboard_view.dart';
 import 'package:infolocate/screens/dynamic_status/view/dynamic_status_screen.dart';
 import 'package:infolocate/screens/login/view/user_login_view.dart';
 import 'package:infolocate/screens/settings/view/settings_screen.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/widget/track_on_map_screen.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
+import 'package:infolocate/utils/app_routes.dart';
 import 'package:infolocate/utils/app_styles.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sizer/sizer.dart';
@@ -103,7 +103,7 @@ class CustomNavigationDrawer extends StatelessWidget {
                             title: Text(LocaliazationKey.dashboard.tr()),
                             onTap: () {
                               Navigator.pushNamedAndRemoveUntil(context,
-                                  HomeScreen.routeName, (route) => false);
+                                  AppRoutes.dashboardRoute(), (route) => false);
                             },
                           ),
                         ),

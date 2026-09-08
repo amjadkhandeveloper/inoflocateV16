@@ -13,11 +13,11 @@ import 'package:sizer/sizer.dart';
 
 import '../../../animation/custom_fade_animation.dart';
 import '../../../utils/app_helper.dart';
+import '../../../utils/app_routes.dart';
 import '../../../utils/app_styles.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/buttons/custom_button.dart';
 import '../../../widgets/powered_by_text_widget.dart';
-import '../../dashboard/view/dashboard_view.dart';
 import '../controller/user_provider.dart';
 import '../model/user_login_request_model.dart';
 
@@ -213,11 +213,12 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                             loginPwd: passwordCtl!.text.trim()),
                       );
 
-                      if (userState.state == NotifierState.loaded &&
-                          userState.authData != null) {
-                        if (!mounted) return;
+                      if (!mounted) return;
+                      final loggedIn = userState.authData?.data?.user != null ||
+                          Global.savedUserAuthData?.userid != null;
+                      if (userState.state == NotifierState.loaded && loggedIn) {
                         Navigator.of(context).pushNamedAndRemoveUntil(
-                            HomeScreen.routeName, (route) => false);
+                            AppRoutes.dashboardRoute(), (route) => false);
                       }
                     }
                   },

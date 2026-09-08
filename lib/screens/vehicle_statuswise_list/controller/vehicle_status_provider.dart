@@ -172,28 +172,21 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       final result = await VehicleStatusService().getVehicleList(
           vehicleStatusWiseListRequestModel: vehicleStatusWiseListRequestModel);
       _vehicleStatusResponseModelData = result;
-      // bool condition = result!.vehicleStatusdetails!.length < pageSize;
-      // if (condition) {
-      //   // if (backgroundFetch) {
-      //   // customToast(message: LocaliazationKey.no_more_data.tr());
-      //   // }
-      //   _hasMoreData = false;
-      // } else {
-      //   _hasMoreData = true;
-      // }
-
-      _vehicleList = result!.vehicleStatusdetails;
-      // log("Vehicle List Data");
-      // log(_vehicleStatusResponseModelData!.toJson().toString());
-
+      _vehicleList = result?.vehicleStatusdetails ?? [];
       _filterList = _vehicleList;
-      if (result.vehicleCount!.isNotEmpty) {
-        _totalCount = result.vehicleCount!.first!.recCnt!;
+      final counts = result?.vehicleCount ?? [];
+      if (counts.isNotEmpty && counts.first?.recCnt != null) {
+        _totalCount = counts.first!.recCnt;
+      } else {
+        _totalCount = _vehicleList?.length ?? 0;
       }
 
-      if (_vehicleList!.isNotEmpty) {
-        _currentLocation =
-            LatLng(_vehicleList!.first!.lat!, _vehicleList!.first!.lon!);
+      final firstWithPoint = _vehicleList
+          ?.whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()
+          .where((v) => v.lat != null && v.lon != null);
+      if (firstWithPoint != null && firstWithPoint.isNotEmpty) {
+        final first = firstWithPoint.first;
+        _currentLocation = LatLng(first.lat!, first.lon!);
         if (_markers.isNotEmpty) {
           // generateMarker();
           // updateMarker();
@@ -222,27 +215,23 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       final result = await VehicleStatusService().getVehicleList(
           vehicleStatusWiseListRequestModel: vehicleStatusWiseListRequestModel);
       _vehicleStatusResponseModelData = result;
-      bool condition = result!.vehicleStatusdetails!.length < pageSize;
-      if (condition) {
-        // if (backgroundFetch) {
-        // customToast(message: LocaliazationKey.no_more_data.tr());
-        // }
-        _hasMoreData = false;
-      } else {
-        _hasMoreData = true;
-      }
-      _vehicleList!.addAll(result.vehicleStatusdetails ?? []);
-      // log("Vehicle List Data");
-      // log(_vehicleStatusResponseModelData!.toJson().toString());
-
+      final details = result?.vehicleStatusdetails ?? [];
+      _hasMoreData = details.length >= pageSize;
+      _vehicleList!.addAll(details);
       _filterList = _vehicleList;
-      if (result.vehicleCount!.isNotEmpty) {
-        _totalCount = result.vehicleCount!.first!.recCnt!;
+      final counts = result?.vehicleCount ?? [];
+      if (counts.isNotEmpty && counts.first?.recCnt != null) {
+        _totalCount = counts.first!.recCnt;
+      } else {
+        _totalCount = _vehicleList?.length ?? 0;
       }
 
-      if (_vehicleList!.isNotEmpty) {
-        _currentLocation =
-            LatLng(_vehicleList!.first!.lat!, _vehicleList!.first!.lon!);
+      final firstWithPoint = _vehicleList
+          ?.whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()
+          .where((v) => v.lat != null && v.lon != null);
+      if (firstWithPoint != null && firstWithPoint.isNotEmpty) {
+        final first = firstWithPoint.first;
+        _currentLocation = LatLng(first.lat!, first.lon!);
         if (_markers.isNotEmpty) {
           // generateMarker();
           // updateMarker();
@@ -269,7 +258,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     try {
       final result = await VehicleStatusService().vehicleHistoryTrackApi(
           vehicleHistoryTrackRequestModel: vehicleHistoryTrackRequestModel);
-      _historyTrackList = result!.VehicleHistory;
+      _historyTrackList = result?.VehicleHistory ?? [];
       if (_historyTrackList!.isEmpty) {
         customToast(message: 'History data not available for selected period');
       }

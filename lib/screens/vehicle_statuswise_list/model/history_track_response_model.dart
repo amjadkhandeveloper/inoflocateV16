@@ -58,13 +58,14 @@ class VehicleHistoryTrackModelDataVehicleHistory {
       this.uniqueId});
   VehicleHistoryTrackModelDataVehicleHistory.fromJson(
       Map<String, dynamic> json) {
-    VehicleId = json['VehicleId']?.toInt();
-    ClientID = json['ClientID']?.toInt();
-    VehicleNo = json['VehicleNo']?.toString();
-    Unitno = json['Unitno']?.toString();
-    tracktime = json['tracktime']?.toString();
-    lat = json['lat']?.toDouble();
-    lon = json['lon']?.toDouble();
+    VehicleId = (json['VehicleId'] ?? json['vehicleId'])?.toInt();
+    ClientID = (json['ClientID'] ?? json['clientId'] ?? json['ClientId'])?.toInt();
+    VehicleNo = (json['VehicleNo'] ?? json['vehicleNo'])?.toString();
+    Unitno = (json['Unitno'] ?? json['unitno'] ?? json['unitNo'])?.toString();
+    tracktime = (json['tracktime'] ?? json['trackTime'] ?? json['TrackingTime'])
+        ?.toString();
+    lat = (json['lat'] ?? json['latitude'])?.toDouble();
+    lon = (json['lon'] ?? json['lng'] ?? json['longitude'])?.toDouble();
     location = json['location']?.toString();
     speed = json['speed']?.toInt();
     odometer = json['odometer']?.toDouble();
@@ -133,13 +134,14 @@ class VehicleHistoryTrackModelData {
   });
   VehicleHistoryTrackModelData.fromJson(Map<String, dynamic> json) {
     status = json['status']?.toInt();
-    if (json['VehicleHistory'] != null) {
-      final v = json['VehicleHistory'];
-      final arr0 = <VehicleHistoryTrackModelDataVehicleHistory>[];
-      v.forEach((v) {
-        arr0.add(VehicleHistoryTrackModelDataVehicleHistory.fromJson(v));
-      });
-      VehicleHistory = arr0;
+    final raw = json['VehicleHistory'] ?? json['vehicleHistory'] ?? json['history'];
+    if (raw is List) {
+      VehicleHistory = raw
+          .whereType<Map>()
+          .map((item) => VehicleHistoryTrackModelDataVehicleHistory.fromJson(
+                Map<String, dynamic>.from(item),
+              ))
+          .toList();
     }
   }
   Map<String, dynamic> toJson() {
@@ -192,9 +194,15 @@ class VehicleHistoryTrackModel {
     this.data,
   });
   VehicleHistoryTrackModel.fromJson(Map<String, dynamic> json) {
-    data = (json['data'] != null)
-        ? VehicleHistoryTrackModelData.fromJson(json['data'])
-        : null;
+    if (json['data'] is Map) {
+      data = VehicleHistoryTrackModelData.fromJson(
+        Map<String, dynamic>.from(json['data'] as Map),
+      );
+    } else if (json['VehicleHistory'] != null ||
+        json['vehicleHistory'] != null ||
+        json['history'] != null) {
+      data = VehicleHistoryTrackModelData.fromJson(json);
+    }
   }
   Map<String, dynamic> toJson() {
     final res = <String, dynamic>{};

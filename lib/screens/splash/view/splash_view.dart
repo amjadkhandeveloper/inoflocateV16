@@ -3,12 +3,12 @@ import 'dart:developer';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
-import 'package:infolocate/screens/dashboard/view/dashboard_view.dart';
 import 'package:infolocate/screens/login/view/client_login_view.dart';
 import 'package:infolocate/screens/login/view/user_login_view.dart';
 import 'package:infolocate/screens/splash/model/force_update_request_model.dart';
 import 'package:infolocate/screens/splash/repository/splash_repo.dart';
 import 'package:infolocate/utils/app_globals.dart';
+import 'package:infolocate/utils/app_routes.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../utils/app_styles.dart';
@@ -18,7 +18,7 @@ import '../../language/view/select_language_screen.dart';
 /// First screen after launch. Checks force-update, then routes by saved Hive session.
 ///
 /// Navigation priority (see [navigateTo]):
-/// 1. User logged in → Dashboard ([HomeScreen])
+/// 1. User logged in → Dashboard (common or Sequel)
 /// 2. Client logged in only → User login
 /// 3. Language saved → Client login
 /// 4. Otherwise → Language selection
@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
   navigateTo() {
     if (Global.savedUserAuthData != null) {
       Navigator.pushNamedAndRemoveUntil(
-          context, HomeScreen.routeName, (route) => false);
+          context, AppRoutes.dashboardRoute(), (route) => false);
       return;
     }
     if (Global.savedClientAuthData != null) {

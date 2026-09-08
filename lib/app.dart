@@ -10,6 +10,7 @@ import 'screens/login/controller/client_provider.dart';
 import 'package:infolocate/screens/alerts/controller/alert_provider.dart';
 import 'package:infolocate/screens/card_types_screen/controller/card_type_provider.dart';
 import 'package:infolocate/screens/dashboard/controller/dashboard_provider.dart';
+import 'package:infolocate/screens/dashboard/controller/sequel_dashboard_provider.dart';
 import 'package:infolocate/screens/dynamic_status/controller/dyanmic_status_provider.dart';
 import 'package:infolocate/screens/forgot_password/controller/forgot_password_provider.dart';
 import 'package:infolocate/screens/splash/view/splash_view.dart';
@@ -52,6 +53,9 @@ class MyApp extends StatelessWidget {
             ),
             ChangeNotifierProvider(
               create: (_) => DashboardProvider(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => SequelDashboardProvider(),
             ),
             ChangeNotifierProvider(
               create: (_) => AlertProvider(),

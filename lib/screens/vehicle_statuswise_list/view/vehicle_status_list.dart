@@ -311,7 +311,7 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                                               vehicleTrackTime: cardData.tracktime ?? "",
                                                             ),
                                                             vehicleNo: cardData.VehicleNo.toString(),
-                                                            vehicleId: cardData.Vehicleid!.toInt(),
+                                                            vehicleId: cardData.Vehicleid ?? 0,
                                                             location: cardData.location,
                                                             trackTime: cardData.tracktime.toString(),
                                                             status: cardData.Status.toString(),

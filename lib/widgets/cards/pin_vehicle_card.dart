@@ -16,6 +16,7 @@ import 'package:sizer/sizer.dart';
 
 import '../../common_models/button_list_model.dart';
 import '../../screens/dashboard/controller/dashboard_provider.dart';
+import '../../screens/dashboard/controller/sequel_dashboard_provider.dart';
 import '../../screens/dashboard/model/dashboard_request_model.dart';
 import '../../screens/vehicle_statuswise_list/controller/vehicle_status_provider.dart';
 import '../../utils/app_colors.dart';
@@ -100,6 +101,8 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
     final vehicleStatusState = Provider.of<VehicleStatusProvider>(context);
     final dashBoardState =
         Provider.of<DashboardProvider>(context, listen: false);
+    final sequelDashState =
+        Provider.of<SequelDashboardProvider>(context, listen: false);
     // log(widget.status.toString());
 
     print('Widget Live: ${widget.liveUrlList}');
@@ -400,9 +403,15 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                         vehicleStatusState.updatePinValue(
                             vehicleId: widget.vehicleId,
                             value: widget.isPinned ? 0 : 1);
-                        dashBoardState.updatePinValue(
-                            vehicleId: widget.vehicleId,
-                            value: widget.isPinned ? false : true);
+                        if (Global.isSequelClient) {
+                          sequelDashState.updatePinValue(
+                              vehicleId: widget.vehicleId,
+                              value: widget.isPinned ? false : true);
+                        } else {
+                          dashBoardState.updatePinValue(
+                              vehicleId: widget.vehicleId,
+                              value: widget.isPinned ? false : true);
+                        }
 
                         await pinVehicleState.pinUnpinVehicle(
                           pinVehicleRequestModel: PinVehicleRequestModel(
@@ -412,15 +421,22 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                               vehicleid: widget.vehicleId.toInt(),
                               insertMode: widget.isPinned ? 1 : 0),
                         );
-                        await dashBoardState.getDashboardData(
-                            dashboardRequestModel: DashboardRequestModel(
-                              userId: Global.savedUserAuthData!.userid!,
-                              pSize: pageSize,
-                              pNo: defaultPageN0,
-                            ),
-                            backgroundFetch: true);
-                        pinVehicleState.lengthOfPinVehicles = dashBoardState
-                            .dashboardResponseModelData!.Pinvehicle!.length;
+                        if (Global.isSequelClient) {
+                          await sequelDashState.loadDashboard(
+                              showLoader: false);
+                          pinVehicleState.lengthOfPinVehicles =
+                              sequelDashState.data?.Pinvehicle?.length;
+                        } else {
+                          await dashBoardState.getDashboardData(
+                              dashboardRequestModel: DashboardRequestModel(
+                                userId: Global.savedUserAuthData!.userid!,
+                                pSize: pageSize,
+                                pNo: defaultPageN0,
+                              ),
+                              backgroundFetch: true);
+                          pinVehicleState.lengthOfPinVehicles = dashBoardState
+                              .dashboardResponseModelData!.Pinvehicle!.length;
+                        }
                         log("Length of PinVehicle ${pinVehicleState.lengthOfPinVehicles}");
                         if (pinVehicleState.pinVehicleResponseModel!.pinvehicle!
                                     .first!.Remark ==

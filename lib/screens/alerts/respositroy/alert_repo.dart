@@ -19,14 +19,17 @@ class AlertService {
   Future<AlertListResponseModelData?> alertListService({required AlertListRequestModel? alertListRequestModel}) async {
     try {
       AppHelper.configureDio(dio, tag: 'AlertService.alertListService');
-      log(alertListRequestModel!.toJson().toString());
-      //for testing shimmer
-      // await Future.delayed(const Duration(seconds: 8));
-      final response =
-          await dio.post(Global.savedClientAuthData!.clientUrl! + alertwiseList, data: alertListRequestModel.toJson());
-      print("Url ${Global.savedClientAuthData!.clientUrl! + alertwiseList}");
-      print('Alert Screen: Req: ${alertListRequestModel.toJson()} Resp ${jsonEncode(response.data)}');
-      // log(response.data);
+      final url = Global.savedClientAuthData!.clientUrl! + alertwiseList;
+      final body = alertListRequestModel!.toJson();
+      final response = await dio.post(url, data: body);
+      AppHelper.logApiCall(
+        tag: 'AlertService.alertListService',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
       if (response.statusCode == 200) {
         return AlertListResponseModel.fromJson(response.data).data!;
       }
@@ -37,7 +40,15 @@ class AlertService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiCall(
+          tag: 'AlertService.alertListService',
+          method: 'POST',
+          url: Global.savedClientAuthData!.clientUrl! + alertwiseList,
+          request: alertListRequestModel?.toJson(),
+          status: e.response?.statusCode,
+          response: e.response?.data,
+          error: e,
+        );
         throw Failure(AlertListResponseModel.fromJson(e.response!.data)
             .data!
             .error!

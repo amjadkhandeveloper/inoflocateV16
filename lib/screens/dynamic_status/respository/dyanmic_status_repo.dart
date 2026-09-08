@@ -20,16 +20,17 @@ class DynamicStatusService {
       {required DynamicStatusRequestModel? dynamicListRequestModel}) async {
     try {
       AppHelper.configureDio(dio, tag: 'DynamicStatusService.dynamicStatusListService');
-      log(dynamicListRequestModel!.toJson().toString());
-      //for testing shimmer
-      // await Future.delayed(const Duration(seconds: 8));
-      final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! + currDashVehicle,
-          data: dynamicListRequestModel.toJson());
-      print(
-          "Dynamic Status URL ${Global.savedClientAuthData!.clientUrl! + currDashVehicle}");
-      print(jsonEncode(response.data));
-      // log(response.data);
+      final url = Global.savedClientAuthData!.clientUrl! + currDashVehicle;
+      final body = dynamicListRequestModel!.toJson();
+      final response = await dio.post(url, data: body);
+      AppHelper.logApiCall(
+        tag: 'DynamicStatusService.dynamicStatusListService',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
       if (response.statusCode == 200) {
         return DynamicStatusModel.fromJson(response.data);
       }

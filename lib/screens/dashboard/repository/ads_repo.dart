@@ -16,18 +16,20 @@ class AdsService {
   Future<AdsResponseModelData?> getAds({required int clientId}) async {
     try {
       AppHelper.configureDio(dio, tag: 'AdsService.getAds');
-      log(Global.savedClientAuthData!.clientUrl! + app_const.adsUrl);
-      final requestbody = jsonEncode({"clientId": clientId});
-      log("Request Body===> $requestbody");
-      // For testing shimmer effect
-      // await Future.delayed(const Duration(seconds: 8));
+      final url = Global.savedClientAuthData!.clientUrl! + app_const.adsUrl;
+      final requestbody = {"clientId": clientId};
       final response = await dio.post(
-          Global.savedClientAuthData!.clientUrl! + app_const.adsUrl,
+          url,
           data: requestbody,
           options: Options(contentType: Headers.jsonContentType));
-      log(response.data.toString());
-
-      print("Response Carousel: ${Global.savedClientAuthData!.clientUrl! + app_const.adsUrl} and data => ${response.data.toString()}");
+      AppHelper.logApiCall(
+        tag: 'AdsService.getAds',
+        method: 'POST',
+        url: url,
+        request: requestbody,
+        status: response.statusCode,
+        response: response.data,
+      );
 
       if (response.statusCode == 200) {
         return AdsResponseModel.fromJson(response.data).data;
