@@ -85,7 +85,7 @@ class ForgotPasswordResponseModelData with JsonSafeParser {
     data = inner != null
         ? ForgotPasswordResponseModelDataData.fromJson(inner)
         : null;
-    message = asString(json['message']);
+    message = asStringFrom(json, ['message', 'Message']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -121,9 +121,16 @@ class ForgotPasswordResponseModel with JsonSafeParser {
   });
   ForgotPasswordResponseModel.fromJson(Map<String, dynamic> json) {
     final dataMap = asMapOrNull(json['data']);
-    data = dataMap != null
-        ? ForgotPasswordResponseModelData.fromJson(dataMap)
-        : null;
+    if (dataMap != null) {
+      data = ForgotPasswordResponseModelData.fromJson(dataMap);
+    } else {
+      data = ForgotPasswordResponseModelData.fromJson(json);
+    }
+  }
+
+  bool get isSuccess {
+    final status = data?.status;
+    return status == 1 || status == 200;
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};

@@ -360,7 +360,7 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                   top: 3.w,
                   child: GestureDetector(
                       onTap: () async {
-                        if (pinVehicleState.lengthOfPinVehicles! >= 6 &&
+                        if ((pinVehicleState.lengthOfPinVehicles ?? 0) >= 6 &&
                             !widget.isPinned) {
                           customToast(
                               message: LocaliazationKey
@@ -368,26 +368,30 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                   .tr());
                           return;
                         }
+                        final wasPinned = widget.isPinned;
+                        final insertMode = wasPinned ? 1 : 0;
+                        final clientId = Global.savedUserAuthData?.clientid ??
+                            Global.savedClientAuthData?.clientId ??
+                            0;
                         vehicleStatusState.updatePinValue(
                             vehicleId: widget.vehicleId,
-                            value: widget.isPinned ? 0 : 1);
+                            value: wasPinned ? 0 : 1);
                         if (Global.isSequelClient) {
                           sequelDashState.updatePinValue(
                               vehicleId: widget.vehicleId,
-                              value: widget.isPinned ? false : true);
+                              value: !wasPinned);
                         } else {
                           dashBoardState.updatePinValue(
                               vehicleId: widget.vehicleId,
-                              value: widget.isPinned ? false : true);
+                              value: !wasPinned);
                         }
 
                         await pinVehicleState.pinUnpinVehicle(
                           pinVehicleRequestModel: PinVehicleRequestModel(
-                              clientId:
-                                  Global.savedClientAuthData!.clientId!.toInt(),
+                              clientId: clientId.toInt(),
                               userId: Global.savedUserAuthData!.userid!.toInt(),
                               vehicleid: widget.vehicleId.toInt(),
-                              insertMode: widget.isPinned ? 1 : 0),
+                              insertMode: insertMode),
                         );
                         if (Global.isSequelClient) {
                           await sequelDashState.loadDashboard(
@@ -406,31 +410,32 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                               .dashboardResponseModelData!.Pinvehicle!.length;
                         }
                         log("Length of PinVehicle ${pinVehicleState.lengthOfPinVehicles}");
-                        if (pinVehicleState.pinVehicleResponseModel!.pinvehicle!
-                                    .first!.Remark ==
-                                "Vehicle is already added Sucessfully" ||
-                            pinVehicleState.pinVehicleResponseModel!.pinvehicle!
-                                    .first!.Remark ==
-                                "Vehicle added Sucessfully") {
+                        final result = pinVehicleState.pinVehicleResponseModel;
+                        final remark =
+                            (result?.pinvehicle?.isNotEmpty == true
+                                    ? result!.pinvehicle!.first?.Remark
+                                    : null) ??
+                                result?.message ??
+                                '';
+                        final remarkLower = remark.toLowerCase();
+                        if (insertMode == 0 &&
+                            (result?.isSuccess == true ||
+                                remarkLower.contains('added'))) {
                           customToast(
                             message: LocaliazationKey
                                 .vehicle_pinned_successfully
                                 .tr(),
                           );
-                        } else if (pinVehicleState.pinVehicleResponseModel!
-                                .pinvehicle!.first!.Remark ==
-                            "Vehicle deleted Sucessfully") {
+                        } else if (insertMode == 1 &&
+                            (result?.isSuccess == true ||
+                                remarkLower.contains('deleted'))) {
                           customToast(
                             message: LocaliazationKey
                                 .vehicle_unppined_successfully
                                 .tr(),
                           );
-                        } else {
-                          customToast(
-                            message: pinVehicleState.pinVehicleResponseModel!
-                                .pinvehicle!.first!.Remark
-                                .toString(),
-                          );
+                        } else if (remark.isNotEmpty) {
+                          customToast(message: remark);
                         }
                       },
                       child: AnimatedSwitcher(

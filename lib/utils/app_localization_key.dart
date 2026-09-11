@@ -138,6 +138,9 @@ class LocaliazationKey {
   static const password_reset_link_sent = "password_reset_link_sent";
   static const apply = "apply";
   static const reset_password = "reset_password";
+  static const confirm_password = "confirm_password";
+  static const passwords_do_not_match = "passwords_do_not_match";
+  static const password_reset_successfully = "password_reset_successfully";
   static const advertisement = "advertisement";
   static const select_country = "select_country";
   static const select_country_hint = "select_country_hint";

@@ -27,10 +27,14 @@ class PinVehicleRequestModel {
 
   factory PinVehicleRequestModel.fromJson(Map<String, dynamic> json) =>
       PinVehicleRequestModel(
-        clientId: JsonSafe.asInt(json["ClientId"]),
-        userId: JsonSafe.asInt(json["UserId"]),
-        vehicleid: JsonSafe.asInt(json["Vehicleid"]),
-        insertMode: JsonSafe.asInt(json["InsertMode"]),
+        clientId: JsonSafe.asInt(
+            JsonSafe.firstValue(json, ["clientId", "ClientId"])),
+        userId: JsonSafe.asInt(
+            JsonSafe.firstValue(json, ["userId", "UserId"])),
+        vehicleid: JsonSafe.asInt(JsonSafe.firstValue(
+            json, ["vehicleId", "Vehicleid", "VehicleID"])),
+        insertMode: JsonSafe.asInt(
+            JsonSafe.firstValue(json, ["insertMode", "InsertMode"])),
       );
 
   Map<String, dynamic> toJson() => {
@@ -38,5 +42,12 @@ class PinVehicleRequestModel {
         "UserId": userId,
         "Vehicleid": vehicleid,
         "InsertMode": insertMode,
+      };
+
+  Map<String, dynamic> toSequelJson() => {
+        "userId": userId,
+        "clientId": clientId,
+        "vehicleId": vehicleid,
+        "insertMode": insertMode,
       };
 }

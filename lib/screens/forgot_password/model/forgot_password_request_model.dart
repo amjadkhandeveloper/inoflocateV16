@@ -23,4 +23,24 @@ class ForgotPasswordRequestModel {
   Map<String, dynamic> toJson() => {
         "LoginName": loginName,
       };
+
+  Map<String, dynamic> toSequelVerifyJson() => {
+        "loginName": loginName,
+        "loginPwd": "",
+      };
+}
+
+class ResetPasswordRequestModel {
+  int userid;
+  String newPassword;
+
+  ResetPasswordRequestModel({
+    required this.userid,
+    required this.newPassword,
+  });
+
+  Map<String, dynamic> toJson() => {
+        "userid": userid,
+        "newPassword": newPassword,
+      };
 }

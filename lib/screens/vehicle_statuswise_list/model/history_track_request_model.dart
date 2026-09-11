@@ -3,11 +3,11 @@ import '../../../utils/json_safe_parser.dart';
 class HistoryTrackRequestModel with JsonSafeParser {
 /*
 {
-  "UserId": 1,
-  "VehicleID": 34,
-  "FromDatetime": "2023-05-11 00:00:00",
-  "ToDatetime": "2023-05-11 23:00:00"
-} 
+  "userId": 1,
+  "vehicleId": 34,
+  "fromDatetime": "2023-05-11 00:00:00",
+  "toDatetime": "2023-05-11 23:00:00"
+}
 */
 
   int? UserId;
@@ -22,17 +22,27 @@ class HistoryTrackRequestModel with JsonSafeParser {
     this.ToDatetime,
   });
   HistoryTrackRequestModel.fromJson(Map<String, dynamic> json) {
-    UserId = asIntFrom(json, ['UserId', 'userId']);
-    VehicleID = asIntFrom(json, ['VehicleID', 'vehicleId']);
-    FromDatetime = asStringFrom(json, ['FromDatetime', 'fromDatetime']);
-    ToDatetime = asStringFrom(json, ['ToDatetime', 'toDatetime']);
+    UserId = asIntFrom(json, ['userId', 'UserId']);
+    VehicleID = asIntFrom(json, ['vehicleId', 'VehicleID', 'VehicleId']);
+    FromDatetime = asStringFrom(json, ['fromDatetime', 'FromDatetime']);
+    ToDatetime = asStringFrom(json, ['toDatetime', 'ToDatetime']);
   }
+
   Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{};
-    data['UserId'] = UserId;
-    data['VehicleID'] = VehicleID;
-    data['FromDatetime'] = FromDatetime;
-    data['ToDatetime'] = ToDatetime;
-    return data;
+    return {
+      'userId': UserId,
+      'vehicleId': VehicleID,
+      'fromDatetime': FromDatetime,
+      'toDatetime': ToDatetime,
+    };
+  }
+
+  Map<String, dynamic> toCommonJson() {
+    return {
+      'UserId': UserId,
+      'VehicleID': VehicleID,
+      'FromDatetime': FromDatetime,
+      'ToDatetime': ToDatetime,
+    };
   }
 }

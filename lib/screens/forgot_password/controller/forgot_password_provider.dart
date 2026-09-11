@@ -53,4 +53,21 @@ class ForgotPasswordProvider extends ChangeNotifier with StateInterface {
     }
     setState(NotifierState.loaded);
   }
+
+  Future<bool> resetPassword({
+    required ResetPasswordRequestModel resetPasswordRequestModel,
+  }) async {
+    setState(NotifierState.loading);
+    try {
+      final result = await ForgotPasswordService().resetPasswordService(
+          resetPasswordRequestModel: resetPasswordRequestModel);
+      _forgotPasswordResponseModel = result;
+      setState(NotifierState.loaded);
+      return result?.isSuccess == true;
+    } on Failure catch (failure) {
+      setFailure(failure);
+      setState(NotifierState.loaded);
+      return false;
+    }
+  }
 }

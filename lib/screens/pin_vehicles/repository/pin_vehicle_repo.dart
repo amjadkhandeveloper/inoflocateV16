@@ -11,7 +11,8 @@ import '../model/pin_vehicle_response_model.dart';
 
 /// Pinned vehicles API (list / pin / unpin).
 ///
-/// Endpoint: `{clientUrl}` + [pinVehicle] (POST).
+/// Common: `{clientUrl}` + [pinVehicle].
+/// Sequel: [sequelPinVehicleUrl] (`insertMode` 0 = pin, 1 = unpin).
 class PinVehicleService {
   var dio = Dio();
 
@@ -19,9 +20,13 @@ class PinVehicleService {
       {required PinVehicleRequestModel pinVehicleRequestModel}) async {
     try {
       AppHelper.configureDio(dio, tag: 'PinVehicleService.pinUnpinVehicle');
-      final url =
-          Global.savedClientAuthData!.clientUrl! + app_const.pinVehicle;
-      final body = pinVehicleRequestModel.toJson();
+      final isSequel = Global.isSequelClient;
+      final url = isSequel
+          ? app_const.sequelPinVehicleUrl
+          : Global.savedClientAuthData!.clientUrl! + app_const.pinVehicle;
+      final body = isSequel
+          ? pinVehicleRequestModel.toSequelJson()
+          : pinVehicleRequestModel.toJson();
       final response = await dio.post(
           url,
           data: body,
@@ -35,10 +40,10 @@ class PinVehicleService {
         response: response.data,
       );
 
-      // final json = jsonDecode(.toString());
-
-      if (response.statusCode == 200) {
-        return PinVehicleResponseModel.fromJson(response.data).data;
+      if (response.statusCode == 200 && response.data is Map) {
+        return PinVehicleResponseModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        ).data;
       }
       return PinVehicleResponseModelData();
     } on DioException catch (e) {

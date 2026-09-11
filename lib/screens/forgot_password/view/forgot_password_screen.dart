@@ -28,11 +28,28 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   TextEditingController usernameController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+
+  bool get _isReset => !widget.isForgotPassword;
+  bool get _useSequelReset => _isReset && Global.isSequelClient;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isReset) {
+      usernameController.text = Global.savedUserAuthData?.username ?? '';
+    }
+  }
 
   @override
   void dispose() {
     usernameController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -94,11 +111,106 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             validator: (name) =>
                                 AppHelper.uerNameValidator(name),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            LocaliazationKey.email_note.tr(),
-                            style: AppUi.mutedStyle(context),
-                          ),
+                          if (_useSequelReset) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              LocaliazationKey.password.tr(),
+                              style: AppUi.fieldLabel(context),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: passwordController,
+                              obscureText: _obscurePassword,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(32),
+                                FilteringTextInputFormatter.deny(RegExp(r' ')),
+                              ],
+                              decoration: AppUi.inputDecoration(
+                                context: context,
+                                hintText:
+                                    LocaliazationKey.please_enter_password.tr(),
+                                prefixIcon: Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 20,
+                                  color: AppUi.muted(context),
+                                ),
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: AppUi.muted(context),
+                                  ),
+                                ),
+                              ),
+                              validator: (value) =>
+                                  AppHelper.passwordValidator(value),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              LocaliazationKey.confirm_password.tr(),
+                              style: AppUi.fieldLabel(context),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: confirmPasswordController,
+                              obscureText: _obscureConfirm,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(32),
+                                FilteringTextInputFormatter.deny(RegExp(r' ')),
+                              ],
+                              decoration: AppUi.inputDecoration(
+                                context: context,
+                                hintText:
+                                    LocaliazationKey.confirm_password.tr(),
+                                prefixIcon: Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 20,
+                                  color: AppUi.muted(context),
+                                ),
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirm = !_obscureConfirm;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _obscureConfirm
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: AppUi.muted(context),
+                                  ),
+                                ),
+                              ),
+                              validator: (value) {
+                                final base =
+                                    AppHelper.passwordValidator(value);
+                                if (base != null) return base;
+                                if (value != passwordController.text) {
+                                  return LocaliazationKey
+                                      .passwords_do_not_match
+                                      .tr();
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                          if (!_useSequelReset) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              LocaliazationKey.email_note.tr(),
+                              style: AppUi.mutedStyle(context),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           AppUi.primaryButton(
                             title: LocaliazationKey.confirm.tr(),
@@ -113,26 +225,56 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                         .incorrect_username
                                         .tr(),
                                   );
-                                } else {
-                                  FocusScope.of(context).unfocus();
-                                  await forgotPasswordState.forgotPassword(
-                                    forgotPasswordRequestModel:
-                                        ForgotPasswordRequestModel(
-                                            loginName: usernameController.text
-                                                .trim()),
-                                  );
-                                  if (forgotPasswordState.state ==
-                                          NotifierState.loaded &&
-                                      forgotPasswordState
-                                              .forgotPasswordResponseModel !=
-                                          null) {
-                                    Navigator.of(context).pushReplacement(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const MailSentScreen(),
-                                      ),
+                                }
+                                FocusScope.of(context).unfocus();
+                                if (_useSequelReset) {
+                                  final userId =
+                                      Global.savedUserAuthData?.userid;
+                                  if (userId == null) {
+                                    customToast(
+                                      message: LocaliazationKey
+                                          .could_not_login
+                                          .tr(),
                                     );
+                                    return;
                                   }
+                                  final ok =
+                                      await forgotPasswordState.resetPassword(
+                                    resetPasswordRequestModel:
+                                        ResetPasswordRequestModel(
+                                      userid: userId.toInt(),
+                                      newPassword:
+                                          passwordController.text.trim(),
+                                    ),
+                                  );
+                                  if (!mounted) return;
+                                  if (ok) {
+                                    customToast(
+                                      message: LocaliazationKey
+                                          .password_reset_successfully
+                                          .tr(),
+                                    );
+                                    Navigator.of(context).pop();
+                                  }
+                                  return;
+                                }
+                                await forgotPasswordState.forgotPassword(
+                                  forgotPasswordRequestModel:
+                                      ForgotPasswordRequestModel(
+                                          loginName: usernameController.text
+                                              .trim()),
+                                );
+                                if (forgotPasswordState.state ==
+                                        NotifierState.loaded &&
+                                    forgotPasswordState
+                                            .forgotPasswordResponseModel !=
+                                        null) {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const MailSentScreen(),
+                                    ),
+                                  );
                                 }
                               }
                             },

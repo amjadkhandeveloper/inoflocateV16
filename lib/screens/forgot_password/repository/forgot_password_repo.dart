@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:infolocate/utils/app_constants.dart' as app_const;
@@ -10,9 +9,7 @@ import '../../../utils/app_localization_key.dart';
 import '../model/forgot_password_request_model.dart';
 import '../model/forgot_password_response_model.dart';
 
-/// Forgot-password / verify-user API.
-///
-/// Endpoint: `{clientUrl}` + [forgotPassword] (POST).
+/// Forgot-password / reset-password APIs.
 class ForgotPasswordService {
   final dio = Dio();
   Future<ForgotPasswordResponseModel?> forgotPasswordService({
@@ -36,7 +33,6 @@ class ForgotPasswordService {
         status: response.statusCode,
         response: response.data,
       );
-      // final json = jsonDecode(.toString());
 
       if (response.statusCode == 200) {
         forgotPasswordResponseModel =
@@ -62,6 +58,52 @@ class ForgotPasswordService {
           newMessage = message;
         }
         throw Failure(newMessage);
+      }
+      throw await AppHelper.failureFromErrorAsync(e);
+    } catch (error) {
+      log(error.toString());
+      throw await AppHelper.failureFromErrorAsync(error);
+    }
+  }
+
+  Future<ForgotPasswordResponseModel?> resetPasswordService({
+    required ResetPasswordRequestModel resetPasswordRequestModel,
+  }) async {
+    try {
+      AppHelper.configureDio(
+          dio, tag: 'ForgotPasswordService.resetPasswordService');
+      final url = Global.isSequelClient
+          ? app_const.sequelResetPasswordUrl
+          : Global.savedClientAuthData!.clientUrl! + app_const.forgotPassword;
+      final body = resetPasswordRequestModel.toJson();
+      final response = await dio.post(
+        url,
+        data: body,
+        options: Options(contentType: Headers.jsonContentType),
+      );
+      AppHelper.logApiCall(
+        tag: 'ForgotPasswordService.resetPasswordService',
+        method: 'POST',
+        url: url,
+        request: body,
+        status: response.statusCode,
+        response: response.data,
+      );
+      if (response.statusCode == 200 && response.data is Map) {
+        return ForgotPasswordResponseModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        );
+      }
+      return null;
+    } on DioException catch (e) {
+      if (e.response?.data is Map) {
+        final parsed = ForgotPasswordResponseModel.fromJson(
+          Map<String, dynamic>.from(e.response!.data as Map),
+        );
+        final message = parsed.data?.message;
+        if (message != null && message.trim().isNotEmpty) {
+          throw Failure(message);
+        }
       }
       throw await AppHelper.failureFromErrorAsync(e);
     } catch (error) {

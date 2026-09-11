@@ -86,13 +86,8 @@ class VehicleStatusService {
           ? app_const.sequelHistoryTrackUrl
           : '${Global.savedClientAuthData!.clientUrl}${app_const.historyTrackVehicle}';
       final body = isSequel
-          ? {
-              'userId': vehicleHistoryTrackRequestModel.UserId,
-              'vehicleId': vehicleHistoryTrackRequestModel.VehicleID,
-              'fromDatetime': vehicleHistoryTrackRequestModel.FromDatetime,
-              'toDatetime': vehicleHistoryTrackRequestModel.ToDatetime,
-            }
-          : vehicleHistoryTrackRequestModel.toJson();
+          ? vehicleHistoryTrackRequestModel.toJson()
+          : vehicleHistoryTrackRequestModel.toCommonJson();
       log('History track $url');
       log(jsonEncode(body));
       final response = await dio.post(

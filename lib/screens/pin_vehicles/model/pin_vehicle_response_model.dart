@@ -45,25 +45,32 @@ class PinVehicleResponseModelData with JsonSafeParser {
 */
 
   int? status;
+  String? message;
   List<PinVehicleResponseModelDataPinvehicle?>? pinvehicle;
 
   List<DataError?>? error;
 
   PinVehicleResponseModelData({
     this.status,
+    this.message,
     this.pinvehicle,
   });
   PinVehicleResponseModelData.fromJson(Map<String, dynamic> json) {
     status = asIntFrom(json, ['status', 'Status']);
-    if (json['pinvehicle'] != null) {
-      pinvehicle = asListOfMaps(json['pinvehicle'])
-          .map(PinVehicleResponseModelDataPinvehicle.fromJson)
-          .toList();
-    }
-    if (json['error'] != null) {
-      error = asListOfMaps(json['error']).map(DataError.fromJson).toList();
-    }
+    message = asStringFrom(json, ['message', 'Message']);
+    pinvehicle = asListOfMaps(firstValue(json, [
+      'pinvehicle',
+      'pinVehicle',
+      'Pinvehicle',
+    ]))
+        .map(PinVehicleResponseModelDataPinvehicle.fromJson)
+        .toList();
+    error = asListOfMaps(firstValue(json, ['error', 'Error']))
+        .map(DataError.fromJson)
+        .toList();
   }
+
+  bool get isSuccess => status == 1 || status == 200;
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['status'] = status;
@@ -101,9 +108,11 @@ class PinVehicleResponseModel with JsonSafeParser {
   });
   PinVehicleResponseModel.fromJson(Map<String, dynamic> json) {
     final dataMap = asMapOrNull(json['data']);
-    data = dataMap != null
-        ? PinVehicleResponseModelData.fromJson(dataMap)
-        : null;
+    if (dataMap != null) {
+      data = PinVehicleResponseModelData.fromJson(dataMap);
+    } else {
+      data = PinVehicleResponseModelData.fromJson(json);
+    }
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
