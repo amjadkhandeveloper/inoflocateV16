@@ -12,6 +12,7 @@ import 'package:infolocate/utils/app_extensions.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/app_styles.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
@@ -415,7 +416,7 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          color: Theme.of(context).colorScheme.primary,
+                          color: AppUi.accent,
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
@@ -546,7 +547,7 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
                               CustomValueWidget(
                                 icon: Icon(
                                   Icons.location_on_outlined,
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: AppUi.accent,
                                 ),
                                 isDarkTheme: isDarkTheme,
                                 value: provider.movingVehicleDetail!.location

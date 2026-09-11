@@ -1,5 +1,6 @@
+import '../../../utils/json_safe_parser.dart';
 
-class HistoryTrackRequestModel {
+class HistoryTrackRequestModel with JsonSafeParser {
 /*
 {
   "UserId": 1,
@@ -21,10 +22,10 @@ class HistoryTrackRequestModel {
     this.ToDatetime,
   });
   HistoryTrackRequestModel.fromJson(Map<String, dynamic> json) {
-    UserId = json['UserId']?.toInt();
-    VehicleID = json['VehicleID']?.toInt();
-    FromDatetime = json['FromDatetime']?.toString();
-    ToDatetime = json['ToDatetime']?.toString();
+    UserId = asIntFrom(json, ['UserId', 'userId']);
+    VehicleID = asIntFrom(json, ['VehicleID', 'vehicleId']);
+    FromDatetime = asStringFrom(json, ['FromDatetime', 'fromDatetime']);
+    ToDatetime = asStringFrom(json, ['ToDatetime', 'toDatetime']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};

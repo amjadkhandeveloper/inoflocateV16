@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:infolocate/utils/app_extensions.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
+
+Color _shimmerBase(BuildContext context) =>
+    AppUi.isDark(context) ? AppUi.cardDark : Colors.grey.shade200;
+
+Color _shimmerHighlight(BuildContext context) =>
+    AppUi.isDark(context) ? AppUi.lineDark : Colors.grey.shade100;
 
 class DasboardShimmerEffect extends StatelessWidget {
   const DasboardShimmerEffect({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        10.h.height,
-        const Expanded(flex: 3, child: AlertShimmerContainer()),
-        const Expanded(flex: 3, child: ShimmerContainer()),
-        const Expanded(flex: 3, child: PinCardShimmer()),
-        const Expanded(flex: 3, child: PinCardShimmer()),
-      ],
+    return ColoredBox(
+      color: AppUi.pageBg(context),
+      child: Column(
+        children: [
+          10.h.height,
+          const Expanded(flex: 3, child: AlertShimmerContainer()),
+          const Expanded(flex: 3, child: ShimmerContainer()),
+          const Expanded(flex: 3, child: PinCardShimmer()),
+          const Expanded(flex: 3, child: PinCardShimmer()),
+        ],
+      ),
     );
   }
 }
@@ -28,7 +38,9 @@ class ListShimmerEffect extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return ColoredBox(
+      color: AppUi.pageBg(context),
+      child: Column(
       children: [
         const SizedBox(
           height: 14,
@@ -67,6 +79,7 @@ class ListShimmerEffect extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
 }
@@ -79,12 +92,8 @@ class DynamicStatusShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Theme.of(context).brightness == Brightness.light
-          ? Colors.grey.shade200
-          : Theme.of(context).cardColor,
-      highlightColor: Theme.of(context).brightness == Brightness.light
-          ? Colors.grey.shade100
-          : Colors.grey.shade500,
+      baseColor: _shimmerBase(context),
+      highlightColor: _shimmerHighlight(context),
       child: const DynamicStatusSkeleton(),
     );
   }
@@ -98,12 +107,8 @@ class ShimmerContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Theme.of(context).brightness == Brightness.light
-          ? Colors.grey.shade200
-          : Theme.of(context).cardColor,
-      highlightColor: Theme.of(context).brightness == Brightness.light
-          ? Colors.grey.shade100
-          : Colors.grey.shade500,
+      baseColor: _shimmerBase(context),
+      highlightColor: _shimmerHighlight(context),
       child: Container(
         margin: const EdgeInsets.all(14),
         width: 100.w,
@@ -125,12 +130,8 @@ class AlertShimmerContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-        baseColor: Theme.of(context).brightness == Brightness.light
-            ? Colors.grey.shade200
-            : Theme.of(context).cardColor,
-        highlightColor: Theme.of(context).brightness == Brightness.light
-            ? Colors.grey.shade100
-            : Colors.grey.shade500,
+        baseColor: _shimmerBase(context),
+        highlightColor: _shimmerHighlight(context),
         child: const AlertSkeleton());
   }
 }
@@ -143,12 +144,8 @@ class PinCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-        baseColor: Theme.of(context).brightness == Brightness.light
-            ? Colors.grey.shade200
-            : Theme.of(context).cardColor,
-        highlightColor: Theme.of(context).brightness == Brightness.light
-            ? Colors.grey.shade100
-            : Colors.grey.shade500,
+        baseColor: _shimmerBase(context),
+        highlightColor: _shimmerHighlight(context),
         child: const PinCardSkeleton());
   }
 }

@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import '../../../utils/json_safe_parser.dart';
+
 ForceUpdateRequestModel forceUpdateRequestModelFromJson(String str) =>
     ForceUpdateRequestModel.fromJson(json.decode(str));
 
@@ -23,9 +25,9 @@ class ForceUpdateRequestModel {
 
   factory ForceUpdateRequestModel.fromJson(Map<String, dynamic> json) =>
       ForceUpdateRequestModel(
-        clientId: json["ClientId"],
-        appversion: json["Appversion"],
-        appId: json["AppId"],
+        clientId: JsonSafe.asInt(json["ClientId"]),
+        appversion: JsonSafe.asInt(json["Appversion"]),
+        appId: JsonSafe.asInt(json["AppId"]),
       );
 
   Map<String, dynamic> toJson() => {

@@ -66,6 +66,7 @@
     "graph": "চিত্রলেখ",
     "map": "মানচিত্র",
     "video_playback": "ভিডিও প্লেব্যাক",
+    "no_video_available_for_playback": "প্লেব্যাকের জন্য কোনো ভিডিও নেই",
     "vehicle_number": "গাড়ির নম্বর",
     "from_date_time": "তারিখ এবং সময় থেকে",
     "to_date_time": "তারিখ এবং সময়",

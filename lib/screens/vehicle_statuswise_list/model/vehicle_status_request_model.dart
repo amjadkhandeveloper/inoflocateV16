@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import '../../../utils/json_safe_parser.dart';
+
 VehicleStatusWiseListRequestModel vehicleStatusWiseListRequestModelFrxomJson(
         String str) =>
     VehicleStatusWiseListRequestModel.fromJson(json.decode(str));
@@ -30,11 +32,13 @@ class VehicleStatusWiseListRequestModel {
   factory VehicleStatusWiseListRequestModel.fromJson(
           Map<String, dynamic> json) =>
       VehicleStatusWiseListRequestModel(
-        userId: json["UserId"] ?? json["userId"],
-        statusId: json["StatusId"] ?? json["statusId"],
-        pSize: json["pSize"],
-        pNo: json["PNo"] ?? json["pNo"],
-        sSearch: json["sSearch"] ?? json["search"] ?? '',
+        userId: JsonSafe.asInt(JsonSafe.firstValue(json, ["UserId", "userId"])),
+        statusId:
+            JsonSafe.asInt(JsonSafe.firstValue(json, ["StatusId", "statusId"])),
+        pSize: JsonSafe.asInt(json["pSize"]),
+        pNo: JsonSafe.asInt(JsonSafe.firstValue(json, ["PNo", "pNo"])),
+        sSearch: JsonSafe.asString(
+            JsonSafe.firstValue(json, ["sSearch", "search"])),
       );
 
   /// Common tenant body (PascalCase + `sSearch`).

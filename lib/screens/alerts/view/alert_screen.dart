@@ -14,6 +14,7 @@ import 'package:infolocate/utils/app_extensions.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/app_styles.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/buttons/custom_button.dart';
 import 'package:infolocate/widgets/custom_dropdown.dart';
@@ -165,17 +166,17 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
       alertListRequestModel!.alertTypeId = widget.alertTypeId;
     }
     await loadMoreData();
+    final types = alertState.alertTypesFilterList ?? [];
     if (widget.alertTypeId != null) {
-      final selectedChip = alertState.alertTypesFilterList!.firstWhere(
-          (element) => element!.AlertTypeID == widget.alertTypeId,
+      final selectedChip = types.cast<AlertListResponseModelDataAlerttypes?>().firstWhere(
+          (element) => element?.AlertTypeID == widget.alertTypeId,
           orElse: () => AlertListResponseModelDataAlerttypes());
       if (selectedChip != null && selectedChip.AlertTypeID != null) {
         selectedChip.isSelected = true;
-        // alertListRequestModel!.alertTypeId = selectedChip.AlertTypeID;
         selectedFilter = selectedChip.AlertType;
       }
-    } else {
-      selectedFilter = alertState.alertTypesFilterList!.first!.AlertType!;
+    } else if (types.isNotEmpty && types.first?.AlertType != null) {
+      selectedFilter = types.first!.AlertType;
     }
   }
 
@@ -704,16 +705,12 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
     // log(alertState.alertList!.length.toString());
     // loadMoreData(loadMore: true);
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(onPressed: () async {
-
-      // }),
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-            "${LocaliazationKey.alerts.tr()}\t(${DateFormat("MM/dd/yyyy").format(DateTime.parse(alertListRequestModel!.fromDate.toString()))})",
-            style: AppStyles.textStyle4(context: context, size: 16)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      backgroundColor: AppUi.pageBg(context),
+      appBar: AppUi.appBar(
+        context: context,
+        title: LocaliazationKey.alerts.tr(),
+        subtitle: DateFormat("MM/dd/yyyy").format(
+            DateTime.parse(alertListRequestModel!.fromDate.toString())),
         actions: [
           if (alertState.state != NotifierState.error)
             CustomDropDownButton(
@@ -783,7 +780,11 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                         element.isSelected = true;
                       }
                     }
-                    selectedFilter = alertState.alertTypesFilterList!.first!.AlertType!; //*i added to fix bug
+                    if (alertState.alertTypesFilterList != null &&
+                        alertState.alertTypesFilterList!.isNotEmpty) {
+                      selectedFilter =
+                          alertState.alertTypesFilterList!.first!.AlertType;
+                    }
                   }
                 }
               },
@@ -1002,8 +1003,12 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                                                   // );
                                                 } else {
                                                   final cardData = alertState.filterList![index];
-                                                  print(
-                                                      "unitNo: ${cardData?.UnitNo.toString()},urlPath: ${cardData?.Videofilepath} ");
+                                                  if (cardData == null) {
+                                                    return const SizedBox.shrink();
+                                                  }
+                                                  final videoUrls = AppHelper.decodeVideoPath(
+                                                      unitNo: cardData.UnitNo?.toString() ?? '',
+                                                      urlPath: cardData.Videofilepath);
                                                   return AnimationConfiguration.staggeredList(
                                                       duration: const Duration(milliseconds: 500),
                                                       position: index,
@@ -1016,43 +1021,39 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                                                                     ? 3.h
                                                                     : 0),
                                                             child: PinVehicleCard(
-                                                              location: cardData!.Location!,
-                                                              mapData: GoogleMapModel(
+                                                              location: cardData.Location ?? '',
+                                                              mapData: (cardData.Lat != null && cardData.Lon != null)
+                                                                  ? GoogleMapModel(
                                                                   latLng: LatLng(cardData.Lat!, cardData.Lon!),
                                                                   vehicleId: cardData.VehicleID,
                                                                   statusName: cardData.AlertType,
-                                                                  vehicleNo:
-                                                                      // ignore: prefer_null_aware_operators
-                                                                      cardData.VehicleNo,
+                                                                  vehicleNo: cardData.VehicleNo,
                                                                   engineOffdelay: null,
                                                                   idleduration: null,
-                                                                  // ignore: prefer_null_aware_operators
                                                                   ignition: cardData.ignition == null
                                                                       ? null
                                                                       : cardData.ignition.toString(),
                                                                   odometer: null,
-                                                                  // ignore: prefer_null_aware_operators
                                                                   speed: cardData.speed == null
                                                                       ? null
                                                                       : cardData.speed.toString(),
                                                                   stopduration: null,
                                                                   vehicleLocation: cardData.Location,
-                                                                  vehicleTrackTime: cardData.Alertdatetime),
+                                                                  vehicleTrackTime: cardData.Alertdatetime)
+                                                                  : null,
                                                               alertType: LocaliazationKey.alert_video.tr(),
-                                                              liveUrlList: AppHelper.decodeVideoPath(
-                                                                  unitNo: cardData.UnitNo.toString(),
-                                                                  urlPath: cardData.Videofilepath),
-                                                              status: cardData.AlertType! == "yaccel end" ||
-                                                                      cardData.AlertType! == "xaccel end"
+                                                              liveUrlList: videoUrls,
+                                                              status: cardData.AlertType == "yaccel end" ||
+                                                                      cardData.AlertType == "xaccel end"
                                                                   ? AppHelper.returnAlertStatus(
                                                                       alertStatus: cardData.AlertType!)
-                                                                  : cardData.AlertType!,
+                                                                  : cardData.AlertType ?? '',
                                                               ignition: cardData.ignition.toString(),
                                                               speed: cardData.speed.toString(),
-                                                              trackTime: cardData.Alertdatetime!,
-                                                              vehicleNo: cardData.VehicleNo!,
-                                                              vehicleId: cardData.VehicleID!,
-                                                              enableUrl: cardData.Videofilepath != null,
+                                                              trackTime: cardData.Alertdatetime ?? '',
+                                                              vehicleNo: cardData.VehicleNo ?? '',
+                                                              vehicleId: cardData.VehicleID ?? 0,
+                                                              enableUrl: videoUrls.isNotEmpty,
                                                               // && cardData.deviceType == "MDVR" || cardData.deviceType == "MDVR AI",
                                                               showPinnedIcon: false,
                                                               // disableLiveUrl: cardData.Status!

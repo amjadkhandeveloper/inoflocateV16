@@ -1,12 +1,15 @@
 import 'dart:developer';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:infolocate/screens/video_playback/model/video_playback_request_model.dart';
 import 'package:infolocate/utils/app_globals.dart';
+import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 
 import '../../../common_models/failure_model.dart';
 import '../../../utils/enums.dart';
+import '../model/video_playback_request_model.dart';
+import '../model/video_playback_response_model.dart';
 import '../model/video_vehicle_list_response_model.dart';
 import '../repository/video_playback_repo.dart';
 
@@ -24,11 +27,19 @@ class VideoPlayBackProvider extends ChangeNotifier with StateInterface {
 
   // final List<String> _svehicleIdList = [];
   // List<VideoVehicleListDataVehicles?>? _filteredList = [];
-  List<VideoVehicleListDataVehicles?> _allVehicles = [];
-  // List<VideoVehicleListDataVehicles?>? get filteredList => _filteredList;
-  List<VideoVehicleListDataVehicles?>? get allVehicles => _allVehicles;
+  List<VideoVehicleListDataVehicles> _allVehicles = [];
+  List<VideoVehicleListDataVehicles> get allVehicles => _allVehicles;
+
+  VideoVehicleListDataVehicles? _selectedVehicle;
+  VideoVehicleListDataVehicles? get selectedVehicle => _selectedVehicle;
+
   String? _playBackUrl;
   String? get playBackUrl => _playBackUrl;
+  VideoPlayBackResponseModelDataPlaybackvideo? _playbackVideo;
+  VideoPlayBackResponseModelDataPlaybackvideo? get playbackVideo =>
+      _playbackVideo;
+  bool _isGenerating = false;
+  bool get isGenerating => _isGenerating;
 
   loadingFalse() {
     setState(NotifierState.loaded);
@@ -43,7 +54,6 @@ class VideoPlayBackProvider extends ChangeNotifier with StateInterface {
 
   @override
   void setFailure(Failure failure) {
-    _vehicleList = null;
     customToast(message: failure.message.toString(), color: Colors.red);
     _failure = failure;
     notifyListeners();
@@ -54,58 +64,72 @@ class VideoPlayBackProvider extends ChangeNotifier with StateInterface {
     try {
       final result = await VideoPlayBackService()
           .getVehicleList(userId: Global.savedUserAuthData!.userid!.toInt());
-      // print(jsonEncode(result));
       _vehicleList = result;
-      _allVehicles = [];
-      for (var value in _vehicleList!.vehicles!) {
-        _allVehicles.add(value!);
-      }
+      _allVehicles = (result?.vehicles ?? const [])
+          .whereType<VideoVehicleListDataVehicles>()
+          .where((v) => (v.VehicleNo ?? '').trim().isNotEmpty)
+          .toList();
       _allVehicles.sort(
-        (a, b) => b!.DelayEnable!.compareTo(a!.DelayEnable!),
+        (a, b) => (b.DelayEnable ?? 0).compareTo(a.DelayEnable ?? 0),
       );
-      // _allVehicles.insert(0, VideoVehicleListDataVehicles(VehicleNo: select));
-
-      // _filteredList = vehicleList!.vehicles!
-      //     .where(
-      //       (element) => element!.DelayEnable! > 0,
-      //     )
-      //     .toList();
-      // _filteredList!.insert(0, VideoVehicleListDataVehicles(VehicleNo: select));
-
-      // for (int i = 0; i <= _vehicleList!.vehicles!.length; i++) {
-      //   if (_vehicleList!.vehicles![i]!.DelayEnable! > 0) {
-      //     _vehicleIdList.add(_vehicleList!.vehicles![i]!.VehicleId.toString());
-      //   }
-      // }
-      // log("Vehicle Id List $_vehicleIdList");
+      _selectedVehicle = null;
+      log('Video vehicles stored: ${_allVehicles.length}');
+      setState(NotifierState.loaded);
     } on Failure catch (failure) {
       setFailure(failure);
+      setState(NotifierState.error);
+    } catch (error) {
+      log('Video playback vehicle list error: $error');
+      setFailure(Failure(error.toString()));
+      setState(NotifierState.error);
     }
-    setState(NotifierState.loaded);
   }
 
   generateVideoPlayback(
       VideoPlayBackRequestModel videoPlayBackRequestModel) async {
-    setState(NotifierState.loading);
+    // Keep the form on screen. Full-screen [NotifierState.loading] was leaving
+    // the spinner up if the generate API returned an empty/malformed payload.
+    _isGenerating = true;
+    _playBackUrl = null;
+    _playbackVideo = null;
+    notifyListeners();
     try {
       final result = await VideoPlayBackService().generateVideoPlayback(
           videoPlayBackRequestModel: videoPlayBackRequestModel);
-      _playBackUrl = result!.playbackvideo![0]!.Purl;
+      final playback = result?.firstPlayback;
+      final url = playback?.Purl?.trim();
+      final playbackList = result?.playbackvideo ?? const [];
+      if (playbackList.isEmpty || playback == null || url == null || url.isEmpty) {
+        customToast(
+          message: LocaliazationKey.no_video_available_for_playback.tr(),
+        );
+        return;
+      }
+      _playbackVideo = playback;
+      _playBackUrl = url;
       log("PlayBack Url $_playBackUrl");
     } on Failure catch (failure) {
       setFailure(failure);
+    } catch (error) {
+      log('Generate video playback error: $error');
+      setFailure(Failure(error.toString()));
+    } finally {
+      _isGenerating = false;
+      notifyListeners();
     }
-    setState(NotifierState.loaded);
+  }
+
+  void selectVehicle(VideoVehicleListDataVehicles? vehicle) {
+    _selectedVehicle = vehicle;
+    notifyListeners();
   }
 
   int returnVehicleId({required String vehicleNo}) {
-    int vehicleId = 0;
-    for (var value in _allVehicles) {
-      if (value!.VehicleNo == vehicleNo) {
-        vehicleId = value.VehicleId!;
-        break;
+    for (final value in _allVehicles) {
+      if (value.VehicleNo == vehicleNo) {
+        return value.VehicleId ?? 0;
       }
     }
-    return vehicleId;
+    return _selectedVehicle?.VehicleId ?? 0;
   }
 }

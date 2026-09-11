@@ -710,31 +710,21 @@ class AppHelper {
 
   static List<String?> decodeVideoPath(
       {required String? urlPath, required String unitNo}) {
-    List<String?> urlList = [];
+    if (urlPath == null || urlPath.trim().isEmpty) return [];
+
+    final urlList = <String?>[];
     const baseUrl = kVideDecodeUrl;
-
     const token = kToken;
-    var channels = [];
-    var encoded = [];
-    final video = urlPath;
 
-    var videoPath = video!.split(',');
-    // print(videoPath);
-    if (videoPath.isNotEmpty) {
-      channels = videoPath.map((data) => data.split('|')[0]).toList();
-      encoded = videoPath.map((data) => data.split('|')[1]).toList();
-    }
-
-    final List<VideoModel?> videoWithChannels = [];
-
-    for (var i = 0; i < channels.length; i++) {
-      videoWithChannels
-          .add(VideoModel(channel: channels[i], video: encoded[i]));
-    }
-    for (var data in videoWithChannels) {
-      var url =
-          "$baseUrl?token=$token&deviceId=$unitNo&chs=${data!.channel}&fpath=${data.video}\n";
-      urlList.add(url);
+    for (final data in urlPath.split(',')) {
+      final parts = data.split('|');
+      if (parts.length < 2) continue;
+      final channel = parts[0].trim();
+      final encoded = parts[1].trim();
+      if (channel.isEmpty || encoded.isEmpty) continue;
+      urlList.add(
+        "$baseUrl?token=$token&deviceId=$unitNo&chs=$channel&fpath=$encoded\n",
+      );
     }
 
     return urlList;

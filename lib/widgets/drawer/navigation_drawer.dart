@@ -10,9 +10,8 @@ import 'package:infolocate/screens/vehicle_statuswise_list/widget/track_on_map_s
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_routes.dart';
-import 'package:infolocate/utils/app_styles.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sizer/sizer.dart';
 import '../../screens/vehicle_statuswise_list/view/live_vehicles_list.dart';
 import '../../screens/video_playback/view/video_playback_screen.dart';
 import '../../utils/app_constants.dart';
@@ -35,12 +34,6 @@ class CustomNavigationDrawer extends StatelessWidget {
         MaterialPageRoute(
           builder: (context) => const TrackOnMapScreen(
             showTrackHistory: true,
-            // markerList: provider.vehicleList!
-            //     .map((e) => GoogleMapModel(
-            //         latLng: LatLng(e!.lat!, e.lon!),
-            //         vehicleId: e.Vehicleid,
-            //         vehicleNo: e.VehicleNo))
-            //     .toList(),
           ),
         ),
       ).then((value) => Global.isVehicleListBackgroundFetching = false);
@@ -50,214 +43,226 @@ class CustomNavigationDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final drawerIconColor = Theme.of(context).colorScheme.primary;
     log("Location permission ${Global.locationPermission}");
+    final user = Global.savedUserAuthData?.username ?? '';
+    final client = Global.savedClientAuthData?.clientName ?? '';
+
     return StatefulBuilder(
       builder: (BuildContext context, void Function(void Function()) setState) {
         return Drawer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: SizedBox(
-                    child: Column(
-                      children: [
-                        SizedBox(height: 6.h,),
-                        SizedBox(
-                          height: 5.h,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 15,
-                              ),
-                              Text(
-                                'InfoLocate V14',
-                                style: AppStyles.infoLocateTextStyle(
-                                    context: context).copyWith(fontSize: 30),
-                              )
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 1.h,),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            '${LocaliazationKey.welcome.tr()} ${Global.savedUserAuthData != null ? Global.savedUserAuthData!.username! : ""}',
-                            style: AppStyles.textStyle4(
-                                context: context, isBold: true),
-                          ),
-                        ),
-                        Container(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.2),
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.home,
-                              color: drawerIconColor,
+          backgroundColor: AppUi.pageBg(context),
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Row(
+                    children: [
+                      AppUi.brandMark(size: 44),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('InfoLocate', style: AppUi.titleStyle(context)),
+                            Text(
+                              user.isEmpty
+                                  ? LocaliazationKey.welcome.tr()
+                                  : '${LocaliazationKey.welcome.tr()} $user',
+                              style: AppUi.mutedStyle(context),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            title: Text(LocaliazationKey.dashboard.tr()),
-                            onTap: () {
-                              Navigator.pushNamedAndRemoveUntil(context,
-                                  AppRoutes.dashboardRoute(), (route) => false);
-                            },
-                          ),
+                          ],
                         ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.notification_important,
-                            color: drawerIconColor,
-                          ),
-                          title: Text(LocaliazationKey.alerts.tr()),
-                          onTap: () {
-                            Navigator.of(context)
-                                .pushNamed(AlertDashboardScreen.routeName);
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.dynamic_form,
-                            color: drawerIconColor,
-                          ),
-                          title: Text(LocaliazationKey.dynamic_status.tr()),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const DynamicStatusScreen(),
-                              ),
-                            );
-                            // Navigator.of(context)
-                            //     .pushNamed(DynamicStatusScreen.routeName);
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.local_taxi,
-                            color: drawerIconColor,
-                          ),
-                          title: Text(LocaliazationKey.live_vehicle.tr()),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const LiveVehicleList()),
-                            );
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.map,
-                            color: drawerIconColor,
-                          ),
-                          title: Text(LocaliazationKey.track_on_map.tr()),
-                          onTap: () async {
-                            // final provider = Provider.of<VehicleStatusProvider>(
-                            //     context,
-                            //     listen: false);
-                            if (Global.locationPermission == true) {
-                              navigateToTrackOnMap(context);
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: const Text("Grant Permission"),
-                                    content: const Text(
-                                      'Infolocate app collects location information for the loading of the map to view vehicle locations.',
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        child: const Text('DENY'),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: const Text('ACCEPT'),
-                                        onPressed: () async {
-                                          await Global.box
-                                              .put(locationPermission, true);
-                                          navigateToTrackOnMap(context);
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            }
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.video_camera_back,
-                            color: drawerIconColor,
-                          ),
-                          title: Text(LocaliazationKey.video_playback.tr()),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const VideoPlayBackScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.settings,
-                            color: drawerIconColor,
-                          ),
-                          title: Text(LocaliazationKey.setting.tr()),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const SettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.exit_to_app,
-                            color: drawerIconColor,
-                          ),
-                          title: isLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(),
-                                )
-                              : Text(LocaliazationKey.logout.tr()),
-                          onTap: isLoading
-                              ? null
-                              : () async {
-                                  final isLogOut =
-                                      await logoutAlertDialog(context);
-                                  if (isLogOut != null && isLogOut) {
-                                    setState(() {
-                                      isLoading = true;
-                                    });
-
-                                    await logout(context: context);
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  }
-                                },
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: Text('${LocaliazationKey.version.tr()} 1.0.0'),
-              ),
-            ],
+                if (client.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppUi.cardColor(context),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppUi.line(context)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.apartment_outlined,
+                              size: 16, color: AppUi.muted(context)),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              client,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppUi.ink(context),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    children: [
+                      _DrawerTile(
+                        icon: Icons.home_rounded,
+                        title: LocaliazationKey.dashboard.tr(),
+                        selected: true,
+                        onTap: () {
+                          Navigator.pushNamedAndRemoveUntil(context,
+                              AppRoutes.dashboardRoute(), (route) => false);
+                        },
+                      ),
+                      _DrawerTile(
+                        icon: Icons.notifications_outlined,
+                        title: LocaliazationKey.alerts.tr(),
+                        onTap: () {
+                          Navigator.of(context)
+                              .pushNamed(AlertDashboardScreen.routeName);
+                        },
+                      ),
+                      _DrawerTile(
+                        icon: Icons.dynamic_form_outlined,
+                        title: LocaliazationKey.dynamic_status.tr(),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const DynamicStatusScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _DrawerTile(
+                        icon: Icons.local_taxi_outlined,
+                        title: LocaliazationKey.live_vehicle.tr(),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const LiveVehicleList()),
+                          );
+                        },
+                      ),
+                      _DrawerTile(
+                        icon: Icons.map_outlined,
+                        title: LocaliazationKey.track_on_map.tr(),
+                        onTap: () async {
+                          if (Global.locationPermission == true) {
+                            navigateToTrackOnMap(context);
+                          } else {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor: AppUi.cardColor(context),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppUi.radius),
+                                  ),
+                                  title: Text('Grant Permission',
+                                      style: AppUi.titleStyle(context)),
+                                  content: Text(
+                                    'Infolocate app collects location information for the loading of the map to view vehicle locations.',
+                                    style: AppUi.body(context),
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text('DENY',
+                                          style: TextStyle(
+                                              color: AppUi.muted(context))),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: const Text('ACCEPT',
+                                          style: TextStyle(
+                                              color: AppUi.accent,
+                                              fontWeight: FontWeight.w700)),
+                                      onPressed: () async {
+                                        await Global.box
+                                            .put(locationPermission, true);
+                                        navigateToTrackOnMap(context);
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          }
+                        },
+                      ),
+                      _DrawerTile(
+                        icon: Icons.videocam_outlined,
+                        title: LocaliazationKey.video_playback.tr(),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const VideoPlayBackScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _DrawerTile(
+                        icon: Icons.settings_outlined,
+                        title: LocaliazationKey.setting.tr(),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _DrawerTile(
+                        icon: Icons.logout_rounded,
+                        title: isLoading
+                            ? LocaliazationKey.logout.tr()
+                            : LocaliazationKey.logout.tr(),
+                        danger: true,
+                        loading: isLoading,
+                        onTap: isLoading
+                            ? null
+                            : () async {
+                                final isLogOut =
+                                    await logoutAlertDialog(context);
+                                if (isLogOut != null && isLogOut) {
+                                  setState(() {
+                                    isLoading = true;
+                                  });
+
+                                  await logout(context: context);
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                }
+                              },
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Text(
+                    '${LocaliazationKey.version.tr()} 1.0.0',
+                    style: AppUi.mutedStyle(context),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -266,20 +271,90 @@ class CustomNavigationDrawer extends StatelessWidget {
 
   logout({required BuildContext context}) async {
     try {
-      // AdaptiveTheme.of(context).setLight();
-      // AppHelper().setCustomTheme(
-      //     context: context, primaryColor: primeryColorConstant, reset: true);
-      // final SharedPreferences prefs = await SharedPreferences.getInstance();
       await Global.box.delete(userAuthBoxKey);
       await AppHelper.getHiveBoxData();
-      // await Global.box.put(clientAuthBoxKey, Global.savedClientAuthData);
-      // await prefs
-      //     .clear(); //*for removing stored theme which is using by Adaptive theme package.
 
       Navigator.pushNamedAndRemoveUntil(
           context, UserLoginScreen.routeName, (route) => false);
     } catch (err) {
       log(err.toString());
     }
+  }
+}
+
+class _DrawerTile extends StatelessWidget {
+  const _DrawerTile({
+    required this.icon,
+    required this.title,
+    this.onTap,
+    this.selected = false,
+    this.danger = false,
+    this.loading = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback? onTap;
+  final bool selected;
+  final bool danger;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = danger
+        ? const Color(0xFFDC2626)
+        : selected
+            ? AppUi.accent
+            : AppUi.ink(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: selected
+            ? AppUi.accent.withValues(alpha: 0.12)
+            : AppUi.cardColor(context),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected ? AppUi.accent : AppUi.line(context),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: color),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                ),
+                if (loading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppUi.accent,
+                    ),
+                  )
+                else
+                  Icon(Icons.chevron_right_rounded,
+                      size: 18, color: AppUi.muted(context)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

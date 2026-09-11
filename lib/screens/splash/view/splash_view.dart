@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'dart:developer';
 
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:infolocate/screens/login/view/client_login_view.dart';
 import 'package:infolocate/screens/login/view/user_login_view.dart';
@@ -9,9 +7,9 @@ import 'package:infolocate/screens/splash/model/force_update_request_model.dart'
 import 'package:infolocate/screens/splash/repository/splash_repo.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_routes.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../../utils/app_styles.dart';
 import '../../../widgets/dialog_box/force_update_dialog.dart';
 import '../../language/view/select_language_screen.dart';
 
@@ -31,18 +29,15 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 5000), () async {
-      // navigateTo();
       if (Global.savedClientAuthData != null) {
         log('inside force update');
         await forceUpdate();
       }
-      // log('outside');
       navigateTo();
     });
   }
@@ -70,6 +65,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   /// Decides next route from [Global] Hive-backed session flags.
   navigateTo() {
+    if (!mounted) return;
     if (Global.savedUserAuthData != null) {
       Navigator.pushNamedAndRemoveUntil(
           context, AppRoutes.dashboardRoute(), (route) => false);
@@ -95,52 +91,36 @@ class _SplashScreenState extends State<SplashScreen>
         (route) => false);
   }
 
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppUi.pageBg(context),
       body: Center(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // SvgPicture.asset('assets/images/splash_logo.svg'),
-          Image.asset(
-            'assets/animation/splash_animation.gif',
-            fit: BoxFit.contain,
-            height: 30.h,
-          ),
-          //added my comment
-          SizedBox(
-            height: 4.h,
-          ),
-
-          //this is comment from ruhaan
-          AnimatedTextKit(isRepeatingAnimation: false, animatedTexts: [
-            // TypewriterAnimatedText(
-            //   'InfoLocate',
-            //   speed: const Duration(milliseconds: 100),
-            //   textStyle: AppStyles.infoLocateTextStyle(context: context),
-            // ),
-            // WavyAnimatedText(
-            //   'InfoLocate',
-            //   speed: const Duration(milliseconds: 200),
-            //   textStyle: AppStyles.infoLocateTextStyle(context: context),
-            // ),
-            ColorizeAnimatedText(
-              'InfoLocate V14',
-              textStyle: AppStyles.infoLocateTextStyle(context: context),
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.primary.withOpacity(0.2)
-              ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/animation/splash_animation.gif',
+              fit: BoxFit.contain,
+              height: 28.h,
+              errorBuilder: (_, __, ___) => AppUi.brandMark(size: 88),
             ),
-          ])
-          // Text(
-          //   'InfoLocate',
-          //   style: AppStyles.infoLocateTextStyle(context: context),
-          // )
-        ],
-      )),
+            const SizedBox(height: 28),
+            Text('InfoLocate', style: AppUi.brandTitle(context)),
+            const SizedBox(height: 8),
+            Text('Fleet tracking', style: AppUi.subtitle(context)),
+            const SizedBox(height: 28),
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: AppUi.accent,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -2,9 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
-import 'package:sizer/sizer.dart';
-
-import '../utils/app_colors.dart';
+import 'package:infolocate/utils/app_ui.dart';
 
 class SearchWidget extends StatelessWidget {
   const SearchWidget(
@@ -21,72 +19,35 @@ class SearchWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).cardColor
-              : AppColors.grey,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Theme.of(context).cardColor
-                  : AppColors.grey),
-        ),
-        child: Row(
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 3.w),
-              child: const Icon(Icons.search),
-            ),
-            const SizedBox(
-              width: 12,
-            ),
-            Expanded(
-              child: TextField(
-                  controller: controller,
-                  inputFormatters: [
-                    // NoLeadingSpaceFormatter(),
-                    FilteringTextInputFormatter.deny(RegExp('^\\s')),
-                  ],
-                  decoration: InputDecoration(
-                      isDense: true,
-                      hintText: LocaliazationKey.search.tr(),
-                      border: InputBorder.none),
-                  onChanged: onChanged),
-            ),
-            controller.text.isEmpty
-                ? Container()
-                : IconButton(
-                    icon: isLoading
-                        ? const SizedBox.square(
-                            dimension: 25, child: CircularProgressIndicator())
-                        : const Icon(Icons.cancel),
-                    onPressed: isLoading ? null : onPressedClear),
-          ],
-        )
-
-        //  ListTile(
-        //   leading: const Icon(Icons.search),
-        //   title: TextField(
-        //       controller: controller,
-        //       inputFormatters: [NoLeadingSpaceFormatter()],
-        //       decoration: InputDecoration(
-        //           isDense: true,
-        //           hintText: LocaliazationKey.search.tr(),
-        //           border: InputBorder.none),
-        //       onChanged: onChanged),
-        //   trailing: controller.text.isEmpty
-        //       ? null
-        //       : IconButton(
-        //           icon: isLoading
-        //               ? const SizedBox.square(
-        //                   dimension: 25, child: CircularProgressIndicator())
-        //               : const Icon(Icons.cancel),
-        //           onPressed: isLoading ? null : onPressedClear),
-        // ),
-        );
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      inputFormatters: [
+        FilteringTextInputFormatter.deny(RegExp('^\\s')),
+      ],
+      style: AppUi.body(context),
+      decoration: AppUi.inputDecoration(
+        context: context,
+        hintText: LocaliazationKey.search.tr(),
+        prefixIcon: Icon(Icons.search_rounded,
+            size: 20, color: AppUi.muted(context)),
+        suffixIcon: controller.text.isEmpty
+            ? null
+            : IconButton(
+                icon: isLoading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppUi.accent,
+                        ),
+                      )
+                    : Icon(Icons.close_rounded,
+                        size: 18, color: AppUi.muted(context)),
+                onPressed: isLoading ? null : onPressedClear,
+              ),
+      ),
+    );
   }
 }
 

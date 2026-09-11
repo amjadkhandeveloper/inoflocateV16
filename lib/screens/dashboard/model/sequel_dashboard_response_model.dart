@@ -1,3 +1,4 @@
+import '../../../utils/json_safe_parser.dart';
 import 'dashboard_response_model.dart';
 
 /// Parser for Sequel `GetDashData` (flat JSON, no `data` wrapper).
@@ -16,34 +17,20 @@ class SequelDashboardResponse {
 
   factory SequelDashboardResponse.fromJson(Map<String, dynamic> json) {
     return SequelDashboardResponse(
-      status: json['status']?.toInt(),
-      message: json['message']?.toString(),
+      status: JsonSafe.asInt(JsonSafe.firstValue(json, ['status', 'Status'])),
+      message: JsonSafe.asString(json['message']),
       data: DashboardResponseModelData(
-        status: json['status']?.toInt(),
-        VehicleStatus: _mapList(
+        status: JsonSafe.asInt(JsonSafe.firstValue(json, ['status', 'Status'])),
+        VehicleStatus: JsonSafe.asListOfMaps(
           json['vehicleStatus'] ?? json['VehicleStatus'],
-          DashboardResponseModelDataVehicleStatus.fromJson,
-        ),
-        StatusCount: _mapList(
+        ).map(DashboardResponseModelDataVehicleStatus.fromJson).toList(),
+        StatusCount: JsonSafe.asListOfMaps(
           json['statusCount'] ?? json['StatusCount'],
-          DashboardResponseModelDataStatusCount.fromJson,
-        ),
-        Pinvehicle: _mapList(
+        ).map(DashboardResponseModelDataStatusCount.fromJson).toList(),
+        Pinvehicle: JsonSafe.asListOfMaps(
           json['pinvehicle'] ?? json['Pinvehicle'],
-          DashboardResponseModelDataPinvehicle.fromJson,
-        ),
+        ).map(DashboardResponseModelDataPinvehicle.fromJson).toList(),
       ),
     );
-  }
-
-  static List<T> _mapList<T>(
-    dynamic raw,
-    T Function(Map<String, dynamic>) mapper,
-  ) {
-    if (raw is! List) return <T>[];
-    return raw
-        .whereType<Map>()
-        .map((item) => mapper(Map<String, dynamic>.from(item)))
-        .toList();
   }
 }

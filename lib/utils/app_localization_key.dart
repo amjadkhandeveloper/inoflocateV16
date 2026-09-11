@@ -73,6 +73,8 @@ class LocaliazationKey {
   static const graph = "graph";
   static const map = "map";
   static const video_playback = "video_playback";
+  static const no_video_available_for_playback =
+      "no_video_available_for_playback";
   static const vechicle_number = "vehicle_number";
   static const from_date_time = "from_date_time";
   static const to_date_time = "to_date_time";

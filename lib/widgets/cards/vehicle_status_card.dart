@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:infolocate/utils/app_styles.dart';
+import 'package:infolocate/utils/app_ui.dart';
 
 import 'custom_card.dart';
 
@@ -27,18 +27,16 @@ class VehicleStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       decoration: BoxDecoration(
         border: Border.all(
             color: isSlelected
-                ? Colors.lightGreen
+                ? AppUi.accent
                 : enableBorder
-                    ? Theme.of(context).brightness == Brightness.dark
-                        ? Theme.of(context).cardColor
-                        : Colors.black26
+                    ? AppUi.line(context)
                     : Colors.transparent,
-            width: 2),
-        borderRadius: BorderRadius.circular(12),
+            width: isSlelected ? 1.6 : 1),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -78,13 +76,9 @@ class VehicleStatusCard extends StatelessWidget {
                   child: Container(
                     // height: 32,
                     // width: 32,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      // border: Border.all(
-                      //   width: 4,
-                      //   color: Theme.of(context).scaffoldBackgroundColor,
-                      // ),
-                      color: Colors.white,
+                      color: AppUi.cardColor(context),
                     ),
                     child: const Icon(
                       Icons.check_circle,
@@ -123,14 +117,14 @@ class VehicleStatusCard extends StatelessWidget {
   Text valueWidget(BuildContext context) {
     return Text(
       count ?? '',
-      style: AppStyles.textStyle1(context: context, fontSize: 24),
+      style: AppUi.titleStyle(context).copyWith(fontSize: 22),
     );
   }
 
   Text titleWidget(BuildContext context) {
     return Text(
       title ?? '',
-      style: AppStyles.textStyle4(context: context, size: 16),
+      style: AppUi.body(context).copyWith(fontSize: 14),
     );
   }
 

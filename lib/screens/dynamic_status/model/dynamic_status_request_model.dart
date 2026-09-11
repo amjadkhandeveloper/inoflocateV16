@@ -1,10 +1,10 @@
+import '../../../utils/json_safe_parser.dart';
+
 /// POST body for [currDashVehicle] (dynamic status list).
 ///
-/// [UserId] — logged-in user from [Global.savedUserAuthData].
-/// [PNo] / [pSize] — pagination (see [pageSize], [defaultPageN0]).
-/// [sSearch] — optional vehicle search text.
-class DynamicStatusRequestModel {
-
+/// Common tenant: `UserId`, `PNo`, `sSearch`.
+/// Sequel swagger: `userId`, `pNo`, `search`.
+class DynamicStatusRequestModel with JsonSafeParser {
   int? UserId;
   int? pSize;
   int? PNo;
@@ -12,11 +12,12 @@ class DynamicStatusRequestModel {
 
   DynamicStatusRequestModel({this.UserId, this.pSize, this.PNo, this.sSearch});
   DynamicStatusRequestModel.fromJson(Map<String, dynamic> json) {
-    UserId = json['UserId']?.toInt();
-    pSize = json['pSize']?.toInt();
-    PNo = json['PNo']?.toInt();
-    sSearch = json['sSearch'].toString();
+    UserId = asIntFrom(json, ['UserId', 'userId']);
+    pSize = asInt(json['pSize']);
+    PNo = asIntFrom(json, ['PNo', 'pNo']);
+    sSearch = asStringFrom(json, ['sSearch', 'search']);
   }
+
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['UserId'] = UserId;
@@ -24,5 +25,14 @@ class DynamicStatusRequestModel {
     data['PNo'] = PNo;
     data['sSearch'] = sSearch;
     return data;
+  }
+
+  Map<String, dynamic> toSequelJson() {
+    return {
+      'userId': UserId,
+      'pSize': pSize,
+      'pNo': PNo,
+      'search': sSearch ?? '',
+    };
   }
 }

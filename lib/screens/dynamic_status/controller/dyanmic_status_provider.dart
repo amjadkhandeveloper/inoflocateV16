@@ -84,9 +84,9 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
     try {
       final result = await DynamicStatusService().dynamicStatusListService(
           dynamicListRequestModel: dynamicListRequestModel);
-      _filterList = result!.data!.vehicledetails;
-      if (result.data!.vehicledetails!.isEmpty ||
-          result.data!.vehicledetails!.length < pageSize) {
+      final details = result?.data?.vehicledetails ?? [];
+      _filterList = details;
+      if (details.isEmpty || details.length < pageSize) {
         _hasMoreData = false;
       }
     } catch (e) {
@@ -103,7 +103,7 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
     final result = await DynamicStatusService().dynamicStatusListService(
         dynamicListRequestModel: dynamicListRequestModel);
     print(jsonEncode(result));
-    _dynamicStatusList = result!.data!.vehicledetails;
+    _dynamicStatusList = result?.data?.vehicledetails ?? [];
     _filterList = _dynamicStatusList;
     notifyListeners();
   }
@@ -120,17 +120,19 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
       final result = await DynamicStatusService().dynamicStatusListService(
           dynamicListRequestModel: dynamicListRequestModel);
       print(jsonEncode(result));
-      if (result!.data!.vehicledetails!.isEmpty ||
-          result.data!.vehicledetails!.length < pageSize) {
-        // if (loadMore) customToast(message: LocaliazationKey.no_more_data.tr());
+      final details = result?.data?.vehicledetails ?? [];
+      if (details.isEmpty || details.length < pageSize) {
         _hasMoreData = false;
       } else {
         _hasMoreData = true;
       }
-      _dynamicStatusList!.addAll(result.data!.vehicledetails!.toList());
+      _dynamicStatusList!.addAll(details);
       _filterList = _dynamicStatusList;
-      if (result.data!.vehicleCnt!.isNotEmpty) {
-        _totalCount = result.data!.vehicleCnt!.first!.reccount;
+      final counts = result?.data?.vehicleCnt ?? [];
+      if (counts.isNotEmpty && counts.first?.reccount != null) {
+        _totalCount = counts.first!.reccount;
+      } else {
+        _totalCount = _dynamicStatusList?.length ?? 0;
       }
       notifyListeners();
     } on Failure catch (failure) {

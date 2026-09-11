@@ -1,6 +1,7 @@
+import '../../../utils/json_safe_parser.dart';
 import '../../login/model/client_model.dart';
 
-class VideoVehicleListDataVehicles {
+class VideoVehicleListDataVehicles with JsonSafeParser {
 /*
 {
   "VehicleId": 50,
@@ -22,11 +23,26 @@ class VideoVehicleListDataVehicles {
     this.deviceType
   });
   VideoVehicleListDataVehicles.fromJson(Map<String, dynamic> json) {
-    VehicleId = json['VehicleId']?.toInt();
-    VehicleNo = json['VehicleNo']?.toString();
-    DelayEnable = json['DelayEnable']?.toInt();
-    deviceType = json['devicetype'] ?? "";
+    VehicleId = asIntFrom(json, ['VehicleId', 'vehicleId']);
+    VehicleNo = asStringFrom(json, ['VehicleNo', 'vehicleNo']);
+    DelayEnable = asIntFrom(json, ['DelayEnable', 'delayEnable']);
+    deviceType = asStringFrom(json, ['devicetype', 'deviceType', 'DeviceType']);
   }
+
+  bool get isPlaybackEnabled => (DelayEnable ?? 0) > 0;
+
+  @override
+  String toString() => VehicleNo ?? '';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VideoVehicleListDataVehicles &&
+          VehicleId == other.VehicleId &&
+          VehicleNo == other.VehicleNo;
+
+  @override
+  int get hashCode => Object.hash(VehicleId, VehicleNo);
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['VehicleId'] = VehicleId;
@@ -50,7 +66,7 @@ class VideoVehicleListDataVehicles {
   }
 }
 
-class VideoVehicleListData {
+class VideoVehicleListData with JsonSafeParser {
 /*
 {
   "status": 200,
@@ -74,23 +90,18 @@ class VideoVehicleListData {
     this.error,
   });
   VideoVehicleListData.fromJson(Map<String, dynamic> json) {
-    status = json['status']?.toInt();
-    if (json['vehicles'] != null) {
-      final v = json['vehicles'];
-      final arr0 = <VideoVehicleListDataVehicles>[];
-      v.forEach((v) {
-        arr0.add(VideoVehicleListDataVehicles.fromJson(v));
-      });
-      vehicles = arr0;
-    }
-    if (json['error'] != null) {
-      final v = json['error'];
-      final arr0 = <DataError>[];
-      v.forEach((v) {
-        arr0.add(DataError.fromJson(v));
-      });
-      error = arr0;
-    }
+    status = asIntFrom(json, ['status', 'Status']);
+    vehicles = asListOfMaps(firstValue(json, [
+      'vehicles',
+      'Vehicles',
+      'vehicleList',
+      'VehicleList',
+    ]))
+        .map(VideoVehicleListDataVehicles.fromJson)
+        .toList();
+    error = asListOfMaps(firstValue(json, ['error', 'Error']))
+        .map(DataError.fromJson)
+        .toList();
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -108,7 +119,7 @@ class VideoVehicleListData {
   }
 }
 
-class VideoVehicleList {
+class VideoVehicleList with JsonSafeParser {
 /*
 {
   "data": {
@@ -131,9 +142,21 @@ class VideoVehicleList {
     this.data,
   });
   VideoVehicleList.fromJson(Map<String, dynamic> json) {
-    data = (json['data'] != null)
-        ? VideoVehicleListData.fromJson(json['data'])
-        : null;
+    final nested = asMapOrNull(firstValue(json, ['data', 'Data']));
+    if (nested != null) {
+      data = VideoVehicleListData.fromJson(nested);
+      return;
+    }
+    final list = asListOrNull(firstValue(json, ['data', 'Data', 'vehicles', 'Vehicles']));
+    if (list != null) {
+      data = VideoVehicleListData(
+        vehicles: asListOfMaps(list)
+            .map(VideoVehicleListDataVehicles.fromJson)
+            .toList(),
+      );
+      return;
+    }
+    data = VideoVehicleListData.fromJson(json);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};

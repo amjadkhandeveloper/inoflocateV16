@@ -12,17 +12,21 @@ class CustomDropDownButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final menuItems =
+        (items ?? []).where((e) => e != null && e.isNotEmpty).toList();
+    final initial =
+        (value != null && menuItems.contains(value)) ? value : null;
     return PopupMenuButton<String?>(
         icon: icon,
         tooltip: 'Open Filter',
         onSelected: onChanged,
-        initialValue: value,
+        initialValue: initial,
         itemBuilder: (BuildContext context) {
-          return items!
-              .map((String? value) => PopupMenuItem<String?>(
-                    value: value,
+          return menuItems
+              .map((String? itemValue) => PopupMenuItem<String?>(
+                    value: itemValue,
                     child: Text(
-                      value!,
+                      itemValue!,
                       style: AppStyles.textStyle5(context: context),
                     ),
                   ))

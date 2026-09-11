@@ -88,8 +88,7 @@ class AlertProvider extends ChangeNotifier with StateInterface {
     try {
       final result = await AlertService()
           .alertListService(alertListRequestModel: alertListRequestModel);
-      if (result == null && result!.alertdetails == null) return;
-      _filterList = result.alertdetails;
+      _filterList = result?.alertdetails ?? [];
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -137,32 +136,17 @@ class AlertProvider extends ChangeNotifier with StateInterface {
       notifyListeners();
       final result = await AlertService()
           .alertListService(alertListRequestModel: alertListRequestModel);
-
-      if (result!.alertdetails!.isEmpty ||
-          result.alertdetails!.length < pageSize) {
-        // customToast(message: LocaliazationKey.no_more_data.tr());
-        _hasMoreData = false;
-      } else {
-        _hasMoreData = true;
-      }
-      _alertList!.addAll(result.alertdetails!.toList());
+      final details = result?.alertdetails ?? [];
+      _hasMoreData = details.length >= pageSize;
+      _alertList!.addAll(details);
       _filterList = _alertList;
-      if (result.alertcnt!.isNotEmpty) {
-        _totalCount = result.alertcnt!.first!.TotRec!;
+      final counts = result?.alertcnt ?? [];
+      if (counts.isNotEmpty && counts.first?.TotRec != null) {
+        _totalCount = counts.first!.TotRec;
+      } else {
+        _totalCount = _alertList?.length ?? 0;
       }
-      if (result.alerttypes!.isNotEmpty) {
-        var data = result.alerttypes;
-        for (var element in data!) {
-          element!.AlertType = element.AlertType == "yaccel end" ||
-                  element.AlertType == "xaccel end"
-              ? AppHelper.returnJapaneseText(
-                  title: AppHelper.returnAlertStatus(
-                  alertStatus: element.AlertType,
-                ))
-              : AppHelper.returnJapaneseText(title: element.AlertType);
-        }
-        _alertTypesFilterList!.addAll(data);
-      }
+      _applyAlertTypes(result?.alerttypes);
 
       notifyListeners();
     } on Failure catch (failure) {
@@ -170,6 +154,22 @@ class AlertProvider extends ChangeNotifier with StateInterface {
     }
     _isMoreDataLoading = false;
     notifyListeners();
+  }
+
+  void _applyAlertTypes(
+      List<AlertListResponseModelDataAlerttypes?>? types) {
+    if (types == null || types.isEmpty) return;
+    for (final element in types) {
+      if (element == null) continue;
+      element.AlertType = element.AlertType == "yaccel end" ||
+              element.AlertType == "xaccel end"
+          ? AppHelper.returnJapaneseText(
+              title: AppHelper.returnAlertStatus(
+              alertStatus: element.AlertType,
+            ))
+          : AppHelper.returnJapaneseText(title: element.AlertType);
+    }
+    _alertTypesFilterList!.addAll(types);
   }
 
   getAlertList({
@@ -186,39 +186,24 @@ class AlertProvider extends ChangeNotifier with StateInterface {
     try {
       final result = await AlertService()
           .alertListService(alertListRequestModel: alertListRequestModel);
-
-      if (result!.alertdetails!.isEmpty ||
-          result.alertdetails!.length < pageSize) {
-        // if (loadMore) customToast(message: LocaliazationKey.no_more_data.tr());
-        _hasMoreData = false;
-      } else {
-        _hasMoreData = true;
-      }
-      _alertList!.addAll(result.alertdetails!.toList());
+      final details = result?.alertdetails ?? [];
+      _hasMoreData = details.length >= pageSize;
+      _alertList!.addAll(details);
       _filterList = _alertList;
-      if (result.alertcnt!.isNotEmpty) {
-        _totalCount = result.alertcnt!.first!.TotRec!;
+      final counts = result?.alertcnt ?? [];
+      if (counts.isNotEmpty && counts.first?.TotRec != null) {
+        _totalCount = counts.first!.TotRec;
+      } else {
+        _totalCount = _alertList?.length ?? 0;
       }
-      if (result.alerttypes!.isNotEmpty) {
-        var data = result.alerttypes;
-        for (var element in data!) {
-          element!.AlertType = element.AlertType == "yaccel end" ||
-                  element.AlertType == "xaccel end"
-              ? AppHelper.returnJapaneseText(
-                  title: AppHelper.returnAlertStatus(
-                  alertStatus: element.AlertType,
-                ))
-              : AppHelper.returnJapaneseText(title: element.AlertType);
-        }
-        _alertTypesFilterList!.addAll(data);
-      }
+      _applyAlertTypes(result?.alerttypes);
       setState(NotifierState.loaded);
       notifyListeners();
     } on Failure catch (failure) {
-      // loadMore == false
-      //     ?
       setFailure(failure);
-      // : customToast(message: failure.message.toString());
+    } catch (err) {
+      debugPrint(err.toString());
+      setState(NotifierState.loaded);
     }
     // if (loadMore == false)
   }

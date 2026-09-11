@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../utils/app_colors.dart';
 import '../../utils/app_helper.dart';
 import '../../utils/app_styles.dart';
+import '../../utils/app_ui.dart';
 
 class AlertStatusCard extends StatelessWidget {
   const AlertStatusCard(
@@ -98,9 +98,7 @@ class AlertStatusCard extends StatelessWidget {
                 // textAlign: TextAlign.center,
                 style:
                     AppStyles.textStyle4(context: context, size: 12).copyWith(
-                  color: Theme.of(context).brightness == Brightness.light
-                      ? AppColors.darkGrey
-                      : null,
+                  color: AppUi.muted(context),
                   overflow: TextOverflow.ellipsis,
                 ),
                 // overflow: TextOverflow.fade,
@@ -109,7 +107,11 @@ class AlertStatusCard extends StatelessWidget {
           ),
           Expanded(
               child: Text(alertCount.toString(),
-                  style: AppStyles.textStyle4(context: context, size: 25))),
+                  style: AppStyles.textStyle4(
+                    context: context,
+                    size: 25,
+                    color: AppUi.ink(context),
+                  ))),
           // const Spacer()
         ],
       ),
@@ -127,9 +129,7 @@ class AlertStatusCard extends StatelessWidget {
             border: Border.all(
                 color: isSelected ? Colors.lightGreen : Colors.transparent,
                 width: 3),
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: AppUi.accent.withValues(alpha: 0.12),
             borderRadius: const BorderRadius.all(Radius.circular(12)));
         break;
       case 2:
@@ -137,9 +137,7 @@ class AlertStatusCard extends StatelessWidget {
           border: Border.all(
               color: isSelected ? Colors.lightGreen : Colors.transparent,
               width: 3),
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          color: AppUi.accent.withValues(alpha: 0.12),
         );
         break;
 
@@ -149,9 +147,7 @@ class AlertStatusCard extends StatelessWidget {
               color: isSelected ? Colors.lightGreen : Colors.transparent,
               width: 3),
           shape: BoxShape.circle,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          color: AppUi.accent.withValues(alpha: 0.12),
         );
         break;
     }

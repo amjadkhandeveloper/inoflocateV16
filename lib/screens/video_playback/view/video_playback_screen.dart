@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:infolocate/screens/video_playback/controller/video_playback_provider.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/enums.dart';
-import 'package:infolocate/widgets/buttons/custom_button.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
@@ -16,9 +15,11 @@ import '../../../animation/custom_fade_animation.dart';
 import '../../../utils/app_constants.dart';
 import '../../../utils/app_globals.dart';
 import '../../../utils/app_styles.dart';
+import '../../../utils/app_ui.dart';
 import '../../../widgets/custom_webview.dart';
 import '../../../widgets/error_widget.dart';
 import '../model/video_playback_request_model.dart';
+import '../model/video_vehicle_list_response_model.dart';
 
 class VideoPlayBackScreen extends StatefulWidget {
   const VideoPlayBackScreen({Key? key}) : super(key: key);
@@ -31,10 +32,7 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
   String fromDateTime = "yyyy-mm-dd hh:mm:ss";
   String toDateTime = "yyyy-mm-dd hh:mm:ss";
   TimeOfDay selectedTime = TimeOfDay.now();
-  int? vehicleId;
   int? userId;
-
-  String? selectedValue;
   @override
   void initState() {
     super.initState();
@@ -125,8 +123,80 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
     final videoPlayBackState =
         Provider.of<VideoPlayBackProvider>(context, listen: false);
     await videoPlayBackState.getVehicleList();
-    // selectedValue = videoPlayBackState.allVehicles!.first!.VehicleNo.toString();
-    selectedValue = LocaliazationKey.select.tr();
+  }
+
+  Future<void> _onGenerate(VideoPlayBackProvider videoPlayBackState) async {
+    final selected = videoPlayBackState.selectedVehicle;
+    if (selected == null || selected.VehicleId == null) {
+      customToast(message: LocaliazationKey.please_select_vehicle_no.tr());
+      return;
+    }
+    if (fromDateTime == "yyyy-mm-dd hh:mm:ss") {
+      customToast(
+          message: LocaliazationKey.please_select_from_date_and_time.tr());
+      return;
+    }
+    if (toDateTime == "yyyy-mm-dd hh:mm:ss") {
+      customToast(
+          message: LocaliazationKey.please_select_to_date_and_time.tr());
+      return;
+    }
+
+    final format = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final fromDate = format.parse(fromDateTime);
+    final toDate = format.parse(toDateTime);
+    if (fromDate.isAfter(DateTime.now())) {
+      customToast(
+        message: LocaliazationKey
+            .selected_from_time_should_not_greater_than_current_time
+            .tr(),
+      );
+      return;
+    }
+    if (toDate.isAfter(DateTime.now())) {
+      customToast(
+        message: LocaliazationKey
+            .selected_to_time_should_not_greater_than_current_time
+            .tr(),
+      );
+      return;
+    }
+    if (fromDate.isAfter(toDate)) {
+      customToast(
+        message: LocaliazationKey.please_select_proper_date_time.tr(),
+      );
+      return;
+    }
+    if (toDate.difference(fromDate).inMinutes > 1) {
+      customToast(
+          message: LocaliazationKey
+              .time_difference_should_not_be_greater_than_1min
+              .tr());
+      return;
+    }
+
+    await videoPlayBackState.generateVideoPlayback(
+      VideoPlayBackRequestModel(
+        userId: userId!.toInt(),
+        vehicleId: selected.VehicleId,
+        startDate: fromDateTime,
+        endDate: toDateTime,
+      ),
+    );
+    final playback = videoPlayBackState.playbackVideo;
+    final playBackUrl = playback?.Purl?.trim().isNotEmpty == true
+        ? playback!.Purl!.trim()
+        : videoPlayBackState.playBackUrl;
+    if (!mounted || playBackUrl == null || playBackUrl.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoPlayerScreen(
+          url: playBackUrl,
+          title: selected.VehicleNo,
+        ),
+      ),
+    );
   }
 
   // bool endTimeAlwaysGreater(String startStr, String endStr) {
@@ -155,20 +225,20 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
   @override
   Widget build(BuildContext context) {
     final videoPlayBackState = Provider.of<VideoPlayBackProvider>(context);
-    final data = videoPlayBackState.allVehicles;
+    final vehicles = videoPlayBackState.allVehicles;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(LocaliazationKey.video_playback.tr()),
+      backgroundColor: AppUi.pageBg(context),
+      appBar: AppUi.appBar(
+        context: context,
+        title: LocaliazationKey.video_playback.tr(),
       ),
       body: videoPlayBackState.state == NotifierState.loading
           ? const Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: AppUi.accent),
             )
           : videoPlayBackState.state != NotifierState.error
-              ? data == null
-                  ? Container()
-                  : SingleChildScrollView(
+              ? SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -184,105 +254,64 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
                             ),
                           ),
                           Container(
-                            // height: 42,
                             width: 100.w,
                             margin: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppUi.cardColor(context),
+                              border: Border.all(color: AppUi.line(context)),
+                              borderRadius: BorderRadius.circular(AppUi.radiusSm),
                             ),
-                            child: DropdownSearch<String>(
+                            child: DropdownSearch<VideoVehicleListDataVehicles>(
                               popupProps: PopupProps.menu(
                                 showSearchBox: true,
                                 showSelectedItems: true,
                                 itemBuilder: (context, item, isSelected) {
-                                  Color color = Colors.white;
-                                  Color textColor = Colors.black;
-                                  for (var element in data) {
-                                    print("Element ${element!.VehicleNo}, ${element.deviceType}, ${element.DelayEnable}");
-                                    if (element.VehicleNo == item) {
-                                      if (element.DelayEnable! <= 0 &&
-                                          element.DelayEnable != null
-                                      //     || element.deviceType != "MDVR"
-                                      ) {
-                                        color = Colors.grey.shade300;
-                                        textColor = Colors.grey;
-                                      } else {
-                                        color = Colors.green.shade200;
-                                        textColor = Colors.black;
-                                      }
-                                    }
-                                  }
+                                  final enabled = item.isPlaybackEnabled;
                                   return Container(
                                     margin: const EdgeInsets.all(1),
-                                    padding: const EdgeInsets.all(4),
-                                    color: color,
-                                    // height: 30,
-                                    // width: 150,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        item,
-                                        style: TextStyle(
-                                            fontSize: 16, color: textColor),
+                                    padding: const EdgeInsets.all(12),
+                                    color: enabled
+                                        ? (AppUi.isDark(context)
+                                            ? const Color(0xFF14532D)
+                                            : Colors.green.shade200)
+                                        : (AppUi.isDark(context)
+                                            ? AppUi.pageBg(context)
+                                            : Colors.grey.shade300),
+                                    child: Text(
+                                      item.VehicleNo ?? '',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: enabled
+                                            ? AppUi.ink(context)
+                                            : AppUi.muted(context),
                                       ),
                                     ),
                                   );
                                 },
                                 searchFieldProps: TextFieldProps(
-                                  decoration:
-                                      AppStyles.inputFieldStyle().copyWith(
+                                  style: AppUi.body(context),
+                                  decoration: AppUi.inputDecoration(
+                                    context: context,
                                     hintText: LocaliazationKey.search.tr(),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          width: 2),
-                                    ),
                                   ),
                                 ),
-                                disabledItemFn: (String s) {
-                                  // final item = data.firstWhere((element) => element!['VehicleNo'] == s, orElse: () => null);
-                                  // return item?['DelayEnable'] >= 0;
-
-                                  final item = data.firstWhere((element) =>
-                                  element!["VehicleNo"].toString() == s);
-                                  final delayEnable = item!["DelayEnable"];
-                                  return delayEnable != null &&
-                                      delayEnable <= 0;
-
-                                },
+                                disabledItemFn: (item) => !item.isPlaybackEnabled,
                               ),
-                              items: data
-                                  .map((e) => e!.VehicleNo.toString())
-                                  .toList(),
+                              items: vehicles,
+                              itemAsString: (item) => item.VehicleNo ?? '',
+                              compareFn: (a, b) => a.VehicleId == b.VehicleId,
                               dropdownDecoratorProps: DropDownDecoratorProps(
-                                // textAlign: TextAlign.left,
-                                baseStyle: const TextStyle(
-                                  fontSize: 18,
-                                ),
+                                baseStyle: AppUi.body(context).copyWith(fontSize: 16),
                                 dropdownSearchDecoration: InputDecoration(
                                   border: InputBorder.none,
-                                  contentPadding:
-                                      const EdgeInsets.only(left: 8, top: 12),
+                                  contentPadding: const EdgeInsets.only(
+                                      left: 12, top: 12, bottom: 12),
                                   hintText: LocaliazationKey.select.tr(),
+                                  hintStyle: AppUi.mutedStyle(context),
                                 ),
                               ),
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedValue = value ?? "";
-                                  if (selectedValue !=
-                                      LocaliazationKey.select.tr()) {
-                                    vehicleId =
-                                        videoPlayBackState.returnVehicleId(
-                                            vehicleNo:
-                                                selectedValue.toString());
-                                    log("Vehicle Id: $vehicleId");
-                                  }
-                                });
-                              },
-                              selectedItem: selectedValue,
+                              onChanged: videoPlayBackState.selectVehicle,
+                              selectedItem: videoPlayBackState.selectedVehicle,
                             ),
                           ),
                           Padding(
@@ -304,7 +333,7 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Colors.grey,
+                                        color: AppUi.line(context),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -343,7 +372,7 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Colors.grey,
+                                        color: AppUi.line(context),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -367,121 +396,12 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
                           ),
                           Padding(
                             padding: const EdgeInsets.all(14),
-                            child: CustomButton(
-                              onPressed: () async {
-                                if (selectedValue!
-                                    .contains(LocaliazationKey.select.tr())) {
-                                  customToast(
-                                      message: LocaliazationKey
-                                          .please_select_vehicle_no
-                                          .tr());
-                                  return;
-                                }
-                                if (fromDateTime == "yyyy-mm-dd hh:mm:ss") {
-                                  customToast(
-                                      message: LocaliazationKey
-                                          .please_select_from_date_and_time
-                                          .tr());
-                                  return;
-                                }
-                                if (toDateTime == "yyyy-mm-dd hh:mm:ss") {
-                                  customToast(
-                                      message: LocaliazationKey
-                                          .please_select_to_date_and_time
-                                          .tr());
-                                  return;
-                                }
-
-                                DateFormat format =
-                                    DateFormat("yyyy-MM-dd HH:mm:ss");
-                                DateTime fromDate = format.parse(fromDateTime);
-                                DateTime toDate = format.parse(toDateTime);
-                                if (fromDate.isAfter(
-                                  DateTime.now(),
-                                )) {
-                                  customToast(
-                                    message: LocaliazationKey
-                                        .selected_from_time_should_not_greater_than_current_time
-                                        .tr(),
-                                  );
-                                  return;
-                                }
-                                if (toDate.isAfter(
-                                  DateTime.now(),
-                                )) {
-                                  customToast(
-                                    message: LocaliazationKey
-                                        .selected_to_time_should_not_greater_than_current_time
-                                        .tr(),
-                                  );
-                                  return;
-                                }
-                                if (fromDate.isAfter(toDate)) {
-                                  // Condition satisfied
-                                  customToast(
-                                    message: LocaliazationKey
-                                        .please_select_proper_date_time
-                                        .tr(),
-                                  );
-                                  return;
-                                }
-                                if (toDate.difference(fromDate).inMinutes > 1) {
-                                  // Condition not
-                                  // customToast(
-                                  //     message: LocaliazationKey
-                                  //         .time_difference_should_not_be_greater_than_24hours
-                                  //         .tr());
-                                  customToast(
-                                      message: LocaliazationKey
-                                          .time_difference_should_not_be_greater_than_1min
-                                          .tr());
-                                  return;
-                                }
-                                // if (endTimeAlwaysGreater(
-                                //         fromDateTime, toDateTime) ==
-                                //     false) {
-                                //   customToast(
-                                //       message:
-                                //           "Please select proper date time");
-                                //   return;
-                                // }
-                                // if (checkTimeDifference(
-                                //         fromDateTime, toDateTime) ==
-                                //     false) {
-                                //   customToast(
-                                //       message:
-                                //           "Time difference should not be greater than 48hours");
-                                //   return;
-                                // }
-                                print(userId);
-                                print(vehicleId);
-                                print(fromDateTime);
-                                print(toDateTime);
-                                VideoPlayBackRequestModel
-                                    videoPlayBackRequestModel =
-                                    VideoPlayBackRequestModel(
-                                        userId: userId!.toInt(),
-                                        vehicleId: vehicleId!.toInt(),
-                                        startDate: fromDateTime,
-                                        endDate: toDateTime);
-
-                                await videoPlayBackState.generateVideoPlayback(
-                                    videoPlayBackRequestModel);
-                                final playBackUrl =
-                                    videoPlayBackState.playBackUrl;
-                                if (playBackUrl != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => VideoPlayerScreen(
-                                        url: playBackUrl,
-                                        title: selectedValue,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
+                            child: AppUi.primaryButton(
                               title: LocaliazationKey.generate.tr(),
+                              loading: videoPlayBackState.isGenerating,
+                              onPressed: videoPlayBackState.isGenerating
+                                  ? null
+                                  : () => _onGenerate(videoPlayBackState),
                             ),
                           ),
                         ],

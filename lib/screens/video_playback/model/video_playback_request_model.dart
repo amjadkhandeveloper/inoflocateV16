@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import '../../../utils/json_safe_parser.dart';
+
 VideoPlayBackRequestModel videoPlayBackRequestModelFromJson(String str) =>
     VideoPlayBackRequestModel.fromJson(json.decode(str));
 
@@ -25,10 +27,14 @@ class VideoPlayBackRequestModel {
 
   factory VideoPlayBackRequestModel.fromJson(Map<String, dynamic> json) =>
       VideoPlayBackRequestModel(
-        userId: json["UserId"],
-        vehicleId: json["VehicleID"],
-        startDate: json["StartDate"],
-        endDate: json["EndDate"],
+        userId: JsonSafe.asInt(
+            JsonSafe.firstValue(json, ["userId", "UserId"])),
+        vehicleId: JsonSafe.asInt(
+            JsonSafe.firstValue(json, ["vehicleId", "VehicleID", "VehicleId"])),
+        startDate: JsonSafe.asString(JsonSafe.firstValue(
+            json, ["fromDatetime", "StartDate", "startDate"])),
+        endDate: JsonSafe.asString(JsonSafe.firstValue(
+            json, ["toDatetime", "EndDate", "endDate"])),
       );
 
   Map<String, dynamic> toJson() => {
@@ -36,5 +42,12 @@ class VideoPlayBackRequestModel {
         "VehicleID": vehicleId,
         "StartDate": startDate,
         "EndDate": endDate,
+      };
+
+  Map<String, dynamic> toSequelJson() => {
+        "userId": userId,
+        "vehicleId": vehicleId,
+        "fromDatetime": startDate,
+        "toDatetime": endDate,
       };
 }

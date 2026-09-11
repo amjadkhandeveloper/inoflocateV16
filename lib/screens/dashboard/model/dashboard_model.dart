@@ -1,3 +1,5 @@
+import '../../../utils/json_safe_parser.dart';
+
 class Properties {
   final String? name;
   final String? count;
@@ -13,7 +15,7 @@ class ButtonModel {
 }
 
 
-class DashboardModelVehicles {
+class DashboardModelVehicles with JsonSafeParser {
   String? vehicleNumber;
   String? location;
 
@@ -22,8 +24,8 @@ class DashboardModelVehicles {
     this.location,
   });
   DashboardModelVehicles.fromJson(Map<String, dynamic> json) {
-    vehicleNumber = json['vehicle_number']?.toString();
-    location = json['location']?.toString();
+    vehicleNumber = asString(json['vehicle_number']);
+    location = asString(json['location']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -33,7 +35,7 @@ class DashboardModelVehicles {
   }
 }
 
-class DashboardModelStatus {
+class DashboardModelStatus with JsonSafeParser {
   String? statusName;
   String? totalCount;
   String? percentage;
@@ -47,9 +49,9 @@ class DashboardModelStatus {
     this.percentage,
   });
   DashboardModelStatus.fromJson(Map<String, dynamic> json) {
-    statusName = json['status_name']?.toString();
-    totalCount = json['total_count']?.toString();
-    percentage = json['percentage']?.toString();
+    statusName = asString(json['status_name']);
+    totalCount = asString(json['total_count']);
+    percentage = asString(json['percentage']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -60,7 +62,7 @@ class DashboardModelStatus {
   }
 }
 
-class DashboardModel {
+class DashboardModel with JsonSafeParser {
   List<DashboardModelStatus?>? status;
   List<DashboardModelVehicles?>? vehicles;
 
@@ -70,20 +72,14 @@ class DashboardModel {
   });
   DashboardModel.fromJson(Map<String, dynamic> json) {
     if (json['status'] != null) {
-      final v = json['status'];
-      final arr0 = <DashboardModelStatus>[];
-      v.forEach((v) {
-        arr0.add(DashboardModelStatus.fromJson(v));
-      });
-      status = arr0;
+      status = asListOfMaps(json['status'])
+          .map(DashboardModelStatus.fromJson)
+          .toList();
     }
     if (json['vehicles'] != null) {
-      final v = json['vehicles'];
-      final arr0 = <DashboardModelVehicles>[];
-      v.forEach((v) {
-        arr0.add(DashboardModelVehicles.fromJson(v));
-      });
-      vehicles = arr0;
+      vehicles = asListOfMaps(json['vehicles'])
+          .map(DashboardModelVehicles.fromJson)
+          .toList();
     }
   }
   Map<String, dynamic> toJson() {

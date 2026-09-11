@@ -66,6 +66,7 @@
   "graph": "الرسم البياني",
   "map": "خريطة",
   "video_playback": "تشغيل الفيديو",
+  "no_video_available_for_playback": "لا يوجد فيديو متاح للتشغيل",
   "vehicle_number": "رقم السيارة",
   "from_date_time": "من التاريخ والوقت",
   "to_date_time": "إلى التاريخ والوقت",

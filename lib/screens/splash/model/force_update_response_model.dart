@@ -1,4 +1,6 @@
-class ForceUpdateModelDataError {
+import '../../../utils/json_safe_parser.dart';
+
+class ForceUpdateModelDataError with JsonSafeParser {
 /*
 {
   "message": "Force Update failed"
@@ -11,7 +13,7 @@ class ForceUpdateModelDataError {
     this.message,
   });
   ForceUpdateModelDataError.fromJson(Map<String, dynamic> json) {
-    message = json['message']?.toString();
+    message = asString(json['message']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -20,7 +22,7 @@ class ForceUpdateModelDataError {
   }
 }
 
-class ForceUpdateModelDataClient {
+class ForceUpdateModelDataClient with JsonSafeParser {
 /*
 {
   "Forceupdate": 0,
@@ -36,8 +38,8 @@ class ForceUpdateModelDataClient {
     this.currentVersion,
   });
   ForceUpdateModelDataClient.fromJson(Map<String, dynamic> json) {
-    forceupdate = json['Forceupdate']?.toInt();
-    currentVersion = json['CurrentVersion']?.toInt();
+    forceupdate = asIntFrom(json, ['Forceupdate', 'forceUpdate']);
+    currentVersion = asIntFrom(json, ['CurrentVersion', 'currentVersion']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -47,7 +49,7 @@ class ForceUpdateModelDataClient {
   }
 }
 
-class ForceUpdateModelData {
+class ForceUpdateModelData with JsonSafeParser {
 /*
 {
   "status": 400,
@@ -73,17 +75,15 @@ class ForceUpdateModelData {
     this.error,
   });
   ForceUpdateModelData.fromJson(Map<String, dynamic> json) {
-    status = json['status']?.toInt();
-    client = (json['client'] != null)
-        ? ForceUpdateModelDataClient.fromJson(json['client'])
+    status = asIntFrom(json, ['status', 'Status']);
+    final clientMap = asMapOrNull(json['client']);
+    client = clientMap != null
+        ? ForceUpdateModelDataClient.fromJson(clientMap)
         : null;
     if (json['error'] != null) {
-      final v = json['error'];
-      final arr0 = <ForceUpdateModelDataError>[];
-      v.forEach((v) {
-        arr0.add(ForceUpdateModelDataError.fromJson(v));
-      });
-      error = arr0;
+      error = asListOfMaps(json['error'])
+          .map(ForceUpdateModelDataError.fromJson)
+          .toList();
     }
   }
   Map<String, dynamic> toJson() {
@@ -104,7 +104,7 @@ class ForceUpdateModelData {
   }
 }
 
-class ForceUpdateModel {
+class ForceUpdateModel with JsonSafeParser {
 /*
 {
   "data": {
@@ -128,9 +128,8 @@ class ForceUpdateModel {
     this.data,
   });
   ForceUpdateModel.fromJson(Map<String, dynamic> json) {
-    data = (json['data'] != null)
-        ? ForceUpdateModelData.fromJson(json['data'])
-        : null;
+    final dataMap = asMapOrNull(json['data']);
+    data = dataMap != null ? ForceUpdateModelData.fromJson(dataMap) : null;
   }
   Map<String, dynamic> toJson() {
     final res = <String, dynamic>{};

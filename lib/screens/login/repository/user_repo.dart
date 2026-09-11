@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
@@ -9,6 +8,7 @@ import 'package:infolocate/utils/app_globals.dart';
 import '../../../common_models/failure_model.dart';
 import '../../../utils/app_helper.dart';
 import '../../../utils/app_localization_key.dart';
+import '../../../utils/json_safe_parser.dart';
 import '../model/user_login_request_model.dart';
 import '../model/user_login_response_model.dart';
 
@@ -54,16 +54,16 @@ class UserService {
       );
 
       if (response.statusCode == 200) {
-        final map = _asJsonMap(response.data);
+        final map = JsonSafe.asMapOrNull(response.data);
         if (map == null) {
           throw Failure(LocaliazationKey.could_not_login.tr());
         }
         final parsed = UserLoginResponseModel.fromJson(map);
         final status = parsed.data?.status ??
-            _asInt(map['status']) ??
-            _asInt(map['Status']);
-        final message =
-            (map['message'] ?? map['Message'])?.toString();
+            JsonSafe.asIntOrNull(map['status']) ??
+            JsonSafe.asIntOrNull(map['Status']);
+        final message = JsonSafe.asStringOrNull(
+            map['message'] ?? map['Message']);
         final user = parsed.data?.user;
         final success = status == 1 || status == 200 || (user?.userid != null);
         if (!success || user == null) {
@@ -90,9 +90,9 @@ class UserService {
           final raw = e.response!.data;
           String? message;
           if (raw is Map) {
-            message = raw['message']?.toString() ??
+            message = JsonSafe.asStringOrNull(raw['message']) ??
                 UserLoginResponseModel.fromJson(
-                  Map<String, dynamic>.from(raw),
+                  JsonSafe.asMap(raw),
                 ).data?.error?.first?.message?.toString();
           }
           message ??= LocaliazationKey.could_not_login.tr();
@@ -111,23 +111,4 @@ class UserService {
       throw await AppHelper.failureFromErrorAsync(error);
     }
   }
-}
-
-int? _asInt(dynamic value) {
-  if (value == null) return null;
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value.toString());
-}
-
-Map<String, dynamic>? _asJsonMap(dynamic data) {
-  if (data is Map) return Map<String, dynamic>.from(data);
-  if (data is String) {
-    final trimmed = data.trim();
-    if (trimmed.startsWith('{')) {
-      final decoded = jsonDecode(trimmed);
-      if (decoded is Map) return Map<String, dynamic>.from(decoded);
-    }
-  }
-  return null;
 }

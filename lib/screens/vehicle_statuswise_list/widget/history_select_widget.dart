@@ -20,6 +20,7 @@ import '../../../animation/custom_fade_animation.dart';
 import '../../../utils/app_constants.dart';
 import '../../../utils/app_globals.dart';
 import '../../../utils/app_styles.dart';
+import '../../../utils/app_ui.dart';
 import '../../../widgets/error_widget.dart';
 import '../model/history_track_request_model.dart';
 import '../model/history_track_response_model.dart';
@@ -179,27 +180,17 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
     final data = videoPlayBackState.allVehicles;
 
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(onPressed: () {
-      //   Navigator.push(
-      //       context,
-      //       MaterialPageRoute(
-      //         builder: (context) => VehicleHistoryTrackScreen(
-      //           historyTrackList:
-      //               removeDuplicate(list: vehicleStatusState.historyTrackList),
-      //         ),
-      //       ));
-      // }),
-      appBar: AppBar(
-        title: Text(LocaliazationKey.track_history.tr()),
+      backgroundColor: AppUi.pageBg(context),
+      appBar: AppUi.appBar(
+        context: context,
+        title: LocaliazationKey.track_history.tr(),
       ),
       body: videoPlayBackState.state == NotifierState.loading
           ? const Center(
               child: CircularProgressIndicator(),
             )
           : videoPlayBackState.state != NotifierState.error
-              ? data == null
-                  ? Container()
-                  : SingleChildScrollView(
+              ? SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -219,7 +210,7 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                             width: 100.w,
                             margin: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
+                              border: Border.all(color: AppUi.line(context)),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: DropdownSearch<String>(
@@ -241,7 +232,7 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                 ),
                               ),
                               items: data
-                                  .map((e) => e!.VehicleNo.toString())
+                                  .map((e) => e.VehicleNo.toString())
                                   .toList(),
                               dropdownDecoratorProps: DropDownDecoratorProps(
                                 // textAlign: TextAlign.left,
@@ -339,7 +330,7 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Colors.grey,
+                                        color: AppUi.line(context),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -378,7 +369,7 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Colors.grey,
+                                        color: AppUi.line(context),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),

@@ -16,6 +16,7 @@ import '../../../utils/app_globals.dart';
 import '../../../utils/app_helper.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../utils/app_styles.dart';
+import '../../../utils/app_ui.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/buttons/custom_button.dart';
 import '../../../widgets/cards/live_vehicle_list_widget.dart';
@@ -32,12 +33,14 @@ class VehicleStatusScreen extends StatefulWidget {
   final int statusId;
   final String title;
   final bool isLiveVehicle;
+  final int? totalCount;
 
   const VehicleStatusScreen({
     Key? key,
     required this.statusId,
     required this.title,
     required this.isLiveVehicle,
+    this.totalCount,
   }) : super(key: key);
 
   @override
@@ -60,6 +63,8 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
     _timer?.cancel();
     //* must be added so that on dashboard vehicle list should fetch in background.
     Global.isVehicleListBackgroundFetching = false;
+    Provider.of<VehicleStatusProvider>(context, listen: false)
+        .setExpectedTotal(null, notify: false);
     super.dispose();
   }
 
@@ -84,6 +89,7 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
     handleScroll(vehicleStatusState: vehicleStatusState);
 
     vehicleStatusState.clearVehicleList();
+    vehicleStatusState.setExpectedTotal(widget.totalCount);
     if (Global.savedClientAuthData == null) {
       await AppHelper.getHiveBoxData();
     }
@@ -184,19 +190,10 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        appBar: AppBar(
-          iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
-          centerTitle: true,
-          title: Text(widget.title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(4.0),
-            child: Container(
-              color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : Colors.black12,
-              height: 1.0,
-            ),
-          ),
+        backgroundColor: AppUi.pageBg(context),
+        appBar: AppUi.appBar(
+          context: context,
+          title: widget.title,
         ),
         body: vehicleStatusState.state == NotifierState.loading
             ? const ListShimmerEffect()
@@ -225,11 +222,14 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                               ),
                             ),
                             2.h.height,
-                            if ((vehicleStatusState.filterList?.isNotEmpty ?? false) && searchCtl.text.isEmpty)
+                            if (searchCtl.text.isEmpty &&
+                                (vehicleStatusState.loadedCount > 0 ||
+                                    vehicleStatusState.totalCount > 0))
                               Align(
                                 alignment: Alignment.center,
                                 child: PageCountWidget(
-                                  pageCount: '${vehicleStatusState.filterList!.length} / ${(vehicleStatusState.totalCount)}',
+                                  pageCount:
+                                      '${vehicleStatusState.loadedCount} / ${vehicleStatusState.totalCount}',
                                 ),
                               ),
                             (vehicleStatusState.filterList!.isEmpty)

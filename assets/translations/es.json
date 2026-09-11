@@ -66,6 +66,7 @@
     "graph": "Grafico",
     "map": "Mapa",
     "video_playback": "Reproducción de vídeo",
+    "no_video_available_for_playback": "No hay vídeo disponible para la reproducción",
     "vehicle_number": "Número de vehículo",
     "from_date_time": "Desde\nFecha y hora",
     "to_date_time": "Hasta\nFecha y hora",

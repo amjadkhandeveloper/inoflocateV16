@@ -1,7 +1,10 @@
 import 'package:hive/hive.dart';
+
+import '../../../utils/json_safe_parser.dart';
+
 part 'client_model.g.dart';
 
-class DataError {
+class DataError with JsonSafeParser {
 /*
 {
   "message": "Authentication failed"
@@ -14,7 +17,7 @@ class DataError {
     this.message,
   });
   DataError.fromJson(Map<String, dynamic> json) {
-    message = json['message']?.toString();
+    message = asString(json['message']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -24,7 +27,7 @@ class DataError {
 }
 
 @HiveType(typeId: 1)
-class ClientModelDataClient {
+class ClientModelDataClient with JsonSafeParser {
 /*
 {
   "ClientId": 0,
@@ -48,10 +51,10 @@ class ClientModelDataClient {
     this.clientName,
   });
   ClientModelDataClient.fromJson(Map<String, dynamic> json) {
-    clientId = json['ClientId']?.toInt();
-    clientUrl = json['clientUrl']?.toString();
-    currentVersion = json['currentVersion']?.toInt();
-    clientName = json['clientName']?.toString();
+    clientId = asIntFrom(json, ['ClientId', 'clientId']);
+    clientUrl = asString(json['clientUrl']);
+    currentVersion = asInt(json['currentVersion']);
+    clientName = asString(json['clientName']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -63,7 +66,7 @@ class ClientModelDataClient {
   }
 }
 
-class ClientModelData {
+class ClientModelData with JsonSafeParser {
 /*
 {
   "status": 200,
@@ -90,17 +93,13 @@ class ClientModelData {
     this.error,
   });
   ClientModelData.fromJson(Map<String, dynamic> json) {
-    status = json['status']?.toInt();
-    client = (json['client'] != null)
-        ? ClientModelDataClient.fromJson(json['client'])
+    status = asIntFrom(json, ['status', 'Status']);
+    final clientMap = asMapOrNull(json['client']);
+    client = clientMap != null
+        ? ClientModelDataClient.fromJson(clientMap)
         : null;
     if (json['error'] != null) {
-      final v = json['error'];
-      final arr0 = <DataError>[];
-      v.forEach((v) {
-        arr0.add(DataError.fromJson(v));
-      });
-      error = arr0;
+      error = asListOfMaps(json['error']).map(DataError.fromJson).toList();
     }
   }
   Map<String, dynamic> toJson() {
@@ -121,7 +120,7 @@ class ClientModelData {
   }
 }
 
-class ClientModel {
+class ClientModel with JsonSafeParser {
 /*
 {
   "data": {
@@ -146,8 +145,8 @@ class ClientModel {
     this.data,
   });
   ClientModel.fromJson(Map<String, dynamic> json) {
-    data =
-        (json['data'] != null) ? ClientModelData.fromJson(json['data']) : null;
+    final dataMap = asMapOrNull(json['data']);
+    data = dataMap != null ? ClientModelData.fromJson(dataMap) : null;
   }
   Map<String, dynamic> toJson() {
     final res = <String, dynamic>{};

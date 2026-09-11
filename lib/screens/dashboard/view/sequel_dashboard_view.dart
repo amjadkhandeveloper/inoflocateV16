@@ -11,6 +11,7 @@ import 'package:infolocate/screens/vehicle_statuswise_list/view/vehicle_status_l
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/custom_shimmer_effects.dart';
 import 'package:infolocate/widgets/drawer/navigation_drawer.dart';
@@ -20,15 +21,10 @@ import 'package:infolocate/widgets/google_map/map_model.dart';
 import 'package:pie_chart/pie_chart.dart';
 import 'package:provider/provider.dart';
 
-const Color _pageBg = Color(0xFFF4F6F9);
-const Color _ink = Color(0xFF1E293B);
-const Color _muted = Color(0xFF64748B);
-const Color _line = Color(0xFFE2E8F0);
 const Color _moving = Color(0xFF16A34A);
 const Color _stopped = Color(0xFFEA580C);
 const Color _inactive = Color(0xFF64748B);
 const Color _idle = Color(0xFFD97706);
-const Color _totalBlue = Color(0xFF2563EB);
 const Color _critical = Color(0xFFDC2626);
 
 Color sequelStatusColor(String? status) {
@@ -86,7 +82,7 @@ Color _alertColor(String? type, {required bool featured}) {
   final t = (type ?? '').toLowerCase();
   if (t.contains('panic') || t.contains('power')) return _critical;
   if (t.contains('speed')) return const Color(0xFFD97706);
-  if (t.contains('geofence')) return const Color(0xFF2563EB);
+  if (t.contains('geofence')) return AppUi.accent;
   if (t.contains('stop')) return _stopped;
   return const Color(0xFF475569);
 }
@@ -154,7 +150,11 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
     });
   }
 
-  void _openStatusList({required String title, required int statusId}) {
+  void _openStatusList({
+    required String title,
+    required int statusId,
+    int? totalCount,
+  }) {
     Navigator.of(context)
         .push(
           MaterialPageRoute(
@@ -162,6 +162,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
               title: title,
               statusId: statusId,
               isLiveVehicle: false,
+              totalCount: totalCount,
             ),
           ),
         )
@@ -206,7 +207,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _pageBg,
+      backgroundColor: AppUi.pageBg(context),
       drawer: CustomNavigationDrawer(),
       body: dash.state == NotifierState.loading
           ? const DasboardShimmerEffect()
@@ -216,7 +217,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                   onPressed: () => _loadDashboard(force: true),
                 )
               : RefreshIndicator(
-                  color: _totalBlue,
+                  color: AppUi.accent,
                   onRefresh: () =>
                       _loadDashboard(showLoader: false, force: true),
                   child: NotificationListener<ScrollNotification>(
@@ -226,24 +227,26 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                       slivers: [
                         SliverToBoxAdapter(child: _buildHeader(dash)),
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
                               _sectionLabel('Vehicle Overview'),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _KpiGrid(
                                 total: dash.totalFleetCount,
                                 statuses: dash.vehicleStatuses,
                                 onTotal: () => _openStatusList(
                                   title: LocaliazationKey.all_vehicles.tr(),
                                   statusId: 6,
+                                  totalCount: dash.totalFleetCount,
                                 ),
                                 onStatus: (s) => _openStatusList(
                                   title: s.status ?? '',
                                   statusId: s.StatusID ?? 6,
+                                  totalCount: s.Value,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               LayoutBuilder(
                                 builder: (context, constraints) {
                                   final wide = constraints.maxWidth >= 720;
@@ -267,7 +270,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                                     return Column(
                                       children: [
                                         statusCard,
-                                        const SizedBox(height: 8),
+                                        const SizedBox(height: 12),
                                         alertsCard,
                                       ],
                                     );
@@ -283,22 +286,22 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                                   );
                                 },
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _AlertBarsCard(alerts: dash.rankedAlerts),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _AlertSummaryRow(
                                 total: dash.totalAlertCount,
                                 critical: dash.criticalAlertCount,
                                 speed: dash.speedAlertCount,
                                 geofence: dash.geofenceAlertCount,
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _sectionLabel(
                                 'Vehicles',
                                 trailing:
                                     '${_filteredPins(dash.pinVehicles).length}',
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _VehicleList(
                                 vehicles: _filteredPins(dash.pinVehicles),
                                 loadingMore: dash.loadingMore,
@@ -321,31 +324,29 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
     final client = Global.savedClientAuthData?.clientName ?? 'Sequel';
     final user = Global.savedUserAuthData?.username ?? '';
 
-    return Container(
-      color: Colors.white,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 2, 8, 6),
-          child: Column(
-            children: [
+    return Column(
+      children: [
+        Container(
+          color: AppUi.cardColor(context),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 8, 12),
+              child: Column(
+                children: [
               Row(
                 children: [
                   IconButton(
                     onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    icon: const Icon(Icons.menu_rounded, color: _ink),
+                    icon: Icon(Icons.menu_rounded, color: AppUi.ink(context)),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Fleet Dashboard',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: _ink,
-                          ),
+                          style: AppUi.titleStyle(context),
                         ),
                       ],
                     ),
@@ -355,7 +356,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                         setState(() => _showSearch = !_showSearch),
                     icon: Icon(
                       _showSearch ? Icons.close : Icons.search_rounded,
-                      color: _ink,
+                      color: AppUi.ink(context),
                     ),
                   ),
                   Stack(
@@ -369,9 +370,9 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                             ),
                           );
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.notifications_outlined,
-                          color: _ink,
+                          color: AppUi.ink(context),
                         ),
                       ),
                       if (dash.totalAlertCount > 0)
@@ -389,7 +390,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                               dash.totalAlertCount > 99
                                   ? '99+'
                                   : '${dash.totalAlertCount}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
@@ -403,13 +404,13 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                     padding: const EdgeInsets.only(right: 8),
                     child: CircleAvatar(
                       radius: 16,
-                      backgroundColor: const Color(0xFFEEF2FF),
+                      backgroundColor: AppUi.accent.withValues(alpha: 0.12),
                       child: Text(
                         (user.isNotEmpty ? user : client)
                             .substring(0, 1)
                             .toUpperCase(),
                         style: const TextStyle(
-                          color: _totalBlue,
+                          color: AppUi.accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -426,24 +427,24 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: _pageBg,
+                          color: AppUi.pageBg(context),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _line),
+                          border: Border.all(color: AppUi.line(context)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.apartment_outlined,
-                                size: 16, color: _muted),
+                            Icon(Icons.apartment_outlined,
+                                size: 16, color: AppUi.muted(context)),
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 client,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: _ink,
+                                  color: AppUi.ink(context),
                                 ),
                               ),
                             ),
@@ -454,7 +455,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                     const SizedBox(width: 10),
                     Text(
                       now,
-                      style: const TextStyle(fontSize: 11, color: _muted),
+                      style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
                     ),
                   ],
                 ),
@@ -476,7 +477,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                       const SizedBox(width: 6),
                       Text(
                         _lastUpdatedLabel,
-                        style: const TextStyle(fontSize: 11, color: _muted),
+                        style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
                       ),
                     ],
                   ),
@@ -484,26 +485,16 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
               ),
               if (_showSearch)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
                   child: TextField(
                     controller: _searchCtl,
                     onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
+                    style: AppUi.body(context),
+                    decoration: AppUi.inputDecoration(
+                      context: context,
                       hintText: 'Search vehicle, driver or location',
-                      prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                      filled: true,
-                      fillColor: _pageBg,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: _line),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: _line),
-                      ),
+                      prefixIcon: Icon(Icons.search_rounded,
+                          size: 20, color: AppUi.muted(context)),
                     ),
                   ),
                 ),
@@ -511,6 +502,9 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
           ),
         ),
       ),
+        ),
+        Container(height: 1, color: AppUi.line(context)),
+      ],
     );
   }
 
@@ -519,15 +513,15 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: _ink,
+            color: AppUi.ink(context),
           ),
         ),
         const Spacer(),
         if (trailing != null)
-          Text(trailing, style: const TextStyle(fontSize: 12, color: _muted)),
+          Text(trailing, style: TextStyle(fontSize: 12, color: AppUi.muted(context))),
       ],
     );
   }
@@ -568,7 +562,7 @@ class _TightGrid extends StatelessWidget {
   const _TightGrid({
     required this.columns,
     required this.children,
-    this.spacing = 8,
+    this.spacing = 10,
   });
 
   final int columns;
@@ -613,19 +607,8 @@ class _FleetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _line),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: padding ?? const EdgeInsets.all(14),
+      decoration: AppUi.cardDecoration(context),
       child: child,
     );
   }
@@ -650,7 +633,7 @@ class _KpiGrid extends StatelessWidget {
       _KpiItem(
         label: 'Total Vehicles',
         value: total,
-        color: _totalBlue,
+        color: AppUi.accent,
         icon: Icons.directions_car_filled_outlined,
         hint: 'Entire fleet',
         onTap: onTotal,
@@ -671,7 +654,7 @@ class _KpiGrid extends StatelessWidget {
         final cols = c.maxWidth >= 720 ? 4 : 2;
         return _TightGrid(
           columns: cols,
-          spacing: 8,
+          spacing: 10,
           children: items.map((item) => _KpiCard(item: item)).toList(),
         );
       },
@@ -703,18 +686,19 @@ class _KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppUi.cardColor(context),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: item.onTap,
         borderRadius: BorderRadius.circular(14),
         child: Ink(
           decoration: BoxDecoration(
+            color: AppUi.cardColor(context),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _line),
+            border: Border.all(color: AppUi.line(context)),
           ),
             child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -761,17 +745,17 @@ class _KpiCard extends StatelessWidget {
                   item.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: _ink,
+                    color: AppUi.ink(context),
                   ),
                 ),
                 Text(
                   item.hint,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: _muted),
+                  style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
                 ),
               ],
             ),
@@ -805,21 +789,21 @@ class _VehicleStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Vehicle Status',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: _ink,
+              color: AppUi.ink(context),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           if (total <= 0 || dataMap.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Center(
                 child: Text('No vehicle status data',
-                    style: TextStyle(color: _muted)),
+                    style: TextStyle(color: AppUi.muted(context))),
               ),
             )
           else
@@ -838,6 +822,8 @@ class _VehicleStatusCard extends StatelessWidget {
                         ringStrokeWidth: 18,
                         chartRadius: 96,
                         centerText: '',
+                        emptyColor: AppUi.line(context),
+                        baseChartColor: AppUi.cardColor(context),
                         legendOptions:
                             const LegendOptions(showLegends: false),
                         chartValuesOptions: const ChartValuesOptions(
@@ -850,15 +836,15 @@ class _VehicleStatusCard extends StatelessWidget {
                         children: [
                           Text(
                             '$total',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
-                              color: _ink,
+                              color: AppUi.ink(context),
                             ),
                           ),
-                          const Text(
+                          Text(
                             'Vehicles',
-                            style: TextStyle(fontSize: 11, color: _muted),
+                            style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
                           ),
                         ],
                       ),
@@ -884,16 +870,16 @@ class _VehicleStatusCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               s.status ?? '',
-                              style: const TextStyle(
-                                  fontSize: 13, color: _ink),
+                              style: TextStyle(
+                                  fontSize: 13, color: AppUi.ink(context)),
                             ),
                           ),
                           Text(
                             '${s.Value ?? 0}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: _ink,
+                              color: AppUi.ink(context),
                             ),
                           ),
                         ],
@@ -928,8 +914,8 @@ class _AlertsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (alerts.isEmpty) {
-      return const _FleetCard(
-        child: Text('No alerts', style: TextStyle(color: _muted)),
+      return _FleetCard(
+        child: Text('No alerts', style: TextStyle(color: AppUi.muted(context))),
       );
     }
     final featured = alerts.first;
@@ -938,19 +924,23 @@ class _AlertsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Alerts & Events',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: _ink,
+              color: AppUi.ink(context),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Material(
             color: _isCriticalAlert(featured.AlertType)
-                ? const Color(0xFFFEF2F2)
-                : const Color(0xFFFFF7ED),
+                ? (AppUi.isDark(context)
+                    ? const Color(0xFF3F1D1D)
+                    : const Color(0xFFFEF2F2))
+                : (AppUi.isDark(context)
+                    ? const Color(0xFF3F2A14)
+                    : const Color(0xFFFFF7ED)),
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: () => onAlert(featured.AlertTypeID),
@@ -972,14 +962,14 @@ class _AlertsCard extends StatelessWidget {
                         children: [
                           Text(
                             featured.AlertType ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: _ink,
+                              color: AppUi.ink(context),
                             ),
                           ),
-                          const Text(
+                          Text(
                             'Highest frequency',
-                            style: TextStyle(fontSize: 11, color: _muted),
+                            style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
                           ),
                         ],
                       ),
@@ -1017,7 +1007,7 @@ class _AlertsCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         a.AlertType ?? '',
-                        style: const TextStyle(fontSize: 13, color: _ink),
+                        style: TextStyle(fontSize: 13, color: AppUi.ink(context)),
                       ),
                     ),
                     Text(
@@ -1027,7 +1017,7 @@ class _AlertsCard extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: _isCriticalAlert(a.AlertType)
                             ? _critical
-                            : _ink,
+                            : AppUi.ink(context),
                       ),
                     ),
                   ],
@@ -1055,15 +1045,15 @@ class _AlertBarsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Alert frequency',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: _ink,
+              color: AppUi.ink(context),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ...alerts.map((a) {
             final count = a.AlertCount ?? 0;
             final pct = max <= 0 ? 0.0 : count / max;
@@ -1080,15 +1070,15 @@ class _AlertBarsCard extends StatelessWidget {
                           a.AlertType ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: _ink),
+                          style: TextStyle(fontSize: 12, color: AppUi.ink(context)),
                         ),
                       ),
                       Text(
                         '$count',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: _ink,
+                          color: AppUi.ink(context),
                         ),
                       ),
                     ],
@@ -1099,7 +1089,7 @@ class _AlertBarsCard extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: pct,
                       minHeight: 8,
-                      backgroundColor: const Color(0xFFF1F5F9),
+                      backgroundColor: AppUi.pageBg(context),
                       color: color,
                     ),
                   ),
@@ -1129,17 +1119,17 @@ class _AlertSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = [
-      ('Total Alerts', total, _ink),
+      ('Total Alerts', total, AppUi.ink(context)),
       ('Critical Alerts', critical, _critical),
       ('Speed Alerts', speed, _idle),
-      ('Geofence Alerts', geofence, _totalBlue),
+      ('Geofence Alerts', geofence, AppUi.accent),
     ];
     return LayoutBuilder(
       builder: (context, c) {
         final cols = c.maxWidth >= 640 ? 4 : 2;
         return _TightGrid(
           columns: cols,
-          spacing: 8,
+          spacing: 10,
           children: [
             for (final t in tiles)
               _FleetCard(
@@ -1149,7 +1139,7 @@ class _AlertSummaryRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(t.$1,
-                        style: const TextStyle(fontSize: 11, color: _muted)),
+                        style: TextStyle(fontSize: 11, color: AppUi.muted(context))),
                     Text(
                       '${t.$2}',
                       style: TextStyle(
@@ -1186,13 +1176,13 @@ class _VehicleList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (vehicles.isEmpty) {
-      return const _FleetCard(
+      return _FleetCard(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 18),
           child: Center(
             child: Text(
               'No pinned vehicles in this view',
-              style: TextStyle(color: _muted),
+              style: TextStyle(color: AppUi.muted(context)),
             ),
           ),
         ),
@@ -1202,17 +1192,29 @@ class _VehicleList extends StatelessWidget {
       children: [
         ...vehicles.map(
           (v) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.only(bottom: 10),
             child: _VehicleRow(vehicle: v, onOpen: () => onOpen(v)),
           ),
         ),
         if (loadingMore)
-          const Padding(
-            padding: EdgeInsets.all(12),
-            child: CircularProgressIndicator(strokeWidth: 2),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppUi.accent,
+            ),
           )
         else if (hasMore)
-          TextButton(onPressed: onMore, child: const Text('View more')),
+          TextButton(
+            onPressed: onMore,
+            child: Text(
+              'View more',
+              style: TextStyle(
+                color: AppUi.accent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1227,7 +1229,7 @@ class _VehicleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = sequelStatusColor(vehicle.Status);
     return Material(
-      color: Colors.white,
+      color: AppUi.cardColor(context),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onOpen,
@@ -1235,8 +1237,9 @@ class _VehicleRow extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
+            color: AppUi.cardColor(context),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _line),
+            border: Border.all(color: AppUi.line(context)),
           ),
           child: Row(
             children: [
@@ -1255,9 +1258,9 @@ class _VehicleRow extends StatelessWidget {
                         Expanded(
                           child: Text(
                             vehicle.VehicleNo ?? '—',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: _ink,
+                              color: AppUi.ink(context),
                             ),
                           ),
                         ),
@@ -1289,17 +1292,17 @@ class _VehicleRow extends StatelessWidget {
                       ].join('  ·  '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: _muted),
+                      style: TextStyle(fontSize: 12, color: AppUi.muted(context)),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${vehicle.speed ?? 0} km/h  ·  ${vehicle.TrackingTime ?? ''}',
-                      style: const TextStyle(fontSize: 11, color: _muted),
+                      style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: _muted),
+              Icon(Icons.chevron_right_rounded, color: AppUi.muted(context)),
             ],
           ),
         ),

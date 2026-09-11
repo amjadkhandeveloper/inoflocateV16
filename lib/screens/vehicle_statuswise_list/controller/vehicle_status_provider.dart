@@ -27,6 +27,7 @@ import '../model/vehicle_status_response_model.dart';
 /// Vehicle status list, map markers, and track-history playback state.
 class VehicleStatusProvider extends ChangeNotifier with StateInterface {
   int? _totalCount = 0;
+  int? _expectedTotalCount;
   VehicleHistoryTrackModelDataVehicleHistory? _movingVehicleDetail;
   NotifierState _state = NotifierState.initial;
   LatLng _currentLocation = kGooglePlex;
@@ -49,7 +50,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
   // final Completer<GoogleMapController> _controller =
   //     Completer<GoogleMapController>();
   // late final GoogleMapController _cameraController;
-  int get totalCount => _totalCount!;
+  int get totalCount => _expectedTotalCount ?? _totalCount ?? 0;
   LatLng get currentLocation => _currentLocation;
   LatLng get historyCurrentLocation => _historyCurrentLocation;
 
@@ -65,6 +66,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
   bool _isSearchLoading = false;
 
   bool get isSearchLoading => _isSearchLoading;
+  int get loadedCount => _filterList?.length ?? 0;
   List<VehicleHistoryTrackModelDataVehicleHistory?>? get historyTrackList =>
       [..._historyTrackList ?? []];
 
@@ -131,10 +133,38 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     notifyListeners();
   }
 
-  clearVehicleList() {
+  void setExpectedTotal(int? total, {bool notify = true}) {
+    if (total == null || total < 0) {
+      _expectedTotalCount = null;
+    } else {
+      _expectedTotalCount = total;
+      _totalCount = total;
+    }
+    if (notify) notifyListeners();
+  }
+
+  void clearVehicleList() {
     _hasMoreData = true;
     _vehicleList = _filterList = [];
     notifyListeners();
+  }
+
+  void _applyApiTotal(int? recCnt) {
+    if (_expectedTotalCount != null) {
+      _totalCount = _expectedTotalCount;
+      return;
+    }
+    _totalCount = recCnt ?? (_vehicleList?.length ?? 0);
+  }
+
+  void _updatePaging({required int fetchedCount}) {
+    final loaded = _vehicleList?.length ?? 0;
+    if (_expectedTotalCount != null) {
+      _totalCount = _expectedTotalCount;
+      _hasMoreData = loaded < _expectedTotalCount! && fetchedCount > 0;
+      return;
+    }
+    _hasMoreData = fetchedCount >= pageSize;
   }
 
   VehicleStatusResponseModelDataVehicleStatusdetails? getVehicleById(
@@ -175,11 +205,10 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       _vehicleList = result?.vehicleStatusdetails ?? [];
       _filterList = _vehicleList;
       final counts = result?.vehicleCount ?? [];
-      if (counts.isNotEmpty && counts.first?.recCnt != null) {
-        _totalCount = counts.first!.recCnt;
-      } else {
-        _totalCount = _vehicleList?.length ?? 0;
-      }
+      _applyApiTotal(
+        counts.isNotEmpty ? counts.first?.recCnt : null,
+      );
+      _updatePaging(fetchedCount: _vehicleList?.length ?? 0);
 
       final firstWithPoint = _vehicleList
           ?.whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()
@@ -216,15 +245,13 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
           vehicleStatusWiseListRequestModel: vehicleStatusWiseListRequestModel);
       _vehicleStatusResponseModelData = result;
       final details = result?.vehicleStatusdetails ?? [];
-      _hasMoreData = details.length >= pageSize;
       _vehicleList!.addAll(details);
       _filterList = _vehicleList;
       final counts = result?.vehicleCount ?? [];
-      if (counts.isNotEmpty && counts.first?.recCnt != null) {
-        _totalCount = counts.first!.recCnt;
-      } else {
-        _totalCount = _vehicleList?.length ?? 0;
-      }
+      _applyApiTotal(
+        counts.isNotEmpty ? counts.first?.recCnt : null,
+      );
+      _updatePaging(fetchedCount: details.length);
 
       final firstWithPoint = _vehicleList
           ?.whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()

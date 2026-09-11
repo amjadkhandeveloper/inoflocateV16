@@ -1,12 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
-import 'package:infolocate/widgets/cards/custom_card.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
-import 'package:sizer/sizer.dart';
 
-import '../../utils/app_colors.dart';
-import '../../utils/app_styles.dart';
 import '../custom_webview.dart';
 
 class LiveVehicleListWidget extends StatelessWidget {
@@ -26,151 +23,90 @@ class LiveVehicleListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Theme.of(context).cardColor
-            : AppColors.grey,
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.black26
-                : Colors.grey.withOpacity(0.2),
-            spreadRadius: 3,
-            blurRadius: 8,
-            offset: const Offset(0, 2), // changes position of shadow
-          ),
-        ],
-        border: Border.all(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Theme.of(context).cardColor
-                : Colors.grey.shade300,
-            width: 1),
-        // color: Colors.white,
-        borderRadius: const BorderRadius.all(
-          Radius.circular(14),
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
-              ),
-            ),
-            child: Row(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: AppUi.card(
+        context: context,
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Text(
-                    vehicleNo,
-                    style: AppStyles.textStyle4(context: context)
-                        .copyWith(fontSize: 20),
-                  ),
+                AppUi.iconChip(
+                  icon: Icons.local_taxi_outlined,
+                  size: 32,
                 ),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: enableVideo
-                      ? InkWell(
-                          onTap: enableVideo == false
-                              ? () => customToast(
-                                  message:
-                                      LocaliazationKey.video_unavailable.tr())
-                              : () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => VideoPlayerScreen(
-                                        title: vehicleNo,
-                                        url: liveUrl,
-                                        // orientationMode: Orientation.landscape,
-                                      ),
-                                    ),
-                                  ),
-                          child: SizedBox(
-                            // width: width ?? 32.w,
-                            child: CustomContainer(
-                              applyShawdow: true,
-                              buttonRadius: 14,
-                              // height: 5.h,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 4.0, horizontal: 8.0),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.play_circle,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                                    const SizedBox(
-                                      width: 8,
-                                    ),
-                                    Text(
-                                      LocaliazationKey.play_video.tr(),
-                                      style: AppStyles.textStyle5(
-                                          context: context, isBold: true),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      : const Padding(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 4.0, horizontal: 4),
-                          child: Text(""),
-                        ),
-                ),
-                const SizedBox(
-                  width: 14,
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    location,
-                    style: AppStyles.textStyle4(context: context)
-                        .copyWith(fontSize: 18),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                const Spacer(),
-                const Icon(
-                  Icons.watch_later_outlined,
-                  size: 15,
-                ),
-                SizedBox(
-                  width: 2.w,
-                ),
-                Flexible(
-                  child: Text(
-                    tracktime,
-                    style: AppStyles.textStyle5(
-                      context: context,
+                    vehicleNo,
+                    style: AppUi.body(context).copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
                     ),
                   ),
                 ),
+                if (enableVideo)
+                  InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VideoPlayerScreen(
+                          title: vehicleNo,
+                          url: liveUrl,
+                        ),
+                      ),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppUi.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.play_circle_fill_rounded,
+                              size: 16, color: AppUi.accent),
+                          const SizedBox(width: 4),
+                          Text(
+                            LocaliazationKey.play_video.tr(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppUi.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () => customToast(
+                        message: LocaliazationKey.video_unavailable.tr()),
+                    child: Icon(Icons.videocam_off_outlined,
+                        size: 18, color: AppUi.muted(context)),
+                  ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(location, style: AppUi.body(context)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.schedule_rounded,
+                    size: 14, color: AppUi.muted(context)),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(tracktime, style: AppUi.mutedStyle(context)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../../../utils/json_safe_parser.dart';
+
 ForgotPasswordRequestModel forgotPasswordRequestModelFromJson(String str) =>
     ForgotPasswordRequestModel.fromJson(json.decode(str));
 
@@ -15,7 +17,7 @@ class ForgotPasswordRequestModel {
 
   factory ForgotPasswordRequestModel.fromJson(Map<String, dynamic> json) =>
       ForgotPasswordRequestModel(
-        loginName: json["LoginName"],
+        loginName: JsonSafe.asString(json["LoginName"]),
       );
 
   Map<String, dynamic> toJson() => {

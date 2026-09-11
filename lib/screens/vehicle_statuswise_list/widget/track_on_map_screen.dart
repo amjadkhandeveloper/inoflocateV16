@@ -9,6 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/widget/history_select_widget.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_styles.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/error_widget.dart';
 import 'package:provider/provider.dart';
@@ -217,11 +218,10 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<VehicleStatusProvider>(context);
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          LocaliazationKey.track_on_map.tr(),
-        ),
+      backgroundColor: AppUi.pageBg(context),
+      appBar: AppUi.appBar(
+        context: context,
+        title: LocaliazationKey.track_on_map.tr(),
       ),
       body: provider.state == NotifierState.error
           ? CustomErrorWidget(onPressed: () {

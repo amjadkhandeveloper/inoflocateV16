@@ -67,6 +67,7 @@
     "graph": "ग्राफ़",
     "map": "मानचित्र",
     "video_playback": "वीडियो प्लेबैक",
+    "no_video_available_for_playback": "प्लेबैक के लिए कोई वीडियो उपलब्ध नहीं है",
     "vehicle_number": "वाहन नंबर",
     "from_date_time": "तिथि और समय से",
     "to_date_time": "तिथि और समय तक",

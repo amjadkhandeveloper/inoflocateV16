@@ -3,6 +3,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../screens/dashboard/model/dashboard_response_model.dart';
 import '../utils/app_helper.dart';
+import '../utils/app_ui.dart';
 
 class CustomPieChart extends StatelessWidget {
   const CustomPieChart({
@@ -14,11 +15,25 @@ class CustomPieChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final axisColor = AppUi.muted(context);
+    final line = AppUi.line(context);
     return SfCartesianChart(
-      primaryXAxis:
-          CategoryAxis(labelIntersectAction: AxisLabelIntersectAction.trim),
-
-      // isTransposed: true,
+      backgroundColor: Colors.transparent,
+      plotAreaBackgroundColor: Colors.transparent,
+      plotAreaBorderWidth: 0,
+      primaryXAxis: CategoryAxis(
+        labelIntersectAction: AxisLabelIntersectAction.trim,
+        labelStyle: TextStyle(color: axisColor, fontSize: 11),
+        axisLine: AxisLine(color: line),
+        majorGridLines: MajorGridLines(color: line.withValues(alpha: 0.4)),
+        majorTickLines: MajorTickLines(color: line),
+      ),
+      primaryYAxis: NumericAxis(
+        labelStyle: TextStyle(color: axisColor, fontSize: 11),
+        axisLine: AxisLine(color: line),
+        majorGridLines: MajorGridLines(color: line.withValues(alpha: 0.4)),
+        majorTickLines: MajorTickLines(color: line),
+      ),
       series: <ColumnSeries<DashboardResponseModelDataVehicleStatus?, String>>[
         ColumnSeries<DashboardResponseModelDataVehicleStatus?, String>(
           width: 0.5,
@@ -31,8 +46,10 @@ class CustomPieChart extends StatelessWidget {
           pointColorMapper:
               (DashboardResponseModelDataVehicleStatus? sales, _) =>
                   sales!.color,
-          dataLabelSettings: const DataLabelSettings(
-              isVisible: true, textStyle: TextStyle(fontSize: 10)),
+          dataLabelSettings: DataLabelSettings(
+            isVisible: true,
+            textStyle: TextStyle(fontSize: 10, color: AppUi.ink(context)),
+          ),
         ),
       ],
     );

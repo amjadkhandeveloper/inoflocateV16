@@ -65,15 +65,21 @@ class VideoPlayBackService {
     required VideoPlayBackRequestModel videoPlayBackRequestModel,
   }) async {
     try {
-      VideoPlayBackResponseModelData? videoPlayBackResponseModelData;
-
-      print(
-          'VideoPlayBack request body--> ${videoPlayBackRequestModel.toJson()}');
-      AppHelper.configureDio(dio, tag: 'VideoPlayBackService.generateVideoPlayback');
-      final url = Global.savedClientAuthData!.clientUrl! +
-          app_const.vehicleVideoPlayback;
-      final body = videoPlayBackRequestModel.toJson();
-      final response = await dio.post(url, data: body);
+      AppHelper.configureDio(
+          dio, tag: 'VideoPlayBackService.generateVideoPlayback');
+      final isSequel = Global.isSequelClient;
+      final url = isSequel
+          ? app_const.sequelVehicleVideoPlaybackUrl
+          : Global.savedClientAuthData!.clientUrl! +
+              app_const.vehicleVideoPlayback;
+      final body = isSequel
+          ? videoPlayBackRequestModel.toSequelJson()
+          : videoPlayBackRequestModel.toJson();
+      final response = await dio.post(
+        url,
+        data: body,
+        options: Options(contentType: Headers.jsonContentType),
+      );
       AppHelper.logApiCall(
         tag: 'VideoPlayBackService.generateVideoPlayback',
         method: 'POST',
@@ -82,27 +88,29 @@ class VideoPlayBackService {
         status: response.statusCode,
         response: response.data,
       );
-      // final json = jsonDecode(.toString());
 
-      if (response.statusCode == 200) {
-        videoPlayBackResponseModelData =
-            VideoPlayBackResponseModel.fromJson(response.data).data;
-        return videoPlayBackResponseModelData;
+      if (response.statusCode == 200 && response.data is Map) {
+        final parsed = VideoPlayBackResponseModel.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        ).data;
+        if (parsed == null) {
+          throw Failure('No video available for the playback');
+        }
+        return parsed;
       }
-      return videoPlayBackResponseModelData;
+      throw Failure('No video available for the playback');
+    } on Failure {
+      rethrow;
     } on DioException catch (e) {
-      if (e.response != null &&
-          e.response!.statusCode != null &&
-          e.response!.statusCode! > 200 &&
-          e.response!.statusCode! < 404 &&
-          e.response!.data != null) {
-        print(e.response);
-        throw Failure(VideoPlayBackResponseModel.fromJson(e.response!.data)
-            .data!
-            .error!
-            .first!
-            .message
-            .toString());
+      if (e.response?.data is Map) {
+        final parsed = VideoPlayBackResponseModel.fromJson(
+          Map<String, dynamic>.from(e.response!.data as Map),
+        ).data;
+        final apiMessage = parsed?.message ??
+            parsed?.error?.first?.message;
+        if (apiMessage != null && apiMessage.trim().isNotEmpty) {
+          throw Failure(apiMessage);
+        }
       }
       throw await AppHelper.failureFromErrorAsync(e);
     } catch (error) {

@@ -15,6 +15,7 @@ import '../../../utils/app_globals.dart';
 import '../../../utils/app_helper.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../utils/app_styles.dart';
+import '../../../utils/app_ui.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/buttons/custom_button.dart';
 import '../../../widgets/cards/live_vehicle_list_widget.dart';
@@ -84,6 +85,7 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
     handleScroll(vehicleStatusState: vehicleStatusState);
 
     vehicleStatusState.clearVehicleList();
+    vehicleStatusState.setExpectedTotal(null);
     if (Global.savedClientAuthData == null) {
       //* assuring base url is not null
       await AppHelper.getHiveBoxData();
@@ -193,23 +195,10 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        appBar: AppBar(
-          iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
-          centerTitle: true,
-          title: Text(LocaliazationKey.live_vehicle.tr(),
-              style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge!.color)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(4.0),
-            child: Container(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Theme.of(context).cardColor
-                  : Colors.black12,
-              height: 1.0,
-            ),
-          ),
+        backgroundColor: AppUi.pageBg(context),
+        appBar: AppUi.appBar(
+          context: context,
+          title: LocaliazationKey.live_vehicle.tr(),
           actions: [
             CustomDropDownButton(
               onChanged: (value) async {

@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import '../../../utils/json_safe_parser.dart';
+
 UserLoginRequestModel userLoginRequestModelFromJson(String str) =>
     UserLoginRequestModel.fromJson(json.decode(str));
 
@@ -28,8 +30,8 @@ class UserLoginRequestModel {
 
   factory UserLoginRequestModel.fromJson(Map<String, dynamic> json) =>
       UserLoginRequestModel(
-        loginName: json["LoginName"],
-        loginPwd: json["LoginPwd"],
+        loginName: JsonSafe.asString(json["LoginName"]),
+        loginPwd: JsonSafe.asString(json["LoginPwd"]),
       );
 
   Map<String, dynamic> toJson() => {

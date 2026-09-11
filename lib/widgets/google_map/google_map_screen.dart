@@ -14,6 +14,7 @@ import '../../utils/app_colors.dart';
 import '../../utils/app_helper.dart';
 import '../../utils/app_localization_key.dart';
 import '../../utils/app_styles.dart';
+import '../../utils/app_ui.dart';
 import '../buttons/custom_icon_button.dart';
 import 'map_model.dart';
 
@@ -387,12 +388,22 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
               Positioned(
                 top: 2.h,
                 left: 2.w,
-                child: Card(
-                  child: IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.arrow_back)),
+                child: Material(
+                  color: AppUi.cardColor(context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppUi.line(context)),
+                      ),
+                      child: Icon(Icons.arrow_back_rounded,
+                          color: AppUi.ink(context)),
+                    ),
+                  ),
                 ),
               )
           ],

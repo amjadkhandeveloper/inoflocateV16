@@ -13,6 +13,7 @@ import '../../../utils/app_constants.dart';
 import '../../../utils/app_globals.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../utils/app_styles.dart';
+import '../../../utils/app_ui.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/buttons/custom_button.dart';
 import '../../../widgets/cards/pin_vehicle_card.dart';
@@ -142,16 +143,10 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
     // log(dynamicStatusState.dynamicStatusList!.length.toString());
     return SafeArea(
       child: Scaffold(
-        appBar: AppBar(
-          // iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
-          centerTitle: true,
-          title: Text(
-            LocaliazationKey.dynamic_status.tr(),
-            // style: TextStyle(
-            //     color: Theme.of(context).textTheme.bodyLarge!.color)
-          ),
-          // backgroundColor: Colors.transparent,
-          // elevation: 0,
+        backgroundColor: AppUi.pageBg(context),
+        appBar: AppUi.appBar(
+          context: context,
+          title: LocaliazationKey.dynamic_status.tr(),
         ),
         body: dynamicStatusState.state == NotifierState.loading
             ? const ListShimmerEffect(

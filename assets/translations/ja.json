@@ -66,6 +66,7 @@
     "graph": "グラフ",
     "map": "地図",
     "video_playback": "ビデオ再生",
+    "no_video_available_for_playback": "再生できるビデオがありません",
     "vehicle_number": "車両番号",
     "from_date_time": "開始日時",
     "to_date_time": "終了日時",

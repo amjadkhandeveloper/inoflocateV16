@@ -16,6 +16,7 @@ import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_extensions.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_styles.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/cards/alert_status_card.dart';
 import 'package:lottie/lottie.dart';
@@ -330,116 +331,33 @@ class _HomeScreenState extends State<HomeScreen> {
         //             element.isSelected.toString()),
         //       );
         // }),
-        appBar: AppBar(
-          iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
+        backgroundColor: AppUi.pageBg(context),
+        appBar: AppUi.appBar(
+          context: context,
+          title: LocaliazationKey.dashboard.tr(),
           leading: Builder(builder: (context) {
-            return InkWell(
-              onTap: () => Scaffold.of(context).openDrawer(),
-              child: const Icon(
-                Icons.menu,
-                size: 24,
-              ),
-              // child: const CustomSvgIcon(
-              //   icon: 'assets/icons/Group 253.svg',
-              // ),
+            return IconButton(
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              icon: Icon(Icons.menu_rounded, color: AppUi.ink(context)),
             );
           }),
           actions: [
-            // GestureDetector(
-            //   onTap: () {
-            //     Navigator.of(context).push(
-            //       MaterialPageRoute(
-            //         builder: (context) => const NotificationScreen(),
-            //       ),
-            //     );
-            //   },
-            //   child: Stack(
-            //     clipBehavior: Clip.none,
-            //     alignment: Alignment.center,
-            //     children: [
-            //       const CustomSvgIcon(
-            //         icon: 'assets/icons/Group 24.svg',
-            //       ),
-            //       Positioned(
-            //         right: -5,
-            //         top: 10,
-            //         child: Container(
-            //           alignment: Alignment.center,
-            //           decoration: BoxDecoration(
-            //             shape: BoxShape.circle,
-            //             color: Theme.of(context).colorScheme.primary,
-            //           ),
-            //           child: const Padding(
-            //             padding: EdgeInsets.all(5.0),
-            //             child: Text(
-            //               '9',
-            //               style: TextStyle(fontSize: 8),
-            //             ),
-            //           ),
-            //         ),
-            //       )
-            //     ],
-            //   ),
-            // ),
-            // 4.w.width,
             GestureDetector(
               onTap: () {
                 profileDialogBox(context, languageProvider.selectedLanguage);
               },
-              child: Container(
-                height: 30,
-                width: 30,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.primary,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: const CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Color(0x1F2563EB),
+                  child: Icon(
+                    Icons.person_outline_rounded,
+                    color: AppUi.accent,
+                    size: 18,
                   ),
                 ),
-                child: Icon(
-                  Icons.person_outline_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
               ),
-            ),
-            2.w.width,
-            // OpenContainer(
-            //   closedElevation: 0,
-            //   closedColor: Colors.transparent,
-            //   tappable: false,
-            //   openElevation: 0,
-            //   closedBuilder: (BuildContext context, void Function() action) {
-            //     return Padding(
-            //       padding: EdgeInsets.symmetric(horizontal: 2.h),
-            //       child: GestureDetector(
-            //         onTap: action,
-            //         // child: const CircleAvatar(
-            //         //   radius: 12,
-            //         //   backgroundImage: NetworkImage(
-            //         //     "https://images.pexels.com/photos/2422278/pexels-photo-2422278.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            //         //   ),
-            //         // ),
-            //         child: Container(
-            //           height: 30,
-            //           width: 30,
-            //           decoration: BoxDecoration(
-            //             shape: BoxShape.circle,
-            //             border: Border.all(color: AppColors.customGrey),
-            //           ),
-            //           child: Icon(
-            //             Icons.person_outline_rounded,
-            //             color: Theme.of(context).colorScheme.primary,
-            //           ),
-            //         ),
-            //       ),
-            //     );
-            //   },
-            //   openBuilder: (BuildContext context,
-            //       void Function({Object? returnValue}) action) {
-            //     return const ProfileScreen();
-            //   },
-            // ),
-            SizedBox(
-              width: 1.h,
             ),
           ],
         ),
@@ -447,13 +365,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const DasboardShimmerEffect()
             : dashBoardState.state != NotifierState.error && data != null
                 ? RefreshIndicator(
+                    color: AppUi.accent,
                     onRefresh: () async {
                       totalFleetCount = 0;
                       getUserData();
                     },
                     child: SingleChildScrollView(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -462,32 +381,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.only(left: 0.0),
                               child: Text(
                                 LocaliazationKey.dashboard.tr(),
-                                style: AppStyles.textStyle2(
-                                  context: context,
-                                  fontSize: 24,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                                style: AppUi.titleStyle(context).copyWith(fontSize: 22),
                               ),
                             ),
-                            1.h.height,
+                            const SizedBox(height: 12),
                             data.StatusCount!.isEmpty ? Container() : alertStatusListTwo(data),
-                            // alertStatusListTwo(data),
-                            // Figma Flutter Generator Group1Widget - GROUP
-
-                            2.h.height,
+                            const SizedBox(height: 16),
                             Padding(
-                              padding: EdgeInsets.only(bottom: 2.h, left: 6, right: 6),
+                              padding: const EdgeInsets.only(bottom: 12, left: 2, right: 2),
                               child: Text(
                                 LocaliazationKey.vehicle_status.tr(),
-                                style: AppStyles.textStyle4(
-                                  context: context,
-                                  size: 16,
-                                  // isBold: true,
-                                ),
+                                style: AppUi.sectionLabel(context),
                               ),
                             ),
                             CustomContainer(
-                              applyShawdow: false,
+                              applyShawdow: true,
                               // height: 12.h,
                               width: double.infinity,
                               child: Padding(
@@ -497,6 +405,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     ExpansionPanelList(
                                         elevation: 0,
+                                        expandedHeaderPadding: EdgeInsets.zero,
+                                        dividerColor: AppUi.line(context),
                                         expansionCallback: (int index, bool isExpanded) {
                                           log("Boolean Value ${isExpanded.toString()}");
                                           setState(() {
@@ -533,6 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                               title: LocaliazationKey.all_vehicles.tr(),
                                                               statusId: 6,
                                                               isLiveVehicle: false,
+                                                              totalCount: totalFleetCount,
                                                             ),
                                                           ),
                                                         )
@@ -546,17 +457,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       // 2.w.width,
                                                       Text(
                                                         totalFleetCount.toString(),
-                                                        style: AppStyles.textStyle3(context: context, size: 24),
+                                                        style: AppUi.titleStyle(context).copyWith(fontSize: 24),
                                                       ),
                                                       1.w.height,
                                                       Text(
                                                         LocaliazationKey.total_fleet.tr(),
-                                                        style: AppStyles.textStyle4(
-                                                          context: context,
-                                                          color: Theme.of(context).brightness == Brightness.light
-                                                              ? AppColors.darkGrey
-                                                              : null,
-                                                        ),
+                                                        style: AppUi.mutedStyle(context),
                                                       ),
                                                     ],
                                                   ),
@@ -596,8 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                               Tab(text: LocaliazationKey.map.tr()),
                                                             ],
                                                             labelColor: Colors.white,
-                                                            unselectedLabelColor:
-                                                                Theme.of(context).textTheme.bodyLarge!.color,
+                            unselectedLabelColor: AppUi.ink(context),
                                                             labelStyle: const TextStyle(fontSize: 16.0),
                                                             unselectedLabelStyle: const TextStyle(fontSize: 16.0),
                                                             indicator: BoxDecoration(
@@ -670,7 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             // alertStatusList(data),
-                            4.h.height,
+                            const SizedBox(height: 16),
                             data.Pinvehicle!.isEmpty
                                 ? Container()
                                 : Row(
@@ -707,11 +612,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       2.w.width,
                                       Text(
                                         LocaliazationKey.pin_vehicle.tr(),
-                                        style: AppStyles.textStyle4(
-                                          context: context,
-                                          size: 16,
-                                          // isBold: true,
-                                        ),
+                                        style: AppUi.sectionLabel(context),
                                       ),
                                     ],
                                   ),
@@ -928,6 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   statusId: AppHelper.returnStatusId(status: data.VehicleStatus![i]!.status.toString()),
                                   isLiveVehicle: false,
+                                  totalCount: data.VehicleStatus![i]!.Value,
                                 ),
                               ),
                             )
@@ -1215,14 +1117,10 @@ class _HomeScreenState extends State<HomeScreen> {
         Align(
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 6),
+            padding: const EdgeInsets.only(bottom: 12, left: 2, right: 2),
             child: Text(
               LocaliazationKey.alert_status.tr(),
-              style: AppStyles.textStyle4(
-                context: context,
-                size: 16,
-                // isBold: true,
-              ),
+              style: AppUi.sectionLabel(context),
             ),
           ),
         ),
@@ -1245,7 +1143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       visiblePercentage = visiblePercentage;
                     },
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: SizedBox(
                         width: 20.w,
                         child: InkWell(

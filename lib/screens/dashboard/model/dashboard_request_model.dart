@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import '../../../utils/json_safe_parser.dart';
+
 DashboardRequestModel dashboardRequestModelFromJson(String str) =>
     DashboardRequestModel.fromJson(json.decode(str));
 
@@ -23,9 +25,9 @@ class DashboardRequestModel {
 
   factory DashboardRequestModel.fromJson(Map<String, dynamic> json) =>
       DashboardRequestModel(
-        userId: json["UserId"],
-        pSize: json["pSize"],
-        pNo: json["PNo"],
+        userId: JsonSafe.asInt(json["UserId"]),
+        pSize: JsonSafe.asInt(json["pSize"]),
+        pNo: JsonSafe.asInt(json["PNo"]),
       );
 
   Map<String, dynamic> toJson() => {

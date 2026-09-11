@@ -6,15 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:infolocate/screens/forgot_password/controller/forgot_password_provider.dart';
 import 'package:infolocate/screens/forgot_password/model/forgot_password_request_model.dart';
 import 'package:infolocate/screens/forgot_password/view/mail_sent_screen.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 import 'package:provider/provider.dart';
 
 import '../../../utils/app_globals.dart';
 import '../../../utils/app_helper.dart';
 import '../../../utils/app_localization_key.dart';
-import '../../../utils/app_styles.dart';
 import '../../../utils/enums.dart';
-import '../../../widgets/buttons/custom_button.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   final bool isForgotPassword;
@@ -30,96 +29,121 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   TextEditingController usernameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final forgotPasswordState = Provider.of<ForgotPasswordProvider>(context);
+    final loading = forgotPasswordState.state == NotifierState.loading;
+    final title = widget.isForgotPassword
+        ? LocaliazationKey.forgot_password.tr()
+        : LocaliazationKey.reset_password.tr();
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.isForgotPassword
-              ? LocaliazationKey.forgot_password.tr()
-              : LocaliazationKey.reset_password.tr()),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  LocaliazationKey.user_name.tr(),
-                  style: AppStyles.textStyle4(
-                      context: context, size: 16, isBold: true),
-                ),
-                const SizedBox(
-                  height: 12,
-                ),
-                TextFormField(
-                  controller: usernameController,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.deny(RegExp(r' '))
-                  ],
-                  decoration: AppStyles.inputFieldStyle(
-                      hintText: LocaliazationKey.please_enter_username.tr()),
-                  validator: (name) => AppHelper.uerNameValidator(name),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    LocaliazationKey.email_note.tr(),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    textAlign: TextAlign.center,
+        backgroundColor: AppUi.pageBg(context),
+        body: SafeArea(
+          child: Column(
+            children: [
+              AppUi.pageHeader(
+                context: context,
+                title: title,
+                onBack: () => Navigator.of(context).pop(),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  child: Form(
+                    key: _formKey,
+                    child: AppUi.card(
+                      context: context,
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            LocaliazationKey.user_name.tr(),
+                            style: AppUi.fieldLabel(context),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: usernameController,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.deny(RegExp(r' ')),
+                            ],
+                            decoration: AppUi.inputDecoration(
+                              context: context,
+                              hintText: LocaliazationKey.please_enter_username
+                                  .tr(),
+                              prefixIcon: Icon(
+                                Icons.person_outline_rounded,
+                                size: 20,
+                                color: AppUi.muted(context),
+                              ),
+                            ),
+                            validator: (name) =>
+                                AppHelper.uerNameValidator(name),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            LocaliazationKey.email_note.tr(),
+                            style: AppUi.mutedStyle(context),
+                          ),
+                          const SizedBox(height: 24),
+                          AppUi.primaryButton(
+                            title: LocaliazationKey.confirm.tr(),
+                            loading: loading,
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                if (Global.savedUserAuthData != null &&
+                                    usernameController.text !=
+                                        Global.savedUserAuthData!.username!) {
+                                  return customToast(
+                                    message: LocaliazationKey
+                                        .incorrect_username
+                                        .tr(),
+                                  );
+                                } else {
+                                  FocusScope.of(context).unfocus();
+                                  await forgotPasswordState.forgotPassword(
+                                    forgotPasswordRequestModel:
+                                        ForgotPasswordRequestModel(
+                                            loginName: usernameController.text
+                                                .trim()),
+                                  );
+                                  if (forgotPasswordState.state ==
+                                          NotifierState.loaded &&
+                                      forgotPasswordState
+                                              .forgotPasswordResponseModel !=
+                                          null) {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const MailSentScreen(),
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(
-                  height: 24,
-                ),
-                forgotPasswordState.state == NotifierState.loading
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    : CustomButton(
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            if (Global.savedUserAuthData != null &&
-                                usernameController.text !=
-                                    Global.savedUserAuthData!.username!) {
-                              return customToast(
-                                message:
-                                    LocaliazationKey.incorrect_username.tr(),
-                              );
-                            } else {
-                              FocusScope.of(context).unfocus();
-                              await forgotPasswordState.forgotPassword(
-                                forgotPasswordRequestModel:
-                                    ForgotPasswordRequestModel(
-                                        loginName:
-                                            usernameController.text.trim()),
-                              );
-                              if (forgotPasswordState.state ==
-                                      NotifierState.loaded &&
-                                  forgotPasswordState
-                                          .forgotPasswordResponseModel !=
-                                      null) {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const MailSentScreen(),
-                                  ),
-                                );
-                              }
-                            }
-                          }
-                        },
-                        title: LocaliazationKey.confirm.tr(),
-                      ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

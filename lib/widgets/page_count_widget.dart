@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/app_styles.dart';
+import '../utils/app_ui.dart';
 
 class PageCountWidget extends StatelessWidget {
   const PageCountWidget({
@@ -14,18 +13,17 @@ class PageCountWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
-      // height: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.light
-              ? AppColors.grey
-              : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.customGrey)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
-        child: Text(
-          pageCount ?? '',
-          style: AppStyles.textStyle5(context: context).copyWith(fontSize: 16),
+        color: AppUi.cardColor(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppUi.line(context)),
+      ),
+      child: Text(
+        pageCount ?? '',
+        style: AppUi.mutedStyle(context).copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
         ),
       ),
     );

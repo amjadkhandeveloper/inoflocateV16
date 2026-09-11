@@ -1,19 +1,9 @@
-import 'client_model.dart';
 import 'package:hive/hive.dart';
 
+import '../../../utils/json_safe_parser.dart';
+import 'client_model.dart';
+
 part 'user_login_response_model.g.dart';
-
-int? _asInt(dynamic value) {
-  if (value == null) return null;
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value.toString());
-}
-
-Map<String, dynamic>? _asMap(dynamic value) {
-  if (value is Map) return Map<String, dynamic>.from(value);
-  return null;
-}
 
 bool _hasUserId(Map<String, dynamic> json) {
   return json['userid'] != null ||
@@ -32,7 +22,7 @@ Map<String, dynamic>? _extractUserMap(Map<String, dynamic> json) {
     'result',
     'Result',
   ]) {
-    final map = _asMap(json[key]);
+    final map = JsonSafe.asMapOrNull(json[key]);
     if (map != null) {
       if (_hasUserId(map) ||
           map['Username'] != null ||
@@ -43,22 +33,22 @@ Map<String, dynamic>? _extractUserMap(Map<String, dynamic> json) {
       final nested = _extractUserMap(map);
       if (nested != null) return nested;
     }
-    final list = json[key];
-    if (list is List && list.isNotEmpty) {
-      final first = _asMap(list.first);
+    final list = JsonSafe.asListOrNull(json[key]);
+    if (list != null && list.isNotEmpty) {
+      final first = JsonSafe.asMapOrNull(list.first);
       if (first != null && _hasUserId(first)) return first;
     }
   }
   for (final key in ['data', 'Data']) {
-    final map = _asMap(json[key]);
+    final map = JsonSafe.asMapOrNull(json[key]);
     if (map != null) {
       final nested = _extractUserMap(map);
       if (nested != null) return nested;
       if (_hasUserId(map)) return map;
     }
-    final list = json[key];
-    if (list is List && list.isNotEmpty) {
-      final first = _asMap(list.first);
+    final list = JsonSafe.asListOrNull(json[key]);
+    if (list != null && list.isNotEmpty) {
+      final first = JsonSafe.asMapOrNull(list.first);
       if (first != null && _hasUserId(first)) return first;
     }
   }
@@ -67,7 +57,7 @@ Map<String, dynamic>? _extractUserMap(Map<String, dynamic> json) {
 }
 
 @HiveType(typeId: 0)
-class UserLoginResponseModelDataUser {
+class UserLoginResponseModelDataUser with JsonSafeParser {
 /*
 {
   "userid": 3,
@@ -95,23 +85,21 @@ class UserLoginResponseModelDataUser {
       {this.userid, this.username, this.theme, this.language, this.clientid, this.showAdvertise});
 
   UserLoginResponseModelDataUser.fromJson(Map<String, dynamic> json) {
-    userid = _asInt(json['userid'] ??
-        json['userId'] ??
-        json['UserId'] ??
-        json['UserID']);
-    username = (json['Username'] ??
-            json['username'] ??
-            json['userName'] ??
-            json['UserName'])
-        ?.toString();
-    theme = _asInt(json['Theme'] ?? json['theme']);
-    language = (json['Language'] ?? json['language'])?.toString();
-    clientid = _asInt(
-        json['ClientId'] ?? json['clientId'] ?? json['clientid']);
-    showAdvertise = json['IsAdvertise'] ??
-        json['isAdvertise'] ??
-        json['showAdvertise'] ??
-        false;
+    userid = asIntFrom(json, ['userid', 'userId', 'UserId', 'UserID']);
+    username = asStringFrom(json, [
+      'Username',
+      'username',
+      'userName',
+      'UserName',
+    ]);
+    theme = asIntFrom(json, ['Theme', 'theme']);
+    language = asStringFrom(json, ['Language', 'language']);
+    clientid = asIntFrom(json, ['ClientId', 'clientId', 'clientid']);
+    showAdvertise = asBoolFrom(json, [
+      'IsAdvertise',
+      'isAdvertise',
+      'showAdvertise',
+    ]);
   }
 
   Map<String, dynamic> toJson() {
@@ -127,7 +115,7 @@ class UserLoginResponseModelDataUser {
   }
 }
 
-class UserLoginResponseModelData {
+class UserLoginResponseModelData with JsonSafeParser {
 /*
 {
   "status": 200,
@@ -147,18 +135,13 @@ class UserLoginResponseModelData {
   UserLoginResponseModelData({this.status, this.user, this.error});
 
   UserLoginResponseModelData.fromJson(Map<String, dynamic> json) {
-    status = _asInt(json['status'] ?? json['Status']);
+    status = asIntFrom(json, ['status', 'Status']);
     final userJson = _extractUserMap(json);
     if (userJson != null) {
       user = UserLoginResponseModelDataUser.fromJson(userJson);
     }
     if (json['error'] != null) {
-      final v = json['error'];
-      final arr0 = <DataError>[];
-      v.forEach((v) {
-        arr0.add(DataError.fromJson(v));
-      });
-      error = arr0;
+      error = asListOfMaps(json['error']).map(DataError.fromJson).toList();
     }
   }
 
@@ -172,7 +155,7 @@ class UserLoginResponseModelData {
   }
 }
 
-class UserLoginResponseModel {
+class UserLoginResponseModel with JsonSafeParser {
 /*
 {
   "data": {
@@ -195,9 +178,10 @@ class UserLoginResponseModel {
 
   UserLoginResponseModel.fromJson(Map<String, dynamic> json) {
     final userJson = _extractUserMap(json);
-    final nestedData = _asMap(json['data']) ?? _asMap(json['Data']);
+    final nestedData =
+        asMapOrNull(json['data']) ?? asMapOrNull(json['Data']);
     data = UserLoginResponseModelData(
-      status: _asInt(json['status'] ??
+      status: asInt(json['status'] ??
           json['Status'] ??
           nestedData?['status'] ??
           nestedData?['Status']),
@@ -206,12 +190,8 @@ class UserLoginResponseModel {
           : UserLoginResponseModelDataUser.fromJson(userJson),
     );
     if (nestedData != null && nestedData['error'] != null) {
-      final v = nestedData['error'];
-      final arr0 = <DataError>[];
-      v.forEach((item) {
-        arr0.add(DataError.fromJson(item));
-      });
-      data!.error = arr0;
+      data!.error =
+          asListOfMaps(nestedData['error']).map(DataError.fromJson).toList();
     }
   }
 

@@ -38,10 +38,21 @@ class AlertListRequestModel {
     data['AlertTypeId'] = alertTypeId;
     data['pSize'] = pSize;
     data['PNo'] = pNo;
-    // data['alertdt'] = alertdt;
     data['fromdt'] = fromDate;
     data['todt'] = toDate;
     data['vno'] = vno;
     return data;
+  }
+
+  Map<String, dynamic> toSequelJson() {
+    return {
+      'userId': userId,
+      'alertTypeId': alertTypeId,
+      'pSize': pSize,
+      'pNo': pNo,
+      'fromdt': fromDate,
+      'todt': toDate,
+      'vno': vno ?? '',
+    };
   }
 }

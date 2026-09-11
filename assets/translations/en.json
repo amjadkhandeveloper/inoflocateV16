@@ -67,6 +67,7 @@
     "graph": "Graph",
     "map": "Map",
     "video_playback": "Video PlayBack",
+    "no_video_available_for_playback": "No video available for the playback",
     "vehicle_number": "Vehicle Number",
     "from_date_time": "From Date and time",
     "to_date_time": "To Date and time",

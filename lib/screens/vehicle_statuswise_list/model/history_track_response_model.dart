@@ -1,4 +1,6 @@
-class VehicleHistoryTrackModelDataVehicleHistory {
+import '../../../utils/json_safe_parser.dart';
+
+class VehicleHistoryTrackModelDataVehicleHistory with JsonSafeParser {
 /*
 {
   "VehicleId": 34,
@@ -58,23 +60,23 @@ class VehicleHistoryTrackModelDataVehicleHistory {
       this.uniqueId});
   VehicleHistoryTrackModelDataVehicleHistory.fromJson(
       Map<String, dynamic> json) {
-    VehicleId = (json['VehicleId'] ?? json['vehicleId'])?.toInt();
-    ClientID = (json['ClientID'] ?? json['clientId'] ?? json['ClientId'])?.toInt();
-    VehicleNo = (json['VehicleNo'] ?? json['vehicleNo'])?.toString();
-    Unitno = (json['Unitno'] ?? json['unitno'] ?? json['unitNo'])?.toString();
-    tracktime = (json['tracktime'] ?? json['trackTime'] ?? json['TrackingTime'])
-        ?.toString();
-    lat = (json['lat'] ?? json['latitude'])?.toDouble();
-    lon = (json['lon'] ?? json['lng'] ?? json['longitude'])?.toDouble();
-    location = json['location']?.toString();
-    speed = json['speed']?.toInt();
-    odometer = json['odometer']?.toDouble();
-    direction = json['direction']?.toInt();
-    idleduration = json['idleduration']?.toInt();
-    stopduration = json['stopduration']?.toInt();
-    AlertInd = json['AlertInd']?.toInt();
-    Directions = json['Directions']?.toInt();
-    VehicleType = json['VehicleType']?.toString();
+    VehicleId = asIntFrom(json, ['VehicleId', 'vehicleId']);
+    ClientID = asIntFrom(json, ['ClientID', 'clientId', 'ClientId']);
+    VehicleNo = asStringFrom(json, ['VehicleNo', 'vehicleNo']);
+    Unitno = asStringFrom(json, ['Unitno', 'unitno', 'unitNo']);
+    tracktime =
+        asStringFrom(json, ['tracktime', 'trackTime', 'TrackingTime']);
+    lat = asDoubleOrNull(firstValue(json, ['lat', 'latitude']));
+    lon = asDoubleOrNull(firstValue(json, ['lon', 'lng', 'longitude']));
+    location = asString(json['location']);
+    speed = asInt(json['speed']);
+    odometer = asDouble(json['odometer']);
+    direction = asInt(json['direction']);
+    idleduration = asInt(json['idleduration']);
+    stopduration = asInt(json['stopduration']);
+    AlertInd = asInt(json['AlertInd']);
+    Directions = asInt(json['Directions']);
+    VehicleType = asString(json['VehicleType']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -98,7 +100,7 @@ class VehicleHistoryTrackModelDataVehicleHistory {
   }
 }
 
-class VehicleHistoryTrackModelData {
+class VehicleHistoryTrackModelData with JsonSafeParser {
 /*
 {
   "status": 200,
@@ -133,14 +135,12 @@ class VehicleHistoryTrackModelData {
     this.VehicleHistory,
   });
   VehicleHistoryTrackModelData.fromJson(Map<String, dynamic> json) {
-    status = json['status']?.toInt();
-    final raw = json['VehicleHistory'] ?? json['vehicleHistory'] ?? json['history'];
-    if (raw is List) {
-      VehicleHistory = raw
-          .whereType<Map>()
-          .map((item) => VehicleHistoryTrackModelDataVehicleHistory.fromJson(
-                Map<String, dynamic>.from(item),
-              ))
+    status = asIntFrom(json, ['status', 'Status']);
+    final raw = asListOrNull(
+        firstValue(json, ['VehicleHistory', 'vehicleHistory', 'history']));
+    if (raw != null) {
+      VehicleHistory = asListOfMaps(raw)
+          .map(VehicleHistoryTrackModelDataVehicleHistory.fromJson)
           .toList();
     }
   }
@@ -159,7 +159,7 @@ class VehicleHistoryTrackModelData {
   }
 }
 
-class VehicleHistoryTrackModel {
+class VehicleHistoryTrackModel with JsonSafeParser {
 /*
 {
   "data": {
@@ -194,10 +194,9 @@ class VehicleHistoryTrackModel {
     this.data,
   });
   VehicleHistoryTrackModel.fromJson(Map<String, dynamic> json) {
-    if (json['data'] is Map) {
-      data = VehicleHistoryTrackModelData.fromJson(
-        Map<String, dynamic>.from(json['data'] as Map),
-      );
+    final dataMap = asMapOrNull(json['data']);
+    if (dataMap != null) {
+      data = VehicleHistoryTrackModelData.fromJson(dataMap);
     } else if (json['VehicleHistory'] != null ||
         json['vehicleHistory'] != null ||
         json['history'] != null) {

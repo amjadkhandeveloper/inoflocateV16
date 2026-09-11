@@ -5,6 +5,7 @@ import 'package:infolocate/utils/app_extensions.dart';
 
 import 'app_colors.dart';
 import 'app_localization_key.dart';
+import 'app_ui.dart';
 
 class AppStyles {
   static ThemeData appLightTheme(
@@ -12,24 +13,36 @@ class AppStyles {
           required BuildContext ctx,
           String? fontFamily = montserrat}) =>
       ThemeData(
+        useMaterial3: true,
         primarySwatch: primaryColor == null
             ? primeryColorConstant.toMaterial()
             : primaryColor.toMaterial(),
         brightness: Brightness.light,
+        colorScheme: ColorScheme.light(
+          primary: primaryColor ?? primeryColorConstant,
+          onPrimary: Colors.white,
+          secondary: AppUi.accent,
+          onSecondary: Colors.white,
+          surface: AppUi.cardLight,
+          onSurface: AppUi.inkLight,
+          error: const Color(0xFFDC2626),
+          onError: Colors.white,
+        ),
+        canvasColor: AppUi.pageBgLight,
+        cardColor: AppUi.cardLight,
+        dividerColor: AppUi.lineLight,
+        iconTheme: const IconThemeData(color: AppUi.inkLight),
         appBarTheme: AppBarTheme(
-          iconTheme: const IconThemeData(color: Colors.black),
+          iconTheme: const IconThemeData(color: AppUi.inkLight),
           titleTextStyle:
-              AppStyles.textStyle2(context: ctx, color: Colors.black),
+              AppStyles.textStyle2(context: ctx, color: AppUi.inkLight),
           elevation: 0,
-          backgroundColor: Colors.transparent,
-
-          // actionsIconTheme: IconThemeData(
-          //   color: Theme.of(context).iconTheme.color,
-          // ),
+          backgroundColor: AppUi.cardLight,
+          foregroundColor: AppUi.inkLight,
+          surfaceTintColor: Colors.transparent,
         ),
         fontFamily: fontFamily,
-        scaffoldBackgroundColor: Colors.white,
-        // 'Montserrat'
+        scaffoldBackgroundColor: AppUi.pageBgLight,
       );
 
   static ThemeData appDarkTheme(
@@ -37,23 +50,37 @@ class AppStyles {
           required BuildContext ctx,
           String? fontFamily = montserrat}) =>
       ThemeData(
-          primarySwatch: primaryColor == null
-              ? primeryColorConstant.toMaterial()
-              : primaryColor.toMaterial(),
-          brightness: Brightness.dark,
-          appBarTheme: AppBarTheme(
-            // iconTheme: Theme.of(context).iconTheme,
-            titleTextStyle: AppStyles.textStyle2(
-              context: ctx,
-              // color: Theme.of(context).iconTheme.color
-            ),
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            // actionsIconTheme: IconThemeData(
-            //   color: Theme.of(context).iconTheme.color,
-            // ),
-          ),
-          fontFamily: fontFamily);
+        useMaterial3: true,
+        primarySwatch: primaryColor == null
+            ? primeryColorConstant.toMaterial()
+            : primaryColor.toMaterial(),
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.dark(
+          primary: primaryColor ?? primeryColorConstant,
+          onPrimary: Colors.white,
+          secondary: AppUi.accent,
+          onSecondary: Colors.white,
+          surface: AppUi.cardDark,
+          onSurface: AppUi.inkDark,
+          error: const Color(0xFFDC2626),
+          onError: Colors.white,
+        ),
+        canvasColor: AppUi.pageBgDark,
+        cardColor: AppUi.cardDark,
+        dividerColor: AppUi.lineDark,
+        iconTheme: const IconThemeData(color: AppUi.inkDark),
+        appBarTheme: AppBarTheme(
+          iconTheme: const IconThemeData(color: AppUi.inkDark),
+          titleTextStyle:
+              AppStyles.textStyle2(context: ctx, color: AppUi.inkDark),
+          elevation: 0,
+          backgroundColor: AppUi.cardDark,
+          foregroundColor: AppUi.inkDark,
+          surfaceTintColor: Colors.transparent,
+        ),
+        scaffoldBackgroundColor: AppUi.pageBgDark,
+        fontFamily: fontFamily,
+      );
 
   static InputDecoration inputFieldStyle(
       {String? hintText,

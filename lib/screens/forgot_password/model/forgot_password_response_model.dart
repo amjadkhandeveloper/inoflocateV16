@@ -1,3 +1,4 @@
+import '../../../utils/json_safe_parser.dart';
 import '../../login/model/client_model.dart';
 
 ///
@@ -5,7 +6,7 @@ import '../../login/model/client_model.dart';
 ///
 // ignore_for_file: non_constant_identifier_names
 
-class ForgotPasswordResponseModelDataData {
+class ForgotPasswordResponseModelDataData with JsonSafeParser {
 /*
 {
   "ResultID": 1,
@@ -33,12 +34,12 @@ class ForgotPasswordResponseModelDataData {
     this.EmailId,
   });
   ForgotPasswordResponseModelDataData.fromJson(Map<String, dynamic> json) {
-    ResultID = json['ResultID']?.toInt();
-    ResultMessage = json['ResultMessage']?.toString();
-    Userid = json['Userid']?.toInt();
-    Username = json['Username']?.toString();
-    Authword = json['Authword']?.toString();
-    EmailId = json['EmailId']?.toString();
+    ResultID = asInt(json['ResultID']);
+    ResultMessage = asString(json['ResultMessage']);
+    Userid = asInt(json['Userid']);
+    Username = asString(json['Username']);
+    Authword = asString(json['Authword']);
+    EmailId = asString(json['EmailId']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -52,7 +53,7 @@ class ForgotPasswordResponseModelDataData {
   }
 }
 
-class ForgotPasswordResponseModelData {
+class ForgotPasswordResponseModelData with JsonSafeParser {
 /*
 {
   "status": 200,
@@ -79,11 +80,12 @@ class ForgotPasswordResponseModelData {
     this.message,
   });
   ForgotPasswordResponseModelData.fromJson(Map<String, dynamic> json) {
-    status = json['status']?.toInt();
-    data = (json['data'] != null)
-        ? ForgotPasswordResponseModelDataData.fromJson(json['data'])
+    status = asIntFrom(json, ['status', 'Status']);
+    final inner = asMapOrNull(json['data']);
+    data = inner != null
+        ? ForgotPasswordResponseModelDataData.fromJson(inner)
         : null;
-    message = json['message']?.toString();
+    message = asString(json['message']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -94,7 +96,7 @@ class ForgotPasswordResponseModelData {
   }
 }
 
-class ForgotPasswordResponseModel {
+class ForgotPasswordResponseModel with JsonSafeParser {
 /*
 {
   "data": {
@@ -118,8 +120,9 @@ class ForgotPasswordResponseModel {
     this.data,
   });
   ForgotPasswordResponseModel.fromJson(Map<String, dynamic> json) {
-    data = (json['data'] != null)
-        ? ForgotPasswordResponseModelData.fromJson(json['data'])
+    final dataMap = asMapOrNull(json['data']);
+    data = dataMap != null
+        ? ForgotPasswordResponseModelData.fromJson(dataMap)
         : null;
   }
   Map<String, dynamic> toJson() {

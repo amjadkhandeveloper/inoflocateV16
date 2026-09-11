@@ -19,10 +19,9 @@ import '../../screens/dashboard/controller/dashboard_provider.dart';
 import '../../screens/dashboard/controller/sequel_dashboard_provider.dart';
 import '../../screens/dashboard/model/dashboard_request_model.dart';
 import '../../screens/vehicle_statuswise_list/controller/vehicle_status_provider.dart';
-import '../../utils/app_colors.dart';
 import '../../utils/app_globals.dart';
 import '../../utils/app_localization_key.dart';
-import '../../utils/app_styles.dart';
+import '../../utils/app_ui.dart';
 import '../buttons/custom_icon_button.dart';
 import '../google_map/google_map_screen.dart';
 import '../google_map/map_model.dart';
@@ -233,33 +232,20 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
     ];
 
     return Padding(
-      padding: EdgeInsets.only(top: 2.h),
+      padding: const EdgeInsets.only(top: 8),
       child: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Theme.of(context).cardColor
-                  : Theme.of(context).colorScheme.primary.withOpacity(0.04),
-              border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Theme.of(context).cardColor
-                      : Theme.of(context).colorScheme.primary.withOpacity(0.04),
-                  width: 1),
-              borderRadius: const BorderRadius.all(
-                Radius.circular(20),
-              ),
-            ),
+            decoration: AppUi.cardDecoration(context),
             child: Column(
               children: [
                 Container(
-                    // applyShawdow: false,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
+                      color: AppUi.cardColor(context),
                       borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20)),
+                          topLeft: Radius.circular(AppUi.radius),
+                          topRight: Radius.circular(AppUi.radius)),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
@@ -277,10 +263,10 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                   children: [
                                     Text(
                                       widget.vehicleNo ?? '',
-                                      style: AppStyles.textStyle4(
-                                          context: context,
-                                          isBold: true,
-                                          size: 18),
+                                      style: AppUi.body(context).copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                     (widget.status!.toLowerCase() == inactive ||
                                             (widget.status!.toLowerCase() ==
@@ -288,10 +274,7 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                                 !widget.enableUrl))
                                         ? Text(
                                             LocaliazationKey.offline.tr(),
-                                            style: AppStyles.textStyle4(
-                                              context: context,
-                                              color: Colors.grey,
-                                            ),
+                                            style: AppUi.mutedStyle(context),
                                           )
                                         : Container(),
                                   ],
@@ -305,8 +288,9 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Icon(
-                                      Icons.watch_later_outlined,
+                                      Icons.schedule_rounded,
                                       size: 15,
+                                      color: Color(0xFF64748B),
                                     ),
                                     SizedBox(
                                       width: 2.w,
@@ -314,14 +298,7 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                     Flexible(
                                       child: Text(
                                         widget.trackTime ?? '',
-                                        style: AppStyles.textStyle5(
-                                          context: context,
-                                        ).copyWith(
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                        Brightness.light
-                                                    ? AppColors.darkGrey
-                                                    : null),
+                                        style: AppUi.mutedStyle(context),
                                       ),
                                     ),
                                   ],
@@ -334,29 +311,20 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                           ),
                           Text(
                             widget.location ?? '',
-                            style: AppStyles.textStyle4(
-                                context: context, size: 16),
+                            style: AppUi.body(context),
                           )
                         ],
                       ),
                     )),
                 Container(
-                  // width: SizerUtil.width,
                   height: 7.h,
                   decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkGrey
-                          : Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.02),
-                      //  AppColors.grey,
-                      border: Border.all(
-                          color: Theme.of(context).cardColor, width: 1),
-                      // color: Colors.white,
+                      color: AppUi.pageBg(context),
+                      border: Border(
+                          top: BorderSide(color: AppUi.line(context))),
                       borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20))),
+                          bottomLeft: Radius.circular(AppUi.radius),
+                          bottomRight: Radius.circular(AppUi.radius))),
                   // height: 8.h,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,

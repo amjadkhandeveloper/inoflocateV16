@@ -4,6 +4,7 @@ import 'package:infolocate/screens/card_types_screen/controller/card_type_provid
 import 'package:infolocate/utils/app_extensions.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/app_styles.dart';
+import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
@@ -50,35 +51,10 @@ class _CardTypesScreenState extends State<CardTypesScreen> {
   Widget build(BuildContext context) {
     final cardTypeProvider = Provider.of<CardTypeProvider>(context);
     return Scaffold(
-      appBar: AppBar(
-        // iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
-        centerTitle: true,
-        title: Text(
-          LocaliazationKey.choose_cards.tr(),
-          // style: TextStyle(
-          //     color: Theme.of(context).textTheme.bodyLarge!.color)
-        ),
-        // actions: [
-        //   TextButton(
-        //       onPressed: () async {
-        //         await Global.box.put(
-        //             vehicleStatusCardTypeIdKey,
-        //             cardTypeProvider
-        //                 .currentSelectedVehicleStatusCard!.cardTypeId!);
-        //         await Global.box.put(
-        //             alertStatusCardTypeIdKey,
-        //             cardTypeProvider
-        //                 .currentSelectedAlertStatusCard!.cardTypeId!);
-        //         await AppHelper.getHiveBoxData();
-        //         customToast(
-        //           message: LocaliazationKey.card_settings_updated.tr(),
-        //         );
-        //         if (mounted) Navigator.pop(context);
-        //       },
-        //       child: Text(LocaliazationKey.done.tr()))
-        // ],
-        // backgroundColor: Colors.transparent,
-        // elevation: 0,
+      backgroundColor: AppUi.pageBg(context),
+      appBar: AppUi.appBar(
+        context: context,
+        title: LocaliazationKey.choose_cards.tr(),
       ),
       body: SingleChildScrollView(
         child: Padding(

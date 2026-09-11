@@ -102,6 +102,12 @@ const String sequelHistoryTrackUrl =
     "${sequelApiBaseUrl}api/Vehicle/historyTrackVehicle";
 const String sequelVehicleStatusUrl =
     "${sequelApiBaseUrl}api/Vehicle/vehicleStatusWiseList";
+const String sequelCurrDashVehicleUrl =
+    "${sequelApiBaseUrl}api/Vehicle/currDashVehicle";
+const String sequelAlertwiseListUrl =
+    "${sequelApiBaseUrl}api/Vehicle/AlertwiseList";
+const String sequelVehicleVideoPlaybackUrl =
+    "${sequelApiBaseUrl}api/Vehicle/vehicleVideoPlayback";
 
 /// Sample JSON only — not used at runtime (see grep). Kept for API contract reference.
 const Map<String, dynamic> pinVehicleListJson = {

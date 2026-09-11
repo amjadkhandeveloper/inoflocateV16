@@ -97,7 +97,7 @@ class MyApp extends StatelessWidget {
                 supportedLocales: context.supportedLocales,
                 locale: context.locale,
                 debugShowCheckedModeBanner: false,
-                title: 'InfoLocate V14',
+                title: 'InfoLocate',
                 darkTheme: dark,
                 theme: light,
                 initialRoute: SplashScreen.routeName,

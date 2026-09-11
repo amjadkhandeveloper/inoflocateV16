@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import '../../../utils/json_safe_parser.dart';
+
 PinVehicleRequestModel pinVehicleRequestModelFromJson(String str) =>
     PinVehicleRequestModel.fromJson(json.decode(str));
 
@@ -25,10 +27,10 @@ class PinVehicleRequestModel {
 
   factory PinVehicleRequestModel.fromJson(Map<String, dynamic> json) =>
       PinVehicleRequestModel(
-        clientId: json["ClientId"],
-        userId: json["UserId"],
-        vehicleid: json["Vehicleid"],
-        insertMode: json["InsertMode"],
+        clientId: JsonSafe.asInt(json["ClientId"]),
+        userId: JsonSafe.asInt(json["UserId"]),
+        vehicleid: JsonSafe.asInt(json["Vehicleid"]),
+        insertMode: JsonSafe.asInt(json["InsertMode"]),
       );
 
   Map<String, dynamic> toJson() => {
