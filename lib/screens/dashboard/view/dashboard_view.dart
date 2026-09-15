@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:infolocate/animation/custom_fade_animation.dart';
 import 'package:infolocate/screens/dashboard/controller/ads_provider.dart';
 import 'package:infolocate/screens/dashboard/controller/dashboard_provider.dart';
 import 'package:infolocate/screens/dashboard/model/dashboard_request_model.dart';
+import 'package:infolocate/screens/splash/force_update_checker.dart';
 import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_extensions.dart';
 import 'package:infolocate/utils/app_globals.dart';
@@ -19,7 +19,6 @@ import 'package:infolocate/utils/app_styles.dart';
 import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/cards/alert_status_card.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -32,12 +31,12 @@ import '../../../widgets/cards/custom_card.dart';
 import '../../../widgets/cards/pin_vehicle_card.dart';
 import '../../../widgets/cards/vehicle_status_card.dart';
 import '../../../widgets/circle_avatar/custom_avatar.dart';
-import '../../../widgets/custom_pie_chart.dart';
 import '../../../widgets/custom_shimmer_effects.dart';
 import '../../../widgets/cutom_carousel_widget.dart';
 import '../../../widgets/drawer/navigation_drawer.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../widgets/google_map/map_model.dart';
+import '../../../widgets/profile_dialog.dart';
 import '../../alerts/view/alert_screen.dart';
 import '../../card_types_screen/controller/card_type_provider.dart';
 import '../../language/controller/language_provider.dart';
@@ -135,7 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
       languageProvider.setCurrentLanguage();
     });
 
-    Future.delayed(Duration.zero, () => getUserData());
+    Future.delayed(Duration.zero, () {
+      getUserData();
+      ForceUpdateChecker.checkFromDashboard(context);
+    });
 
     // dashboardProvider.getDashboardData(
     //     dashboardRequestModel: dashboardRequestModel);
@@ -342,22 +344,8 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }),
           actions: [
-            GestureDetector(
-              onTap: () {
-                profileDialogBox(context, languageProvider.selectedLanguage);
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: const CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Color(0x1F2563EB),
-                  child: Icon(
-                    Icons.person_outline_rounded,
-                    color: AppUi.accent,
-                    size: 18,
-                  ),
-                ),
-              ),
+            ProfileAvatarButton(
+              selectedLanguage: languageProvider.selectedLanguage,
             ),
           ],
         ),
@@ -372,7 +360,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: SingleChildScrollView(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          12,
+                          16,
+                          AppUi.bottomInset(context, extra: 20),
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,194 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: 12),
                             data.StatusCount!.isEmpty ? Container() : alertStatusListTwo(data),
                             const SizedBox(height: 16),
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12, left: 2, right: 2),
-                              child: Text(
-                                LocaliazationKey.vehicle_status.tr(),
-                                style: AppUi.sectionLabel(context),
-                              ),
-                            ),
-                            CustomContainer(
-                              applyShawdow: true,
-                              // height: 12.h,
-                              width: double.infinity,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ExpansionPanelList(
-                                        elevation: 0,
-                                        expandedHeaderPadding: EdgeInsets.zero,
-                                        dividerColor: AppUi.line(context),
-                                        expansionCallback: (int index, bool isExpanded) {
-                                          log("Boolean Value ${isExpanded.toString()}");
-                                          setState(() {
-                                            isVehicleStatusExpanded = !isVehicleStatusExpanded;
-                                            log("Is Tile Expanded $isVehicleStatusExpanded");
-                                          });
-                                        },
-                                        children: [
-                                          ExpansionPanel(
-                                            backgroundColor: Colors.transparent,
-                                            isExpanded: isVehicleStatusExpanded,
-                                            headerBuilder: (BuildContext context, bool isExpanded) {
-                                              return ListTile(
-                                                // tileColor: Colors.transparent,
-                                                leading: ClipRRect(
-                                                  borderRadius: BorderRadius.circular(15),
-                                                  child: SvgPicture.asset(
-                                                    'assets/icons/Group 254.svg',
-                                                    fit: BoxFit.cover,
-                                                    colorFilter: ColorFilter.mode(
-                                                        Theme.of(context).colorScheme.primary, BlendMode.color),
-                                                    height: 40,
-                                                  ),
-                                                ),
-                                                title: InkWell(
-                                                  onTap: () {
-                                                    if (_timer != null && _timer!.isActive) {
-                                                      _timer!.cancel();
-                                                    }
-                                                    Navigator.of(context)
-                                                        .push(
-                                                          MaterialPageRoute(
-                                                            builder: (context) => VehicleStatusScreen(
-                                                              title: LocaliazationKey.all_vehicles.tr(),
-                                                              statusId: 6,
-                                                              isLiveVehicle: false,
-                                                              totalCount: totalFleetCount,
-                                                            ),
-                                                          ),
-                                                        )
-                                                        .then(
-                                                          (value) => getUserData(),
-                                                        );
-                                                  },
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      // 2.w.width,
-                                                      Text(
-                                                        totalFleetCount.toString(),
-                                                        style: AppUi.titleStyle(context).copyWith(fontSize: 24),
-                                                      ),
-                                                      1.w.height,
-                                                      Text(
-                                                        LocaliazationKey.total_fleet.tr(),
-                                                        style: AppUi.mutedStyle(context),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                            body: Column(
-                                              children: [
-                                                SizedBox(
-                                                  height: data.VehicleStatus!.length <= 4
-                                                      ? tabBarIndex == 0 && data.VehicleStatus!.length <= 2
-                                                          ? 22.h
-                                                          : 36.h
-                                                      : 50.h,
-                                                  child: DefaultTabController(
-                                                    length: 3,
-                                                    child: Column(
-                                                      children: [
-                                                        Container(
-                                                          height: 38,
-                                                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                                                          decoration: BoxDecoration(
-                                                            color:
-                                                                Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                                                            borderRadius: BorderRadius.circular(28),
-                                                          ),
-                                                          child: TabBar(
-                                                            onTap: (index) {
-                                                              tabBarIndex = index;
-                                                              setState(() {});
-                                                            },
-                                                            tabs: [
-                                                              Tab(
-                                                                text: LocaliazationKey.data.tr(),
-                                                              ),
-                                                              Tab(text: LocaliazationKey.graph.tr()),
-                                                              Tab(text: LocaliazationKey.map.tr()),
-                                                            ],
-                                                            labelColor: Colors.white,
-                            unselectedLabelColor: AppUi.ink(context),
-                                                            labelStyle: const TextStyle(fontSize: 16.0),
-                                                            unselectedLabelStyle: const TextStyle(fontSize: 16.0),
-                                                            indicator: BoxDecoration(
-                                                              borderRadius: BorderRadius.circular(28.0),
-                                                              color: Theme.of(context).colorScheme.primary,
-                                                            ),
-                                                            indicatorSize: TabBarIndicatorSize.tab,
-                                                          ),
-                                                        ),
-                                                        1.h.height,
-                                                        Expanded(
-                                                          child: TabBarView(
-                                                            physics: const NeverScrollableScrollPhysics(),
-                                                            children: [
-                                                              // vehicleStatusGrid(data),
-                                                              newVehicleStatusGrid(data),
-                                                              Padding(
-                                                                padding: EdgeInsets.only(top: 1.h),
-                                                                child: CustomPieChart(
-                                                                  data: data.VehicleStatus,
-                                                                ),
-                                                              ),
-                                                              SizedBox(
-                                                                width: SizerUtil.width * 0.85,
-                                                                // height: 300,
-                                                                child: Column(
-                                                                  children: [
-                                                                    Expanded(
-                                                                      flex: 3,
-                                                                      child: Padding(
-                                                                        padding: EdgeInsets.only(
-                                                                          top: 1.8.h,
-                                                                          left: 3.w,
-                                                                          right: 3.w,
-                                                                        ),
-                                                                        child: const MapOverview(),
-                                                                      ),
-                                                                    ),
-                                                                    TextButton(
-                                                                      onPressed: () {
-                                                                        Global.isVehicleListBackgroundFetching = true;
-                                                                        Navigator.push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                const TrackOnMapScreen(),
-                                                                          ),
-                                                                        ).then((value) => false);
-                                                                      },
-                                                                      child: Text(
-                                                                        LocaliazationKey.view_more.tr(),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                        ]),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // alertStatusList(data),
+                            _homeOverviewCards(data),
                             const SizedBox(height: 16),
                             data.Pinvehicle!.isEmpty
                                 ? Container()
@@ -610,8 +416,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       //   ),
                                       // ),
                                       2.w.width,
-                                      Text(
-                                        LocaliazationKey.pin_vehicle.tr(),
+                                        Text(
+                                        LocaliazationKey.favourite_vehicles.tr(),
                                         style: AppUi.sectionLabel(context),
                                       ),
                                     ],
@@ -654,8 +460,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   odometer: pinCardData.odometer,
                                                   speed: pinCardData.speed.toString(),
                                                   urlTitle: pinCardData.VehicleNo,
-                                                  enableUrl: pinCardData.Status!.toLowerCase() == moving ||
-                                                      pinCardData.Status!.toLowerCase() == idle,
+                                                  enableUrl: !Global.isSequelClient &&
+                                                      (pinCardData.LiveUrl ?? '').trim().isNotEmpty &&
+                                                      (pinCardData.Status!.toLowerCase() == moving ||
+                                                      pinCardData.Status!.toLowerCase() == idle),
                                                   liveUrlList: null,
                                                   showPinnedIcon: true,
                                                   statusId: pinCardData.id,
@@ -704,93 +512,111 @@ class _HomeScreenState extends State<HomeScreen> {
         drawer: CustomNavigationDrawer());
   }
 
-  Future<dynamic> profileDialogBox(BuildContext context, String selectedLanguage) {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return CustomFadeScaleTransition(
-          duration: const Duration(milliseconds: 400),
-          child: Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    LottieBuilder.asset(
-                      'assets/animation/user_animation.json',
-                      repeat: false,
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.fill,
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            LocaliazationKey.user_name.tr(),
-                            style: AppStyles.textStyle5(context: context, isBold: false),
+  Widget _homeOverviewCards(DashboardResponseModelData data) {
+    final cardTypeProvider = Provider.of<CardTypeProvider>(context);
+    final statuses = (data.VehicleStatus ?? [])
+        .whereType<DashboardResponseModelDataVehicleStatus>()
+        .where((s) {
+          final name = (s.status ?? '').toLowerCase();
+          return name == moving || name == idle;
+        })
+        .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12, left: 2, right: 2),
+          child: Text(
+            LocaliazationKey.vehicle_overview.tr(),
+            style: AppUi.sectionLabel(context),
+          ),
+        ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          children: [
+            SizedBox(
+              width: 40.w,
+              child: GestureDetector(
+                onTap: () {
+                  if (_timer != null && _timer!.isActive) {
+                    _timer!.cancel();
+                  }
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder: (context) => VehicleStatusScreen(
+                            title: LocaliazationKey.all_vehicles.tr(),
+                            statusId: 6,
+                            isLiveVehicle: false,
+                            totalCount: totalFleetCount,
                           ),
                         ),
-                        Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(Global.savedUserAuthData!.username!)),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            LocaliazationKey.selected_language.tr(),
-                            style: AppStyles.textStyle5(context: context, isBold: false),
-                          ),
-                        ),
-                        Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(selectedLanguage)),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 38,
-                    ),
-                  ],
+                      )
+                      .then((value) => getUserData());
+                },
+                child: VehicleStatusCard(
+                  count: totalFleetCount.toString(),
+                  icon: AppHelper.returnIcons(title: LocaliazationKey.all_vehicles.tr()),
+                  title: LocaliazationKey.total_fleet.tr(),
+                  iconColor: AppUi.accent,
+                  percentage: '100',
+                  cardType:
+                      cardTypeProvider.currentSelectedVehicleStatusCard?.cardTypeId ??
+                          1,
                 ),
-                Positioned(
-                  right: 2,
-                  top: 0,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(
-                      Icons.cancel_outlined,
-                      size: 28,
+              ),
+            ),
+            for (final status in statuses)
+              SizedBox(
+                width: 40.w,
+                child: GestureDetector(
+                  onTap: () {
+                    if (_timer != null && _timer!.isActive) {
+                      _timer!.cancel();
+                    }
+                    Navigator.of(context)
+                        .push(
+                          MaterialPageRoute(
+                            builder: (context) => VehicleStatusScreen(
+                              title: AppHelper.returnJapaneseText(
+                                title: status.status.toString(),
+                              ),
+                              statusId: AppHelper.returnStatusId(
+                                status: status.status.toString(),
+                              ),
+                              isLiveVehicle: false,
+                              totalCount: status.Value,
+                            ),
+                          ),
+                        )
+                        .then((value) => getUserData());
+                  },
+                  child: VehicleStatusCard(
+                    count: status.Value.toString(),
+                    icon: AppHelper.returnIcons(
+                      title: (status.status ?? '').toLowerCase() == idle
+                          ? 'Idle'
+                          : 'Moving',
                     ),
+                    title: AppHelper.returnJapaneseText(
+                      title: status.status.toString(),
+                    ),
+                    iconColor:
+                        AppHelper.returnIconColor(title: status.status.toString()),
+                    percentage: AppHelper.returnPercentage(
+                      value: status.Value?.toInt() ?? 0,
+                      totalcount: totalFleetCount == 0 ? 1 : totalFleetCount,
+                    ).toString(),
+                    cardType: cardTypeProvider
+                            .currentSelectedVehicleStatusCard?.cardTypeId ??
+                        1,
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -848,7 +674,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 value: data.VehicleStatus![i]!.Value!.toInt(), totalcount: totalFleetCount)
                             // .floor()
                             .toString(),
-                        cardType: cardTypeProvider.currentSelectedVehicleStatusCard!.cardTypeId,
+                        cardType: cardTypeProvider.currentSelectedVehicleStatusCard?.cardTypeId ?? 1,
                       ),
                     ),
                   ),
@@ -1161,7 +987,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: AlertStatusCard(
                               alertCount: alertStatusList[index]!.AlertCount,
                               alertType: alertStatusList[index]!.AlertType,
-                              cardType: cardTypeProvider.currentSelectedAlertStatusCard!.cardTypeId,
+                              cardType: cardTypeProvider.currentSelectedAlertStatusCard?.cardTypeId ?? 1,
                             )),
                       ),
                     ),

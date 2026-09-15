@@ -517,7 +517,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
               color: AppHelper.getSpeedometerColor(
                   int.parse(vehicle.speed.toString())),
             ),
-            title: vehicle.speed.toString()),
+            title: "${vehicle.speed} ${LocaliazationKey.km_h.tr()}"),
       if (vehicle.speed != null)
         ButtonListModel(
           icon: SvgPicture.asset(
@@ -534,7 +534,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
               height: 3.h,
               color: Global.savedPrimeryColor,
             ),
-            title: "${vehicle.odometer} ${LocaliazationKey.miles.tr()}"),
+            title: "${vehicle.odometer} ${LocaliazationKey.km.tr()}"),
       if (vehicle.EngineOffdelay != null)
         ButtonListModel(
             icon: SvgPicture.asset(

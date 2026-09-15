@@ -102,14 +102,8 @@ class VehicleStatusCard extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: SvgPicture.asset(
-        color: iconColor,
-        // colorFilter: ColorFilter.mode(
-        //   // iconColor,
-        //   BlendMode.srcIn,
-        // ),
         icon ?? 'assets/icons/Group 134.svg',
-        // fit: BoxFit.contain,
-        // height: 15,
+        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       ),
     );
   }

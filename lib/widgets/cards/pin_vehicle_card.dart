@@ -106,6 +106,12 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
 
     print('Widget Live: ${widget.liveUrlList}');
 
+    final hasLiveUrl = (widget.liveUrl ?? '').trim().isNotEmpty ||
+        (widget.liveUrlList
+                ?.any((e) => (e ?? '').trim().isNotEmpty) ??
+            false);
+    final showLiveVideo = !Global.isSequelClient && hasLiveUrl;
+
     final buttonList = [
       if (widget.status != null)
         ButtonListModel(
@@ -118,46 +124,44 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
           ),
           title: AppHelper.returnJapaneseText(title: widget.status),
         ),
-      ButtonListModel(
-          icon: SvgPicture.asset(
-            "assets/icons/new_icons/live-video.svg",
-            // "assets/icons/new_icons/orange.svg",
-            height: 2.h,
-            // colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-            color: widget.enableUrl
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey,
-          ),
-          title: widget.alertType ?? LocaliazationKey.live_video.tr(),
-          value: widget.liveUrl,
-          onTap: widget.enableUrl
-              ? () {
-                  if (widget.liveUrlList != null) {
-                    print("Live Url: ${widget.liveUrlList}");
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GridVideoPlayerScreen(
-                          url: widget.liveUrlList,
-                          title: widget.vehicleNo,
+      if (showLiveVideo)
+        ButtonListModel(
+            icon: SvgPicture.asset(
+              "assets/icons/new_icons/live-video.svg",
+              height: 2.h,
+              color: widget.enableUrl
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.grey,
+            ),
+            title: widget.alertType ?? LocaliazationKey.live_video.tr(),
+            value: widget.liveUrl,
+            onTap: widget.enableUrl
+                ? () {
+                    if (widget.liveUrlList != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GridVideoPlayerScreen(
+                            url: widget.liveUrlList,
+                            title: widget.vehicleNo,
+                          ),
                         ),
-                      ),
-                    );
-                    return;
-                  } else if (widget.liveUrl != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VideoPlayerScreen(
-                          url: widget.liveUrl,
-                          title: widget.vehicleNo,
+                      );
+                      return;
+                    } else if (widget.liveUrl != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VideoPlayerScreen(
+                            url: widget.liveUrl,
+                            title: widget.vehicleNo,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
                   }
-                }
-              : () => customToast(
-                  message: LocaliazationKey.video_unavailable.tr())),
+                : () => customToast(
+                    message: LocaliazationKey.video_unavailable.tr())),
       ButtonListModel(
           icon: SvgPicture.asset(
             "assets/icons/new_icons/mapit.svg",
@@ -168,34 +172,37 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
           ),
           title: LocaliazationKey.map_it.tr(),
           value: widget.location ?? '',
-          onTap: widget.mapData == null
-              ? null
-              : () async {
-                  if (await Permission.location.request().isGranted) {
-                    // ignore: use_build_context_synchronously
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => GoogleMapScreen(
-                            marker: widget.mapData!,
-                            isAlertStatus:
-                                widget.alertType != null ? true : false,
-                          ),
-                        ));
-                    // Either the permission was already granted before or the user just granted it.
-                  }
-                }),
+          onTap: () async {
+            if (widget.mapData?.latLng == null) {
+              customToast(
+                message: LocaliazationKey.location_unavailable.tr(),
+              );
+              return;
+            }
+            try {
+              await Permission.location.request();
+            } catch (e) {
+              log('location permission: $e');
+            }
+            if (!mounted) return;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GoogleMapScreen(
+                  marker: widget.mapData!,
+                  isAlertStatus: widget.alertType != null,
+                ),
+              ),
+            );
+          }),
       if (widget.speed != null)
         ButtonListModel(
           icon: SvgPicture.asset(
-            AppHelper.getSpeedometerIcon(int.parse(widget.speed.toString())),
-            // "assets/icons/new_icons/orange.svg",
+            AppHelper.getSpeedometerIcon(_parseSpeed(widget.speed)),
             height: 2.h,
-
-            color: AppHelper.getSpeedometerColor(
-                int.parse(widget.speed.toString())),
+            color: AppHelper.getSpeedometerColor(_parseSpeed(widget.speed)),
           ),
-          title: "${widget.speed} mph",
+          title: "${widget.speed} ${LocaliazationKey.km_h.tr()}",
         ),
       if (widget.ignition != null)
         ButtonListModel(
@@ -213,7 +220,7 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
               height: 2.h,
               color: Theme.of(context).colorScheme.primary,
             ),
-            title: "${widget.odometer} ${LocaliazationKey.miles.tr()}"),
+            title: "${widget.odometer} ${LocaliazationKey.km.tr()}"),
       if (widget.stopDuration != null)
         ButtonListModel(
             icon: SvgPicture.asset(
@@ -280,28 +287,31 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                   ],
                                 ),
                               ),
-                              // const Spacer(),
                               Expanded(
                                 flex: widget.showPinnedIcon ? 6 : 4,
-                                child: Row(
-                                  // mainAxisAlignment: MainAxisAlignment.end,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Icon(
-                                      Icons.schedule_rounded,
-                                      size: 15,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                    SizedBox(
-                                      width: 2.w,
-                                    ),
-                                    Flexible(
-                                      child: Text(
-                                        widget.trackTime ?? '',
-                                        style: AppUi.mutedStyle(context),
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: widget.showPinnedIcon ? 36 : 0,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.schedule_rounded,
+                                        size: 15,
+                                        color: Color(0xFF64748B),
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(
+                                        width: 2.w,
+                                      ),
+                                      Flexible(
+                                        child: Text(
+                                          widget.trackTime ?? '',
+                                          style: AppUi.mutedStyle(context),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -480,5 +490,11 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
         ],
       ),
     );
+  }
+
+  int _parseSpeed(String? speed) {
+    return int.tryParse(speed ?? '') ??
+        double.tryParse(speed ?? '')?.round() ??
+        0;
   }
 }

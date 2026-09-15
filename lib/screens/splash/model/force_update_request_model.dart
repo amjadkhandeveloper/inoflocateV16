@@ -35,4 +35,10 @@ class ForceUpdateRequestModel {
         "Appversion": appversion,
         "AppId": appId,
       };
+
+  Map<String, dynamic> toSequelJson() => {
+        "clientId": clientId,
+        "appVersion": appversion,
+        "appId": appId,
+      };
 }

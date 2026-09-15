@@ -246,6 +246,9 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                     child: AnimationLimiter(
                                       child: ListView.builder(
                                         controller: _scrollController,
+                                        padding: EdgeInsets.only(
+                                          bottom: AppUi.bottomInset(context),
+                                        ),
                                         itemCount: (vehicleStatusState.filterList?.length ?? 0) + 1,
                                         itemBuilder: ((context, index) {
                                           if (index == (vehicleStatusState.filterList?.length ?? 0)) {
@@ -288,7 +291,9 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                                           vehicleNo: cardData.VehicleNo ?? "Unknown",
                                                           location: cardData.location ?? "",
                                                           tracktime: cardData.tracktime ?? "",
-                                                          enableVideo: (cardData.Status?.toLowerCase() == idle ||
+                                                          enableVideo: !Global.isSequelClient &&
+                                                              (cardData.LiveUrl ?? '').trim().isNotEmpty &&
+                                                              (cardData.Status?.toLowerCase() == idle ||
                                                               cardData.Status?.toLowerCase() == moving ||
                                                               (cardData.Status?.toLowerCase() == stopped && (cardData.EngineOffdelay ?? 0) > 0)),
                                                           liveUrl: cardData.LiveUrl,
@@ -322,7 +327,10 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                                             odometer: cardData.odometer,
                                                             idelDuration: cardData.idleduration,
                                                             stopDuration: cardData.stopduration,
-                                                            enableUrl: cardData.LiveUrl != null && cardData.devicetype == "MDVR" || cardData.devicetype == "MDVR AI",
+                                                            enableUrl: !Global.isSequelClient &&
+                                                                (cardData.LiveUrl ?? '').trim().isNotEmpty &&
+                                                                (cardData.devicetype == "MDVR" ||
+                                                                    cardData.devicetype == "MDVR AI"),
                                                             // enableUrl: cardData.Status != null &&
                                                             //     (cardData.Status!.toLowerCase() == idle ||
                                                             //         cardData.Status!.toLowerCase() == moving ||

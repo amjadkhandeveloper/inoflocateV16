@@ -57,7 +57,7 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
       }
       // _dashboardResponseModelData!.VehicleStatus!.insert(0, element)
     } on Failure catch (failure) {
-      if (failure.message == LocaliazationKey.no_internet_connection.tr()) {
+      if (_dashboardResponseModelData == null) {
         setFailure(failure);
       }
     } catch (err) {
@@ -131,7 +131,9 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
       //         cardType: "D3",
       //         status: "Demo"));
     } on Failure catch (failure) {
-      setFailure(failure);
+      if (!(backgroundFetch && _dashboardResponseModelData != null)) {
+        setFailure(failure);
+      }
     } catch (err) {
       print(err.toString());
     }

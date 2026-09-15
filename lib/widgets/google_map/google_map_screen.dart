@@ -35,7 +35,7 @@ class GoogleMapScreen extends StatefulWidget {
 class _GoogleMapScreenState extends State<GoogleMapScreen> {
   final Completer<GoogleMapController> _controller =
       Completer<GoogleMapController>();
-  late final GoogleMapController _cameraController;
+  GoogleMapController? _cameraController;
   LatLng currentLocation = kGooglePlex;
   Set<Marker> markers = <Marker>{};
   // @override
@@ -83,14 +83,11 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
       if (vehicle.speed != null)
         ButtonListModel(
             icon: SvgPicture.asset(
-              AppHelper.getSpeedometerIcon(int.parse(vehicle.speed.toString())),
-              // "assets/icons/new_icons/orange.svg",
+              AppHelper.getSpeedometerIcon(_parseSpeed(vehicle.speed)),
               height: 3.h,
-              // colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-              color: AppHelper.getSpeedometerColor(
-                  int.parse(vehicle.speed.toString())),
+              color: AppHelper.getSpeedometerColor(_parseSpeed(vehicle.speed)),
             ),
-            title: "${vehicle.speed} mph"),
+            title: "${vehicle.speed} ${LocaliazationKey.km_h.tr()}"),
       if (vehicle.ignition != null)
         ButtonListModel(
           icon: SvgPicture.asset(
@@ -107,7 +104,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
               height: 3.h,
               color: Theme.of(context).colorScheme.primary,
             ),
-            title: "${vehicle.odometer} ${LocaliazationKey.miles.tr()}"),
+            title: "${vehicle.odometer} ${LocaliazationKey.km.tr()}"),
       if (vehicle.engineOffdelay != null)
         ButtonListModel(
             icon: SvgPicture.asset(
@@ -192,7 +189,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                             ),
                             Text(
                               widget.isAlertStatus
-                                  ? "${LocaliazationKey.alert_status.tr()} : "
+                                  ? ''
                                   : "${LocaliazationKey.vehicle_status.tr()} : ",
                               style: const TextStyle(
                                   color: Colors.white, fontSize: 18),
@@ -318,10 +315,20 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
     markers = {};
     if (widget.marker == null || widget.marker!.latLng == null) return;
     currentLocation = widget.marker!.latLng!;
-    final Uint8List data = await AppHelper.getBytesFromAsset(
-        AppHelper.imagePathByStatusName(statusName: widget.marker!.statusName!),
-        80);
-    var markerIcon = BitmapDescriptor.fromBytes(data);
+    final statusName = AppHelper.returnAlertStatus(
+      alertStatus: widget.marker!.statusName,
+    );
+    BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarkerWithHue(
+      AppHelper.getMarkerColorByStatus(status: statusName) ??
+          BitmapDescriptor.hueRed,
+    );
+    try {
+      final Uint8List data = await AppHelper.getBytesFromAsset(
+          AppHelper.imagePathByStatusName(statusName: statusName), 80);
+      markerIcon = BitmapDescriptor.fromBytes(data);
+    } catch (e) {
+      log('map marker asset failed: $e');
+    }
 
     markers.add(
       Marker(
@@ -346,13 +353,14 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
   }
 
   Future<void> moveCamera() async {
-    log(widget.marker!.vehicleId.toString());
+    log(widget.marker?.vehicleId.toString() ?? '');
     await Future.delayed(const Duration(seconds: 1));
-    await _cameraController
+    final controller = _cameraController;
+    if (!mounted || controller == null) return;
+    await controller
         .showMarkerInfoWindow(MarkerId(widget.marker!.vehicleId.toString()));
-    _cameraController.moveCamera(CameraUpdate.newCameraPosition(CameraPosition(
+    controller.moveCamera(CameraUpdate.newCameraPosition(CameraPosition(
         target: currentLocation,
-        // LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
         zoom: 18)));
   }
 
@@ -367,7 +375,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print(widget.marker!.statusName);
+    print(widget.marker?.statusName);
     // print(markers.length);
     return SafeArea(
       child: Scaffold(
@@ -410,5 +418,11 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
         ),
       ),
     );
+  }
+
+  int _parseSpeed(String? speed) {
+    return int.tryParse(speed ?? '') ??
+        double.tryParse(speed ?? '')?.round() ??
+        0;
   }
 }

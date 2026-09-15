@@ -24,6 +24,8 @@ import 'package:infolocate/utils/app_styles.dart';
 import 'package:sizer/sizer.dart';
 
 import 'app_colors.dart';
+import 'app_ui.dart';
+import 'json_safe_parser.dart';
 
 /// Shared helpers: form validation, network error mapping, Hive/session load,
 /// theme, status icons/colors, and video URL building.
@@ -187,12 +189,7 @@ class AppHelper {
       if (!online) {
         return Failure(LocaliazationKey.no_internet_connection.tr());
       }
-      // Device can reach the internet — host-specific / DNS-for-API failure.
-      final nested = error is DioException ? error.error : error;
-      if (_isServerUnreachable(nested) || _isLikelyOffline(nested)) {
-        return Failure(LocaliazationKey.server_unreachable.tr());
-      }
-      return Failure(LocaliazationKey.no_internet_connection.tr());
+      return Failure(LocaliazationKey.server_unreachable.tr());
     }
 
     return failureFromError(error);
@@ -326,6 +323,31 @@ class AppHelper {
     }
   }
 
+  /// True when HTTP succeeded but the payload is a business failure
+  /// (`status` 0 / non-1-or-200, or an explicit fail message).
+  static bool isApiBusinessFailure(Object? response) {
+    final map = JsonSafe.asMapOrNull(response);
+    if (map == null) return false;
+    final nested = JsonSafe.asMapOrNull(map['data'] ?? map['Data']);
+    final status = JsonSafe.asIntOrNull(map['status'] ?? map['Status']) ??
+        JsonSafe.asIntOrNull(nested?['status'] ?? nested?['Status']);
+    if (status != null && status != 1 && status != 200) return true;
+    final message = (JsonSafe.asStringOrNull(
+              map['message'] ?? map['Message'] ?? map['remark'],
+            ) ??
+            JsonSafe.asStringOrNull(
+              nested?['message'] ?? nested?['Message'] ?? nested?['remark'],
+            ) ??
+            '')
+        .toLowerCase();
+    if (message.contains('fail') ||
+        message.contains('invalid') ||
+        message.contains('unauthor')) {
+      return true;
+    }
+    return false;
+  }
+
   /// Trace helper for repositories: URL + request + response/error.
   static void logApiCall({
     required String tag,
@@ -336,11 +358,14 @@ class AppHelper {
     Object? response,
     Object? error,
   }) {
+    final businessFailure = error == null && isApiBusinessFailure(response);
     logApiTrace('API_CALL [$tag] $method $url');
     logApiTrace('API_CALL [$tag] REQUEST: ${_compactJson(request)}');
-    if (error != null) {
-      logApiTrace('API_CALL [$tag] ERROR: $error');
-      logApiTrace('API_CALL [$tag] ERROR BODY: ${_compactJson(response)}');
+    if (error != null || businessFailure) {
+      logApiTrace(
+        'API_CALL [$tag] FAILURE: ${error ?? 'Business status is not success'}',
+      );
+      logApiTrace('API_CALL [$tag] FAILURE BODY: ${_compactJson(response)}');
     } else {
       logApiTrace('API_CALL [$tag] STATUS: $status');
       logApiTrace('API_CALL [$tag] RESPONSE: ${_compactJson(response)}');
@@ -362,6 +387,9 @@ class AppHelper {
   /// Root cause of "API works in browser but Dio fails": browser trusts/ignores
   /// the cert, while Dio 5.9 needs [IOHttpClientAdapter.createHttpClient].
   static void configureDio(Dio dio, {String tag = 'API'}) {
+    dio.options.connectTimeout = const Duration(seconds: 30);
+    dio.options.receiveTimeout = const Duration(seconds: 30);
+    dio.options.sendTimeout = const Duration(seconds: 30);
     dio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         final client = HttpClient();
@@ -459,7 +487,9 @@ class AppHelper {
         newAlertStatus = "Tilt end";
         break;
       default:
-        newAlertStatus = "alert";
+        newAlertStatus = alertStatus?.trim().isNotEmpty == true
+            ? alertStatus!
+            : LocaliazationKey.alert_type.tr();
     }
     return newAlertStatus;
   }
@@ -732,27 +762,26 @@ class AppHelper {
 
   static returnIconColor({required String? title}) {
     Color color = Colors.blue;
-    switch (title) {
-      case 'Idle':
+    switch ((title ?? '').toLowerCase().trim()) {
+      case 'idle':
         color = const Color(0xffEE9229);
         break;
-      case 'Stopped':
+      case 'stopped':
         color = const Color(0xffed220d);
         break;
-      case 'Moving':
+      case 'moving':
         color = const Color(0xff289348);
         break;
-      case 'Working':
+      case 'working':
+      case 'operational':
+      case 'operation':
         color = const Color(0xff6c4bf1);
         break;
-      case 'Operational':
-        color = const Color(0xff6c4bf1);
-        break;
-      case 'Inactive':
+      case 'inactive':
         color = const Color(0xff929292);
         break;
       default:
-        color = Colors.pink.shade700;
+        color = AppUi.accent;
     }
     return color;
   }
@@ -1137,14 +1166,16 @@ $body
         ? '${DateTime.now().millisecondsSinceEpoch - started}ms'
         : '(unknown)';
     final fullUrl = response.requestOptions.uri.toString();
+    final businessFailure = AppHelper.isApiBusinessFailure(response.data);
+    final label = businessFailure ? 'FAILURE' : 'RESPONSE';
     AppHelper.logApiTrace(
-      'API_TRACE #$id RESPONSE [$tag] ${response.statusCode} $fullUrl ($duration)',
+      'API_TRACE #$id $label [$tag] ${response.statusCode} $fullUrl ($duration)',
     );
     AppHelper.logApiTrace(
-      'API_TRACE #$id RESPONSE BODY [$tag]: ${AppHelper._compactJson(response.data)}',
+      'API_TRACE #$id $label BODY [$tag]: ${AppHelper._compactJson(response.data)}',
     );
     AppHelper._logBlock('''
-========== API RESPONSE #$id [$tag] ==========
+========== API $label #$id [$tag] ==========
 STATUS   : ${response.statusCode} ${response.statusMessage ?? ''}
 URL      : $fullUrl
 DURATION : $duration

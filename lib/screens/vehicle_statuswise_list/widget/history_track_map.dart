@@ -243,7 +243,7 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 48, 12),
                   child: Text(
                     LocaliazationKey.choose_vehicle_icon.tr(),
                     style: AppStyles.textStyle4(
@@ -588,30 +588,32 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
                                                   .movingVehicleDetail!.speed ==
                                               null
                                           ? '0'
-                                          : '${provider.movingVehicleDetail!.speed} mph',
+                                          : '${provider.movingVehicleDetail!.speed} ${LocaliazationKey.km_h.tr()}',
                                       isBold: false,
                                       valueFontSize: 16,
                                     ),
                                   ),
                                   Expanded(
                                     flex: 5,
-                                    child: SizedBox(
-                                      height: 36,
-                                      // width: 10,
-                                      child: ElevatedButton(
-                                        key: widget.key,
-                                        onPressed: () {
-                                          showSelectVehicleSheet();
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          // minimumSize: Size(80.w, 6.h),
-                                          elevation: 0,
-                                        ),
-                                        child: Text(
-                                          LocaliazationKey.change_vehicle.tr(),
-                                          style: AppStyles.textStyle4(
-                                              context: context, size: 14),
-                                        ),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        showSelectVehicleSheet();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 10),
+                                        minimumSize: const Size(0, 40),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: Text(
+                                        LocaliazationKey.change_vehicle.tr(),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppStyles.textStyle4(
+                                            context: context, size: 14),
                                       ),
                                     ),
                                   ),
@@ -680,6 +682,8 @@ class CustomValueWidget extends StatelessWidget {
         Expanded(
           child: Text(
             value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: AppStyles.textStyle4(
                 context: context,
                 isBold: isBold ?? false,

@@ -267,8 +267,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 if (forgotPasswordState.state ==
                                         NotifierState.loaded &&
                                     forgotPasswordState
-                                            .forgotPasswordResponseModel !=
-                                        null) {
+                                            .forgotPasswordResponseModel
+                                            ?.isSuccess ==
+                                        true) {
                                   Navigator.of(context).pushReplacement(
                                     MaterialPageRoute(
                                       builder: (context) =>

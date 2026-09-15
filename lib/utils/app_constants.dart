@@ -112,6 +112,12 @@ const String sequelPinVehicleUrl =
     "${sequelApiBaseUrl}api/Vehicle/pinVehicleList";
 const String sequelResetPasswordUrl =
     "${sequelApiBaseUrl}api/Auth/ResetPassword";
+const String sequelVerifyUserUrl = "${sequelApiBaseUrl}api/Auth/VerifyUser";
+const String sequelForceUpdateUrl =
+    "${sequelApiBaseUrl}api/Auth/ForceUpdateClient";
+
+/// Integer app version sent to ForceUpdateClient and compared with the API.
+const int kAppVersion = 13;
 
 /// Sample JSON only — not used at runtime (see grep). Kept for API contract reference.
 const Map<String, dynamic> pinVehicleListJson = {

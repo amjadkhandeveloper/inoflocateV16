@@ -105,10 +105,14 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
   }
 
   @override
-  void setFailure(Failure failure) {
+  void setFailure(Failure failure, {bool toast = true}) {
     _failure = failure;
-    customToast(message: failure.message.toString());
-    setState(NotifierState.error);
+    if (toast) customToast(message: failure.message.toString());
+    if (_data == null) {
+      setState(NotifierState.error);
+    } else {
+      notifyListeners();
+    }
   }
 
   Future<void> loadDashboard({
@@ -142,9 +146,11 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
       _lastFetchAt = DateTime.now();
       setState(NotifierState.loaded);
     } on Failure catch (failure) {
-      setFailure(failure);
+      final keepShowing = _data != null && !showLoader;
+      setFailure(failure, toast: !keepShowing);
     } catch (err) {
-      setFailure(Failure(err.toString()));
+      final keepShowing = _data != null && !showLoader;
+      setFailure(Failure(err.toString()), toast: !keepShowing);
     } finally {
       _fetching = false;
     }

@@ -22,6 +22,7 @@ import '../../../utils/app_localization_key.dart';
 import '../../../widgets/custom_dropdown.dart';
 import '../../../widgets/custom_search_widget.dart';
 import '../../dashboard/controller/dashboard_provider.dart';
+import '../../dashboard/controller/sequel_dashboard_provider.dart';
 import '../controller/vehicle_status_provider.dart';
 import '../model/vehicle_status_request_model.dart';
 import '../model/vehicle_status_response_model.dart';
@@ -52,25 +53,42 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
 
   @override
   void didChangeDependencies() {
-    final dashBoardState = Provider.of<DashboardProvider>(context, listen: false);
-    choiceList = [];
-    if (dashBoardState.dashboardResponseModelData != null) {
-      choiceList = [
-        LocaliazationKey.all.tr(),
-        if (widget.showTrackHistory == true) LocaliazationKey.track_history.tr()
-      ];
-      choiceList.addAll(dashBoardState.dashboardResponseModelData!.VehicleStatus!
-          .map((e) => AppHelper.returnJapaneseText(title: e!.status))
-          .toSet());
-
-      // choiceList.addAll(dashBoardState
-      //     .dashboardResponseModelData!.VehicleStatus!
-      //     .map((e) => e!.status)
-      //     .toSet());
-    }
-    // moveCameraAlongToMarker();
-
+    _fillChoiceList();
     super.didChangeDependencies();
+  }
+
+  void _fillChoiceList() {
+    final statuses = <String>{};
+    if (Global.isSequelClient) {
+      final sequel = Provider.of<SequelDashboardProvider>(context, listen: false);
+      for (final s in sequel.vehicleStatuses) {
+        final name = AppHelper.returnJapaneseText(title: s.status);
+        if (name.isNotEmpty && name != 'null') statuses.add(name);
+      }
+    } else {
+      final dashBoardState = Provider.of<DashboardProvider>(context, listen: false);
+      final list = dashBoardState.dashboardResponseModelData?.VehicleStatus ?? [];
+      for (final e in list) {
+        final name = AppHelper.returnJapaneseText(title: e?.status);
+        if (name.isNotEmpty && name != 'null') statuses.add(name);
+      }
+    }
+    choiceList = [
+      LocaliazationKey.all.tr(),
+      if (widget.showTrackHistory) LocaliazationKey.track_history.tr(),
+      ...statuses,
+    ];
+    selectedStatusValue ??= choiceList.first;
+  }
+
+  void _appendStatusesFromVehicles(VehicleStatusProvider provider) {
+    final extra = (provider.vehicleList ?? [])
+        .map((e) => AppHelper.returnJapaneseText(title: e?.Status))
+        .where((s) => s.isNotEmpty && s != 'null');
+    for (final s in extra) {
+      if (!choiceList.contains(s)) choiceList.add(s);
+    }
+    selectedStatusValue ??= choiceList.first;
   }
 
   // moveCameraAlongToMarker() async {
@@ -99,30 +117,24 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
 
   setUpLocationData() async {
     try {
-      final dashBoardState = Provider.of<DashboardProvider>(context, listen: false);
       final vehicleStatusState = Provider.of<VehicleStatusProvider>(context, listen: false);
-      if (dashBoardState.dashboardResponseModelData != null) {
-        choiceList.addAll(dashBoardState.dashboardResponseModelData!.VehicleStatus!
-            .map((e) => AppHelper.returnJapaneseText(title: e!.status))
-            .toSet());
-
-        vehicleStatusState.resetStatusName(); //* to reset the the statusName variable in provider
-
-        selectedStatusValue = choiceList.first;
-      }
+      _fillChoiceList();
+      vehicleStatusState.resetStatusName();
+      selectedStatusValue = choiceList.first;
 
       await vehicleStatusState.fetchInBackground(
         vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
           statusId: 6,
           userId: Global.savedUserAuthData!.userid!,
-          // userId: 1,
           pSize: 0,
-          //* get all vehicles if psize 0.
           pNo: defaultPageN0,
           sSearch: '',
-        ), //* calling this api to ensure have all markers on map.
+        ),
       );
       if (vehicleStatusState.state == NotifierState.error) return;
+      if (!mounted) return;
+      _appendStatusesFromVehicles(vehicleStatusState);
+      setState(() {});
 
       generateMarker();
       moveCamera();
@@ -227,7 +239,8 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
           ? CustomErrorWidget(onPressed: () {
               setUpLocationData();
             })
-          : Stack(
+          : SafeArea(
+              child: Stack(
               children: [
                 GoogleMap(
                   markers: provider.filterMarkers,
@@ -304,6 +317,7 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
                 )
               ],
             ),
+            ),
     );
   }
 
@@ -329,10 +343,14 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
                 suffixIcon: IconButton(
                   onPressed: () async {
                     selectedVehicle = null;
-                    final vehicle = provider.vehicleList!.firstWhere(
-                        (element) =>
-                            element!.VehicleNo!.toLowerCase() == textEditingController.text.trim().toLowerCase(),
-                        orElse: () => null);
+                    final query = textEditingController.text.trim().toLowerCase();
+                    VehicleStatusResponseModelDataVehicleStatusdetails? vehicle;
+                    for (final element in provider.vehicleList ?? const []) {
+                      if ((element?.VehicleNo ?? '').toLowerCase() == query) {
+                        vehicle = element;
+                        break;
+                      }
+                    }
                     if (vehicle != null) {
                       if (provider.filterMarkers
                           .map((e) => e.markerId)
@@ -359,53 +377,61 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
           );
         },
         optionsViewBuilder: (BuildContext context, void Function(String) onSelected, Iterable<String> options) {
-          return Padding(
-            padding: EdgeInsets.only(right: 20.w),
-            child: Card(
-                elevation: 0,
-                color: Colors.transparent,
-                child: SizedBox(
-                    // height: 200,
-                    child: SingleChildScrollView(
-                        child: Column(
-                  children: options.map((opt) {
-                    return InkWell(
-                        onTap: () {
-                          onSelected(opt);
-                          FocusScope.of(context).unfocus();
-                        },
-                        child: Card(
-                            child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(10),
-                          child: Text(opt),
-                        )));
-                  }).toList(),
-                )))),
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 6,
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 240, maxWidth: 320),
+                child: ListView.separated(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final opt = options.elementAt(index);
+                    return ListTile(
+                      dense: true,
+                      title: Text(opt),
+                      onTap: () {
+                        onSelected(opt);
+                        FocusScope.of(context).unfocus();
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
           );
         },
         optionsBuilder: (TextEditingValue textEditingValue) {
-          if (textEditingValue.text == '') {
+          final query = textEditingValue.text.trim().toLowerCase();
+          if (query.isEmpty) {
             return const Iterable<String>.empty();
           }
-          return provider.vehicleList!
-              .map((e) => e!.VehicleNo!.toLowerCase().toString())
-              .toList()
-              .where((String option) {
-            return option.contains(textEditingValue.text.toLowerCase());
-          });
+          return (provider.vehicleList ?? [])
+              .map((e) => e?.VehicleNo)
+              .whereType<String>()
+              .where((no) => no.toLowerCase().contains(query));
         },
         onSelected: (String value) async {
           provider.resetMarkers();
           provider.resetStatusName();
-          selectedStatusValue = choiceList[0];
+          if (choiceList.isNotEmpty) selectedStatusValue = choiceList[0];
           provider.updateMarker();
           setState(() {});
-          print('You just selected $value');
           FocusScope.of(context).unfocus();
-          final vehicle = provider.vehicleList!
-              .firstWhere((element) => element!.VehicleNo!.toLowerCase() == value, orElse: () => null);
-          if (vehicle == null) return;
+          final match = value.toLowerCase();
+          VehicleStatusResponseModelDataVehicleStatusdetails? vehicle;
+          for (final element in provider.vehicleList ?? const []) {
+            if ((element?.VehicleNo ?? '').toLowerCase() == match) {
+              vehicle = element;
+              break;
+            }
+          }
+          if (vehicle == null || vehicle.lat == null || vehicle.lon == null) return;
           selectedVehicle = vehicle;
           await _cameraController.animateCamera(
             CameraUpdate.newCameraPosition(

@@ -289,6 +289,9 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
                                     child: AnimationLimiter(
                                       child: ListView.builder(
                                         controller: _scrollController,
+                                        padding: EdgeInsets.only(
+                                          bottom: AppUi.bottomInset(context),
+                                        ),
                                         itemCount: vehicleStatusState
                                                 .filterList!.length +
                                             1,

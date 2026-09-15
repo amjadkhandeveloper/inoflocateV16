@@ -21,9 +21,13 @@ class ForgotPasswordService {
       print(
           'Forgot Password request body--> ${forgotPasswordRequestModel.toJson()}');
       AppHelper.configureDio(dio, tag: 'ForgotPasswordService.forgotPasswordService');
-      final url =
-          Global.savedClientAuthData!.clientUrl! + app_const.forgotPassword;
-      final body = forgotPasswordRequestModel.toJson();
+      final isSequel = Global.isSequelClient;
+      final url = isSequel
+          ? app_const.sequelVerifyUserUrl
+          : Global.savedClientAuthData!.clientUrl! + app_const.forgotPassword;
+      final body = isSequel
+          ? forgotPasswordRequestModel.toSequelVerifyJson()
+          : forgotPasswordRequestModel.toJson();
       final response = await dio.post(url, data: body);
       AppHelper.logApiCall(
         tag: 'ForgotPasswordService.forgotPasswordService',

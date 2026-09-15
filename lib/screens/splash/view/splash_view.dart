@@ -5,6 +5,7 @@ import 'package:infolocate/screens/login/view/client_login_view.dart';
 import 'package:infolocate/screens/login/view/user_login_view.dart';
 import 'package:infolocate/screens/splash/model/force_update_request_model.dart';
 import 'package:infolocate/screens/splash/repository/splash_repo.dart';
+import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_routes.dart';
 import 'package:infolocate/utils/app_ui.dart';
@@ -34,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 5000), () async {
-      if (Global.savedClientAuthData != null) {
+      if (Global.savedClientAuthData != null && !Global.isSequelClient) {
         log('inside force update');
         await forceUpdate();
       }
@@ -46,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
   forceUpdate() async {
     ForceUpdateRequestModel forceUpdateRequestModel = ForceUpdateRequestModel(
         clientId: Global.savedClientAuthData!.clientId,
-        appversion: 0,
+        appversion: kAppVersion,
         appId: 1);
     try {
       final result = await SplashService()

@@ -203,6 +203,7 @@ class CustomNavigationDrawer extends StatelessWidget {
                           }
                         },
                       ),
+                      if (!Global.isSequelClient)
                       _DrawerTile(
                         icon: Icons.videocam_outlined,
                         title: LocaliazationKey.video_playback.tr(),

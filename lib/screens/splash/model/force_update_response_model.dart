@@ -38,8 +38,10 @@ class ForceUpdateModelDataClient with JsonSafeParser {
     this.currentVersion,
   });
   ForceUpdateModelDataClient.fromJson(Map<String, dynamic> json) {
-    forceupdate = asIntFrom(json, ['Forceupdate', 'forceUpdate']);
-    currentVersion = asIntFrom(json, ['CurrentVersion', 'currentVersion']);
+    forceupdate =
+        asIntFrom(json, ['Forceupdate', 'forceUpdate', 'forceupdate']);
+    currentVersion =
+        asIntFrom(json, ['CurrentVersion', 'currentVersion']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -77,9 +79,27 @@ class ForceUpdateModelData with JsonSafeParser {
   ForceUpdateModelData.fromJson(Map<String, dynamic> json) {
     status = asIntFrom(json, ['status', 'Status']);
     final clientMap = asMapOrNull(json['client']);
-    client = clientMap != null
-        ? ForceUpdateModelDataClient.fromJson(clientMap)
-        : null;
+    if (clientMap != null) {
+      client = ForceUpdateModelDataClient.fromJson(clientMap);
+    } else {
+      final list = asListOfMaps(json['data']);
+      if (list.isNotEmpty) {
+        client = ForceUpdateModelDataClient.fromJson(list.first);
+      } else {
+        final nested = asMapOrNull(json['data']);
+        if (nested != null) {
+          final nestedClient = asMapOrNull(nested['client']);
+          if (nestedClient != null) {
+            client = ForceUpdateModelDataClient.fromJson(nestedClient);
+          } else if (nested['Forceupdate'] != null ||
+              nested['forceUpdate'] != null) {
+            client = ForceUpdateModelDataClient.fromJson(nested);
+          }
+        } else if (json['Forceupdate'] != null || json['forceUpdate'] != null) {
+          client = ForceUpdateModelDataClient.fromJson(json);
+        }
+      }
+    }
     if (json['error'] != null) {
       error = asListOfMaps(json['error'])
           .map(ForceUpdateModelDataError.fromJson)

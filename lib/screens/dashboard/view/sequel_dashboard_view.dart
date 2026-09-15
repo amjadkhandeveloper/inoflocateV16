@@ -5,20 +5,25 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/screens/alerts/view/alert_screen.dart';
+import 'package:infolocate/screens/card_types_screen/controller/card_type_provider.dart';
 import 'package:infolocate/screens/dashboard/controller/sequel_dashboard_provider.dart';
 import 'package:infolocate/screens/dashboard/model/dashboard_response_model.dart';
+import 'package:infolocate/screens/language/controller/language_provider.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/view/vehicle_status_list.dart';
+import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/utils/enums.dart';
+import 'package:infolocate/widgets/cards/vehicle_status_card.dart';
 import 'package:infolocate/widgets/custom_shimmer_effects.dart';
 import 'package:infolocate/widgets/drawer/navigation_drawer.dart';
 import 'package:infolocate/widgets/error_widget.dart';
 import 'package:infolocate/widgets/google_map/google_map_screen.dart';
 import 'package:infolocate/widgets/google_map/map_model.dart';
-import 'package:pie_chart/pie_chart.dart';
+import 'package:infolocate/widgets/profile_dialog.dart';
+import 'package:infolocate/screens/splash/force_update_checker.dart';
 import 'package:provider/provider.dart';
 
 const Color _moving = Color(0xFF16A34A);
@@ -54,21 +59,6 @@ IconData sequelStatusIcon(String? status) {
       return Icons.timelapse_rounded;
     default:
       return Icons.directions_car_outlined;
-  }
-}
-
-String sequelStatusHint(String? status) {
-  switch ((status ?? '').toLowerCase()) {
-    case 'moving':
-      return 'On the move';
-    case 'stopped':
-      return 'Need attention';
-    case 'inactive':
-      return 'No recent signal';
-    case 'idle':
-      return 'Ignition on, idle';
-    default:
-      return 'Fleet status';
   }
 }
 
@@ -116,7 +106,13 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration.zero, () => _loadDashboard(force: true));
+    Future.delayed(Duration.zero, () {
+      if (!mounted) return;
+      context.read<CardTypeProvider>().setCurrentVehicleStatusCard();
+      context.read<CardTypeProvider>().setCurrentAlertStatusCard();
+      _loadDashboard(force: true);
+      ForceUpdateChecker.checkFromDashboard(context);
+    });
   }
 
   @override
@@ -170,6 +166,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
   }
 
   bool _onScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
     if (notification.metrics.pixels >=
         notification.metrics.maxScrollExtent - 80) {
       context.read<SequelDashboardProvider>().loadNextPage();
@@ -227,10 +224,15 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                       slivers: [
                         SliverToBoxAdapter(child: _buildHeader(dash)),
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            12,
+                            16,
+                            AppUi.bottomInset(context, extra: 24),
+                          ),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
-                              _sectionLabel('Vehicle Overview'),
+                              _sectionLabel(LocaliazationKey.vehicle_overview.tr()),
                               const SizedBox(height: 12),
                               _KpiGrid(
                                 total: dash.totalFleetCount,
@@ -247,57 +249,21 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final wide = constraints.maxWidth >= 720;
-                                  final statusCard = _VehicleStatusCard(
-                                    statuses: dash.vehicleStatuses,
-                                    total: dash.totalFleetCount,
-                                  );
-                                  final alertsCard = _AlertsCard(
-                                    alerts: dash.rankedAlerts,
-                                    onAlert: (id) {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => AlertDashboardScreen(
-                                            alertTypeId: id,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                  if (!wide) {
-                                    return Column(
-                                      children: [
-                                        statusCard,
-                                        const SizedBox(height: 12),
-                                        alertsCard,
-                                      ],
-                                    );
-                                  }
-                                  return Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(child: statusCard),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: alertsCard),
-                                    ],
+                              _AlertsCard(
+                                alerts: dash.rankedAlerts,
+                                onAlert: (id) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => AlertDashboardScreen(
+                                        alertTypeId: id,
+                                      ),
+                                    ),
                                   );
                                 },
                               ),
                               const SizedBox(height: 12),
-                              _AlertBarsCard(alerts: dash.rankedAlerts),
-                              const SizedBox(height: 12),
-                              _AlertSummaryRow(
-                                total: dash.totalAlertCount,
-                                critical: dash.criticalAlertCount,
-                                speed: dash.speedAlertCount,
-                                geofence: dash.geofenceAlertCount,
-                              ),
-                              const SizedBox(height: 12),
                               _sectionLabel(
-                                'Vehicles',
+                                LocaliazationKey.favourite_vehicles.tr(),
                                 trailing:
                                     '${_filteredPins(dash.pinVehicles).length}',
                               ),
@@ -322,7 +288,6 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
   Widget _buildHeader(SequelDashboardProvider dash) {
     final now = DateFormat('EEE, d MMM yyyy  HH:mm').format(DateTime.now());
     final client = Global.savedClientAuthData?.clientName ?? 'Sequel';
-    final user = Global.savedUserAuthData?.username ?? '';
 
     return Column(
       children: [
@@ -345,7 +310,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Fleet Dashboard',
+                          LocaliazationKey.fleet_dashboard.tr(),
                           style: AppUi.titleStyle(context),
                         ),
                       ],
@@ -402,18 +367,10 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: AppUi.accent.withValues(alpha: 0.12),
-                      child: Text(
-                        (user.isNotEmpty ? user : client)
-                            .substring(0, 1)
-                            .toUpperCase(),
-                        style: const TextStyle(
-                          color: AppUi.accent,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    child: ProfileAvatarButton(
+                      selectedLanguage: context
+                          .watch<LanguageProvider>()
+                          .selectedLanguage,
                     ),
                   ),
                 ],
@@ -504,6 +461,53 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
       ),
         ),
         Container(height: 1, color: AppUi.line(context)),
+      ],
+    );
+  }
+
+  Widget _vehicleStatusStyleGrid(SequelDashboardProvider dash) {
+    final statuses = dash.vehicleStatuses;
+    if (statuses.isEmpty) return const SizedBox.shrink();
+    final cardType = context
+            .watch<CardTypeProvider>()
+            .currentSelectedVehicleStatusCard
+            ?.cardTypeId ??
+        1;
+    final total = dash.totalFleetCount;
+    final width = MediaQuery.sizeOf(context).width;
+    return Wrap(
+      spacing: 10,
+      runSpacing: 4,
+      alignment: WrapAlignment.center,
+      children: [
+        for (int i = 0; i < statuses.length; i++)
+          SizedBox(
+            width: (i.isEven && i == statuses.length - 1)
+                ? width - 32
+                : (width - 42) / 2,
+            child: GestureDetector(
+              onTap: () => _openStatusList(
+                title: AppHelper.returnJapaneseText(
+                    title: statuses[i].status ?? ''),
+                statusId: statuses[i].StatusID ?? 6,
+                totalCount: statuses[i].Value,
+              ),
+              child: VehicleStatusCard(
+                count: '${statuses[i].Value ?? 0}',
+                icon: AppHelper.returnIcons(
+                    title: statuses[i].status ?? ''),
+                title: AppHelper.returnJapaneseText(
+                    title: statuses[i].status ?? ''),
+                iconColor: AppHelper.returnIconColor(
+                    title: statuses[i].status),
+                percentage: AppHelper.returnPercentage(
+                  value: (statuses[i].Value ?? 0).toInt(),
+                  totalcount: total == 0 ? 1 : total,
+                ).toString(),
+                cardType: cardType,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -629,25 +633,46 @@ class _KpiGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = <_KpiItem>[
-      _KpiItem(
-        label: 'Total Vehicles',
-        value: total,
-        color: AppUi.accent,
-        icon: Icons.directions_car_filled_outlined,
-        hint: 'Entire fleet',
+    final cardType = context
+            .watch<CardTypeProvider>()
+            .currentSelectedVehicleStatusCard
+            ?.cardTypeId ??
+        1;
+    final cards = <Widget>[
+      GestureDetector(
         onTap: onTotal,
-      ),
-      ...statuses.map(
-        (s) => _KpiItem(
-          label: s.status ?? '',
-          value: s.Value ?? 0,
-          color: sequelStatusColor(s.status),
-          icon: sequelStatusIcon(s.status),
-          hint: sequelStatusHint(s.status),
-          onTap: () => onStatus(s),
+        child: VehicleStatusCard(
+          count: '$total',
+          icon: AppHelper.returnIcons(
+              title: LocaliazationKey.all_vehicles.tr()),
+          title: LocaliazationKey.total_fleet.tr(),
+          iconColor: AppUi.accent,
+          percentage: '100',
+          cardType: cardType,
         ),
       ),
+      ...statuses.where((s) {
+        final name = (s.status ?? '').toLowerCase();
+        return name == moving || name == idle;
+      }).map((s) {
+        final statusTitle = s.status ?? '';
+        final name = statusTitle.toLowerCase();
+        return GestureDetector(
+          onTap: () => onStatus(s),
+          child: VehicleStatusCard(
+            count: '${s.Value ?? 0}',
+            icon: AppHelper.returnIcons(
+                title: name == idle ? 'Idle' : 'Moving'),
+            title: AppHelper.returnJapaneseText(title: statusTitle),
+            iconColor: sequelStatusColor(statusTitle),
+            percentage: AppHelper.returnPercentage(
+              value: (s.Value ?? 0).toInt(),
+              totalcount: total == 0 ? 1 : total,
+            ).toString(),
+            cardType: cardType,
+          ),
+        );
+      }),
     ];
     return LayoutBuilder(
       builder: (context, c) {
@@ -655,255 +680,13 @@ class _KpiGrid extends StatelessWidget {
         return _TightGrid(
           columns: cols,
           spacing: 10,
-          children: items.map((item) => _KpiCard(item: item)).toList(),
+          children: cards,
         );
       },
     );
   }
 }
 
-class _KpiItem {
-  const _KpiItem({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-    required this.hint,
-    required this.onTap,
-  });
-  final String label;
-  final int value;
-  final Color color;
-  final IconData icon;
-  final String hint;
-  final VoidCallback onTap;
-}
-
-class _KpiCard extends StatelessWidget {
-  const _KpiCard({required this.item});
-  final _KpiItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppUi.cardColor(context),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: item.onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: AppUi.cardColor(context),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppUi.line(context)),
-          ),
-            child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(item.icon, size: 14, color: item.color),
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: item.color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                TweenAnimationBuilder<double>(
-                  key: ValueKey('${item.label}-${item.value}'),
-                  tween: Tween(begin: 0, end: item.value.toDouble()),
-                  duration: const Duration(milliseconds: 650),
-                  builder: (_, v, __) => Text(
-                    '${v.round()}',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: item.color,
-                      height: 1,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppUi.ink(context),
-                  ),
-                ),
-                Text(
-                  item.hint,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VehicleStatusCard extends StatelessWidget {
-  const _VehicleStatusCard({
-    required this.statuses,
-    required this.total,
-  });
-
-  final List<DashboardResponseModelDataVehicleStatus> statuses;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final dataMap = <String, double>{};
-    final colors = <Color>[];
-    for (final s in statuses) {
-      final label = s.status ?? '';
-      if (label.isEmpty) continue;
-      dataMap[label] = (s.Value ?? 0).toDouble();
-      colors.add(sequelStatusColor(s.status));
-    }
-    return _FleetCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Vehicle Status',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AppUi.ink(context),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (total <= 0 || dataMap.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: Text('No vehicle status data',
-                    style: TextStyle(color: AppUi.muted(context))),
-              ),
-            )
-          else
-            LayoutBuilder(
-              builder: (context, c) {
-                final stacked = c.maxWidth < 340;
-                final chart = SizedBox(
-                  height: 128,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      PieChart(
-                        dataMap: dataMap,
-                        colorList: colors,
-                        chartType: ChartType.ring,
-                        ringStrokeWidth: 18,
-                        chartRadius: 96,
-                        centerText: '',
-                        emptyColor: AppUi.line(context),
-                        baseChartColor: AppUi.cardColor(context),
-                        legendOptions:
-                            const LegendOptions(showLegends: false),
-                        chartValuesOptions: const ChartValuesOptions(
-                          showChartValues: false,
-                        ),
-                        animationDuration: const Duration(milliseconds: 700),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '$total',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: AppUi.ink(context),
-                            ),
-                          ),
-                          Text(
-                            'Vehicles',
-                            style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-                final legend = Column(
-                  children: statuses.map((s) {
-                    final color = sequelStatusColor(s.status);
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              s.status ?? '',
-                              style: TextStyle(
-                                  fontSize: 13, color: AppUi.ink(context)),
-                            ),
-                          ),
-                          Text(
-                            '${s.Value ?? 0}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppUi.ink(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                );
-                if (stacked) {
-                  return Column(children: [chart, legend]);
-                }
-                return Row(
-                  children: [
-                    Expanded(child: chart),
-                    const SizedBox(width: 12),
-                    Expanded(child: legend),
-                  ],
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
 
 class _AlertsCard extends StatelessWidget {
   const _AlertsCard({required this.alerts, required this.onAlert});
@@ -915,7 +698,7 @@ class _AlertsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (alerts.isEmpty) {
       return _FleetCard(
-        child: Text('No alerts', style: TextStyle(color: AppUi.muted(context))),
+        child: Text(LocaliazationKey.no_alerts.tr(), style: TextStyle(color: AppUi.muted(context))),
       );
     }
     final featured = alerts.first;
@@ -925,7 +708,7 @@ class _AlertsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Alerts & Events',
+            LocaliazationKey.alerts_and_events.tr(),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -982,6 +765,11 @@ class _AlertsCard extends StatelessWidget {
                         color: _alertColor(featured.AlertType, featured: true),
                       ),
                     ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppUi.muted(context),
+                    ),
                   ],
                 ),
               ),
@@ -1020,6 +808,11 @@ class _AlertsCard extends StatelessWidget {
                             : AppUi.ink(context),
                       ),
                     ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppUi.muted(context),
+                    ),
                   ],
                 ),
               ),
@@ -1031,77 +824,6 @@ class _AlertsCard extends StatelessWidget {
   }
 }
 
-class _AlertBarsCard extends StatelessWidget {
-  const _AlertBarsCard({required this.alerts});
-  final List<DashboardResponseModelDataStatusCount> alerts;
-
-  @override
-  Widget build(BuildContext context) {
-    if (alerts.isEmpty) return const SizedBox.shrink();
-    final max = alerts
-        .map((e) => e.AlertCount ?? 0)
-        .fold<int>(0, (a, b) => a > b ? a : b);
-    return _FleetCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Alert frequency',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AppUi.ink(context),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...alerts.map((a) {
-            final count = a.AlertCount ?? 0;
-            final pct = max <= 0 ? 0.0 : count / max;
-            final color = _alertColor(a.AlertType, featured: a == alerts.first);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: Text(
-                          a.AlertType ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 12, color: AppUi.ink(context)),
-                        ),
-                      ),
-                      Text(
-                        '$count',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppUi.ink(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: pct,
-                      minHeight: 8,
-                      backgroundColor: AppUi.pageBg(context),
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
 
 class _AlertSummaryRow extends StatelessWidget {
   const _AlertSummaryRow({
@@ -1119,10 +841,10 @@ class _AlertSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = [
-      ('Total Alerts', total, AppUi.ink(context)),
-      ('Critical Alerts', critical, _critical),
-      ('Speed Alerts', speed, _idle),
-      ('Geofence Alerts', geofence, AppUi.accent),
+      (LocaliazationKey.total_alerts.tr(), total, AppUi.ink(context)),
+      (LocaliazationKey.critical_alerts.tr(), critical, _critical),
+      (LocaliazationKey.speed_alerts.tr(), speed, _idle),
+      (LocaliazationKey.geofence_alerts.tr(), geofence, AppUi.accent),
     ];
     return LayoutBuilder(
       builder: (context, c) {
@@ -1178,7 +900,7 @@ class _VehicleList extends StatelessWidget {
     if (vehicles.isEmpty) {
       return _FleetCard(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.symmetric(vertical: 18),
           child: Center(
             child: Text(
               'No pinned vehicles in this view',
@@ -1188,124 +910,259 @@ class _VehicleList extends StatelessWidget {
         ),
       );
     }
-    return Column(
-      children: [
-        ...vehicles.map(
-          (v) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _VehicleRow(vehicle: v, onOpen: () => onOpen(v)),
-          ),
-        ),
-        if (loadingMore)
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppUi.accent,
-            ),
-          )
-        else if (hasMore)
-          TextButton(
-            onPressed: onMore,
-            child: Text(
-              'View more',
-              style: TextStyle(
-                color: AppUi.accent,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-      ],
+
+    final extra = (loadingMore || hasMore) ? 1 : 0;
+    return SizedBox(
+      height: 176,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: vehicles.length + extra,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          if (index >= vehicles.length) {
+            return _PinMoreCard(
+              loading: loadingMore,
+              onMore: onMore,
+            );
+          }
+          final vehicle = vehicles[index];
+          return _PinVehicleTile(
+            vehicle: vehicle,
+            onOpen: () => onOpen(vehicle),
+          );
+        },
+      ),
     );
   }
 }
 
-class _VehicleRow extends StatelessWidget {
-  const _VehicleRow({required this.vehicle, required this.onOpen});
+class _PinMoreCard extends StatelessWidget {
+  const _PinMoreCard({required this.loading, required this.onMore});
+  final bool loading;
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppUi.cardColor(context),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: loading ? null : onMore,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          width: 108,
+          decoration: BoxDecoration(
+            color: AppUi.cardColor(context),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppUi.line(context)),
+          ),
+          child: Center(
+            child: loading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppUi.accent,
+                    ),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppUi.accent.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add_rounded,
+                          color: AppUi.accent,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'View more',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppUi.accent,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PinVehicleTile extends StatelessWidget {
+  const _PinVehicleTile({required this.vehicle, required this.onOpen});
   final DashboardResponseModelDataPinvehicle vehicle;
   final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     final color = sequelStatusColor(vehicle.Status);
-    return Material(
+    final location = (vehicle.Location ?? '').trim();
+    final driver = (vehicle.DriverName ?? '').trim();
+    return SizedBox(
+      width: 248,
+      child: Material(
       color: AppUi.cardColor(context),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onOpen,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Ink(
-          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: AppUi.cardColor(context),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppUi.line(context)),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                width: 4,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(14),
+                  ),
+                ),
               ),
-              const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            vehicle.VehicleNo ?? '—',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: AppUi.ink(context),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            vehicle.Status ?? '',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                            child: Icon(
+                              sequelStatusIcon(vehicle.Status),
+                              size: 15,
                               color: color,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              vehicle.VehicleNo ?? '—',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: AppUi.ink(context),
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.push_pin_rounded,
+                            size: 16,
+                            color: AppUi.accent,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      [
-                        if ((vehicle.DriverName ?? '').isNotEmpty)
-                          'Driver: ${vehicle.DriverName}',
-                        if ((vehicle.Location ?? '').isNotEmpty)
-                          vehicle.Location,
-                      ].join('  ·  '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: AppUi.muted(context)),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${vehicle.speed ?? 0} km/h  ·  ${vehicle.TrackingTime ?? ''}',
-                      style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
-                    ),
-                  ],
+                        child: Text(
+                          vehicle.Status ?? '',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (driver.isNotEmpty)
+                        Text(
+                          driver,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppUi.ink(context),
+                          ),
+                        ),
+                      Text(
+                        location.isEmpty
+                            ? LocaliazationKey.location_unavailable.tr()
+                            : location,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.3,
+                          color: AppUi.muted(context),
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          Icon(Icons.speed_rounded,
+                              size: 14, color: AppUi.muted(context)),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${vehicle.speed ?? 0} km/h',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppUi.ink(context),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.power_settings_new_rounded,
+                              size: 14, color: AppUi.muted(context)),
+                          const SizedBox(width: 2),
+                          Text(
+                            vehicle.ignition ?? '—',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppUi.muted(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        vehicle.TrackingTime ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppUi.muted(context),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: AppUi.muted(context)),
             ],
           ),
         ),
+      ),
       ),
     );
   }

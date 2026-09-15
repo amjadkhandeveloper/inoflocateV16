@@ -44,37 +44,65 @@ class UserService {
         data: body,
         options: Options(contentType: Headers.jsonContentType),
       );
-      AppHelper.logApiCall(
-        tag: 'UserService.userLoginService',
-        method: 'POST',
-        url: url,
-        request: body,
-        status: response.statusCode,
-        response: response.data,
-      );
-
       if (response.statusCode == 200) {
         final map = JsonSafe.asMapOrNull(response.data);
         if (map == null) {
+          AppHelper.logApiCall(
+            tag: 'UserService.userLoginService',
+            method: 'POST',
+            url: url,
+            request: body,
+            status: response.statusCode,
+            response: response.data,
+            error: 'Invalid login response body',
+          );
           throw Failure(LocaliazationKey.could_not_login.tr());
         }
         final parsed = UserLoginResponseModel.fromJson(map);
-        final status = parsed.data?.status ??
-            JsonSafe.asIntOrNull(map['status']) ??
-            JsonSafe.asIntOrNull(map['Status']);
+        final nested = JsonSafe.asMapOrNull(map['data']);
+        final status = JsonSafe.asIntOrNull(map['status'] ?? map['Status']) ??
+            JsonSafe.asIntOrNull(nested?['status'] ?? nested?['Status']);
         final message = JsonSafe.asStringOrNull(
-            map['message'] ?? map['Message']);
+                map['message'] ?? map['Message'] ?? map['remark']) ??
+            JsonSafe.asStringOrNull(
+              nested?['message'] ?? nested?['Message'],
+            );
         final user = parsed.data?.user;
-        final success = status == 1 || status == 200 || (user?.userid != null);
+        final userid = user?.userid ?? 0;
+        final username = (user?.username ?? '').trim();
+        final explicitFail = status == 0;
+        final statusOk = status == 1 || status == 200 || status == null;
+        final success =
+            !explicitFail && statusOk && userid > 0 && username.isNotEmpty;
         if (!success || user == null) {
-          throw Failure(
-            (message != null &&
-                    message.isNotEmpty &&
-                    !message.toLowerCase().contains('success'))
-                ? message
-                : LocaliazationKey.could_not_login.tr(),
+          final failureMessage = (message != null &&
+                  message.isNotEmpty &&
+                  !message.toLowerCase().contains('success'))
+              ? (message.toLowerCase().contains('auth') ||
+                      message.toLowerCase().contains('invalid') ||
+                      message.toLowerCase().contains('fail')
+                  ? LocaliazationKey.invalid_credetials.tr()
+                  : message)
+              : LocaliazationKey.invalid_credetials.tr();
+          AppHelper.logApiCall(
+            tag: 'UserService.userLoginService',
+            method: 'POST',
+            url: url,
+            request: body,
+            status: response.statusCode,
+            response: response.data,
+            error: failureMessage,
           );
+          throw Failure(failureMessage);
         }
+        AppHelper.logApiCall(
+          tag: 'UserService.userLoginService',
+          method: 'POST',
+          url: url,
+          request: body,
+          status: response.statusCode,
+          response: response.data,
+        );
         return parsed;
       }
       throw Failure(LocaliazationKey.could_not_login.tr());

@@ -13,6 +13,7 @@ import 'package:sizer/sizer.dart';
 
 import '../../../common_models/button_list_model.dart';
 import '../../../utils/app_constants.dart';
+import '../../../utils/app_globals.dart';
 import '../../../utils/app_helper.dart';
 import '../../../widgets/buttons/custom_icon_button.dart';
 import '../../../widgets/google_map/google_map_screen.dart';
@@ -70,30 +71,30 @@ class DynamicStatusCard extends StatelessWidget {
                 AppHelper.returnIconColor(title: dynamicStatusDetails!.Status)),
         title: dynamicStatusDetails!.Status,
       ),
-      ButtonListModel(
-          icon: SvgPicture.asset(
-            "assets/icons/new_icons/live-video.svg",
-            // "assets/icons/new_icons/orange.svg",
-            height: 2.h,
-            // colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          title: LocaliazationKey.live_video.tr(),
-          value: dynamicStatusDetails!.LiveUrl,
-          onTap: dynamicStatusDetails!.Status!.toLowerCase() == idle ||
-                  dynamicStatusDetails!.Status!.toLowerCase() == moving
-              ? () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VideoPlayerScreen(
-                          url: dynamicStatusDetails!.LiveUrl,
-                          title: dynamicStatusDetails!.VehicleNo,
-                        ),
-                      ));
-                }
-              : () => customToast(
-                  message: LocaliazationKey.video_unavailable.tr())),
+      if (!Global.isSequelClient &&
+          (dynamicStatusDetails!.LiveUrl ?? '').trim().isNotEmpty)
+        ButtonListModel(
+            icon: SvgPicture.asset(
+              "assets/icons/new_icons/live-video.svg",
+              height: 2.h,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: LocaliazationKey.live_video.tr(),
+            value: dynamicStatusDetails!.LiveUrl,
+            onTap: dynamicStatusDetails!.Status!.toLowerCase() == idle ||
+                    dynamicStatusDetails!.Status!.toLowerCase() == moving
+                ? () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VideoPlayerScreen(
+                            url: dynamicStatusDetails!.LiveUrl,
+                            title: dynamicStatusDetails!.VehicleNo,
+                          ),
+                        ));
+                  }
+                : () => customToast(
+                    message: LocaliazationKey.video_unavailable.tr())),
       ButtonListModel(
           icon: SvgPicture.asset(
             "assets/icons/new_icons/mapit.svg",
@@ -127,7 +128,7 @@ class DynamicStatusCard extends StatelessWidget {
             color: AppHelper.getSpeedometerColor(
                 int.parse(dynamicStatusDetails!.speed.toString())),
           ),
-          title: "${dynamicStatusDetails!.speed} mph"),
+          title: "${dynamicStatusDetails!.speed} ${LocaliazationKey.km_h.tr()}"),
       ButtonListModel(
         icon: SvgPicture.asset(
           'assets/icons/ignition.svg',
@@ -143,7 +144,7 @@ class DynamicStatusCard extends StatelessWidget {
             color: Theme.of(context).colorScheme.primary,
           ),
           title:
-              "${dynamicStatusDetails!.odometer} ${LocaliazationKey.miles.tr()}"),
+              "${dynamicStatusDetails!.odometer} ${LocaliazationKey.km.tr()}"),
       if (dynamicStatusDetails!.Status == "Idle")
         ButtonListModel(
           icon: SvgPicture.asset(

@@ -207,6 +207,9 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
                                         child: AnimationLimiter(
                                           child: ListView.builder(
                                               controller: _scrollController,
+                                              padding: EdgeInsets.only(
+                                                bottom: AppUi.bottomInset(context),
+                                              ),
                                               itemCount: dynamicStatusState.filterList!.length + 1,
                                               // shrinkWrap: true,
                                               itemBuilder: (context, index) {
@@ -261,7 +264,8 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
                                                           odometer: data.odometer ?? 0,
                                                           speed: data.speed?.toString() ?? '0',
                                                           urlTitle: data.VehicleNo,
-                                                          enableUrl: data.LiveUrl != null,
+                                                          enableUrl: !Global.isSequelClient &&
+                                                              (data.LiveUrl ?? '').trim().isNotEmpty,
                                                               // && data.deviceType == "MDVR" || data.deviceType == "MDVR AI",
                                                           liveUrlList: null,
                                                           showPinnedIcon: false,

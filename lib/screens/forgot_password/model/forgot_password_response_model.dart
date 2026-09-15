@@ -130,7 +130,17 @@ class ForgotPasswordResponseModel with JsonSafeParser {
 
   bool get isSuccess {
     final status = data?.status;
-    return status == 1 || status == 200;
+    if (status == 1 || status == 200) return true;
+    final msg = '${data?.message ?? ''} ${data?.data?.ResultMessage ?? ''}'
+        .toLowerCase();
+    if (msg.contains('success') ||
+        msg.contains('sent') ||
+        msg.contains('updated') ||
+        msg.contains('reset')) {
+      return true;
+    }
+    final resultId = data?.data?.ResultID ?? 0;
+    return resultId > 0;
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};

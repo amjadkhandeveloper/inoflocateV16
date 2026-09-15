@@ -353,6 +353,10 @@ class AppUi {
       ),
     );
   }
+
+  static double bottomInset(BuildContext context, {double extra = 16}) {
+    return extra + MediaQuery.paddingOf(context).bottom;
+  }
 }
 
 /// Shared auth page shell: brand, title, form card, footer.

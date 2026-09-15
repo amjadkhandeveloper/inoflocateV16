@@ -1009,6 +1009,12 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                                                   final videoUrls = AppHelper.decodeVideoPath(
                                                       unitNo: cardData.UnitNo?.toString() ?? '',
                                                       urlPath: cardData.Videofilepath);
+                                                  final alertTitle = cardData.AlertType == "yaccel end" ||
+                                                          cardData.AlertType == "xaccel end"
+                                                      ? AppHelper.returnAlertStatus(
+                                                          alertStatus: cardData.AlertType!)
+                                                      : cardData.AlertType ?? '';
+                                                  final hasCoords = cardData.Lat != null && cardData.Lon != null;
                                                   return AnimationConfiguration.staggeredList(
                                                       duration: const Duration(milliseconds: 500),
                                                       position: index,
@@ -1022,38 +1028,31 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                                                                     : 0),
                                                             child: PinVehicleCard(
                                                               location: cardData.Location ?? '',
-                                                              mapData: (cardData.Lat != null && cardData.Lon != null)
-                                                                  ? GoogleMapModel(
-                                                                  latLng: LatLng(cardData.Lat!, cardData.Lon!),
+                                                              mapData: GoogleMapModel(
+                                                                  latLng: hasCoords
+                                                                      ? LatLng(cardData.Lat!, cardData.Lon!)
+                                                                      : null,
                                                                   vehicleId: cardData.VehicleID,
-                                                                  statusName: cardData.AlertType,
+                                                                  statusName: alertTitle,
                                                                   vehicleNo: cardData.VehicleNo,
                                                                   engineOffdelay: null,
                                                                   idleduration: null,
-                                                                  ignition: cardData.ignition == null
-                                                                      ? null
-                                                                      : cardData.ignition.toString(),
+                                                                  ignition: cardData.ignition?.toString(),
                                                                   odometer: null,
-                                                                  speed: cardData.speed == null
-                                                                      ? null
-                                                                      : cardData.speed.toString(),
+                                                                  speed: cardData.speed?.toString(),
                                                                   stopduration: null,
                                                                   vehicleLocation: cardData.Location,
-                                                                  vehicleTrackTime: cardData.Alertdatetime)
-                                                                  : null,
+                                                                  vehicleTrackTime: cardData.Alertdatetime),
                                                               alertType: LocaliazationKey.alert_video.tr(),
                                                               liveUrlList: videoUrls,
-                                                              status: cardData.AlertType == "yaccel end" ||
-                                                                      cardData.AlertType == "xaccel end"
-                                                                  ? AppHelper.returnAlertStatus(
-                                                                      alertStatus: cardData.AlertType!)
-                                                                  : cardData.AlertType ?? '',
-                                                              ignition: cardData.ignition.toString(),
-                                                              speed: cardData.speed.toString(),
+                                                              status: alertTitle,
+                                                              ignition: cardData.ignition?.toString() ?? '0',
+                                                              speed: cardData.speed?.toString() ?? '0',
                                                               trackTime: cardData.Alertdatetime ?? '',
                                                               vehicleNo: cardData.VehicleNo ?? '',
                                                               vehicleId: cardData.VehicleID ?? 0,
-                                                              enableUrl: videoUrls.isNotEmpty,
+                                                              enableUrl: !Global.isSequelClient &&
+                                                                  videoUrls.isNotEmpty,
                                                               // && cardData.deviceType == "MDVR" || cardData.deviceType == "MDVR AI",
                                                               showPinnedIcon: false,
                                                               // disableLiveUrl: cardData.Status!

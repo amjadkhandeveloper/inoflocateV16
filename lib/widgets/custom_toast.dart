@@ -6,9 +6,8 @@ customToast({
   required String? message,
   Color? color,
 }) {
-  final text = (message ?? '').trim().isEmpty
-      ? 'No Internet Connection'
-      : message!.trim();
+  final text = (message ?? '').trim();
+  if (text.isEmpty) return;
   Fluttertoast.cancel();
   Fluttertoast.showToast(
       msg: text,

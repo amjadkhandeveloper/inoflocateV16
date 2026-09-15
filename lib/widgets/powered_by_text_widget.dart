@@ -32,7 +32,7 @@ class PoweredByTextWidget extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '@2025 copyright',
+          '@2026 copyright',
           style: AppUi.mutedStyle(context),
         ),
       ],

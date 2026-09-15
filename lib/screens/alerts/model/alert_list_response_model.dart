@@ -133,8 +133,30 @@ class AlertListResponseModelDataAlertdetails with JsonSafeParser {
       'alertDatetime',
       'alertDateTime',
     ]);
-    Lat = asDoubleOrNull(firstValue(json, ['Lat', 'lat']));
-    Lon = asDoubleOrNull(firstValue(json, ['Lon', 'lon', 'lng']));
+    Lat = asDoubleOrNull(firstValue(json, [
+      'Lat',
+      'lat',
+      'latitude',
+      'Latitude',
+    ]));
+    Lon = asDoubleOrNull(firstValue(json, [
+      'Lon',
+      'lon',
+      'lng',
+      'longitude',
+      'Longitude',
+    ]));
+    if (Lat == null || Lon == null) {
+      final mapit =
+          asStringOrNull(firstValue(json, ['Mapit', 'mapit', 'mapIt']));
+      if (mapit != null && mapit.contains(',')) {
+        final parts = mapit.split(',');
+        Lat ??= double.tryParse(parts[0].trim());
+        if (parts.length > 1) {
+          Lon ??= double.tryParse(parts[1].trim());
+        }
+      }
+    }
     Location = asStringFrom(json, ['Location', 'location']);
     ignition = asInt(json['ignition']);
     speed = asInt(json['speed']);
@@ -338,7 +360,7 @@ class AlertListResponseModel with JsonSafeParser {
     } else {
       data = AlertListResponseModelData.fromJson(json);
     }
-  }
+    }
   Map<String, dynamic> toJson() {
     final res = <String, dynamic>{};
     if (data != null) {
