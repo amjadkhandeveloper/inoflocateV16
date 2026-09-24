@@ -22,6 +22,7 @@
   "client": "عميل",
   "user": "مستخدم",
   "version": "الإصدار",
+  "last_updated": "آخر تحديث",
   "powered_by": "يعمل بواسطة",
   "switch_to_client_login": "التبديل إلى تسجيل دخول العميل",
   "moving": "متحرك",
@@ -147,5 +148,7 @@
   "ok": "موافق",
   "admin": "المشرف",
   "notification": "الإخطارات",
-  "profile": "ملف تعريف"
+  "profile": "ملف تعريف",
+  "refresh": "تحديث",
+  "retrying_in_seconds": "إعادة المحاولة خلال {seconds} ث"
 }

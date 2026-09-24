@@ -90,7 +90,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 IconButton(
                   tooltip: 'Open in browser',
                   onPressed: _openInSystemBrowser,
-                  icon: Icon(Icons.open_in_browser, color: AppUi.ink(context)),
+                  icon: Icon(Icons.open_in_browser, color: AppUi.toolbarFg),
                 ),
                 IconButton(
                   onPressed: () async {
@@ -106,7 +106,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     setState(() {});
                   },
                   icon: Icon(Icons.screen_rotation_alt_outlined,
-                      color: AppUi.ink(context)),
+                      color: AppUi.toolbarFg),
                 ),
               ],
             ),

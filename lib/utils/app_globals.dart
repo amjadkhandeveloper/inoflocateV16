@@ -18,6 +18,7 @@ class Global {
   // --- Persisted session & preferences (Hive) ---
   static Color? savedPrimeryColor;
   static UserLoginResponseModelDataUser? savedUserAuthData;
+  static String? savedLastLoginTime;
   static ClientModelDataClient? savedClientAuthData;
 
   /// True when the stored client login name or tenant URL is Sequel.

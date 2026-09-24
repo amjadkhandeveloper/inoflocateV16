@@ -36,6 +36,8 @@ const String vehicleMarkerIconKey = 'vehicleMarkerIconKey';
 const String vehicleStatusCardTypeIdKey = 'vehicleStatusCardTypeIdKey';
 const String alertStatusCardTypeIdKey = 'alertStatusCardTypeIdKey';
 const String locationPermission = 'locationPermission';
+const String fcmDeviceIdKey = 'fcmDeviceIdKey';
+const String lastLoginTimeKey = 'lastLoginTimeKey';
 // const String cardTypeSettingKey = 'cardTypeSettingKey';
 
 //* langauge
@@ -115,9 +117,17 @@ const String sequelResetPasswordUrl =
 const String sequelVerifyUserUrl = "${sequelApiBaseUrl}api/Auth/VerifyUser";
 const String sequelForceUpdateUrl =
     "${sequelApiBaseUrl}api/Auth/ForceUpdateClient";
+const String sequelFcmRegisterTokenUrl =
+    "${sequelApiBaseUrl}api/FcmToken/RegisterToken";
 
 /// Integer app version sent to ForceUpdateClient and compared with the API.
 const int kAppVersion = 13;
+
+/// Shown in the drawer / login footer. Keep in sync with pubspec `version`.
+const String kAppVersionName = '1.0.0';
+
+/// Bump this whenever you ship a build so you can tell which APK is on the device.
+const String kAppLastUpdated = '23 Sep 2026, 15:42';
 
 /// Sample JSON only — not used at runtime (see grep). Kept for API contract reference.
 const Map<String, dynamic> pinVehicleListJson = {

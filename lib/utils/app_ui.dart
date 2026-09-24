@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Shared visual language extracted from the Sequel fleet dashboard.
 class AppUi {
@@ -17,6 +18,9 @@ class AppUi {
   static const Color cardDark = Color(0xFF1E293B);
 
   static const Color accent = Color(0xFF2563EB);
+  static const Color toolbarLight = Color(0xFF1D4ED8);
+  static const Color toolbarDark = Color(0xFF1E3A8A);
+  static const Color toolbarFg = Colors.white;
   static const double radius = 14;
   static const double radiusSm = 10;
   static const double iconChipRadius = 8;
@@ -26,6 +30,26 @@ class AppUi {
 
   static Color pageBg(BuildContext context) =>
       isDark(context) ? pageBgDark : pageBgLight;
+
+  static Color toolbarBg(BuildContext context) =>
+      isDark(context) ? toolbarDark : toolbarLight;
+
+  static List<Color> toolbarGradient(BuildContext context) => isDark(context)
+      ? const [Color(0xFF0F172A), Color(0xFF1E3A8A)]
+      : const [Color(0xFF1E3A8A), Color(0xFF2563EB)];
+
+  static TextStyle toolbarTitleStyle(BuildContext context) => const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: toolbarFg,
+        letterSpacing: 0.15,
+      );
+
+  static TextStyle toolbarSubtitleStyle(BuildContext context) => TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: toolbarFg.withValues(alpha: 0.82),
+      );
 
   static Color ink(BuildContext context) =>
       isDark(context) ? inkDark : inkLight;
@@ -329,28 +353,36 @@ class AppUi {
     bool centerTitle = false,
   }) {
     return AppBar(
-      backgroundColor: cardColor(context),
+      backgroundColor: toolbarBg(context),
       surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
+      elevation: 4,
+      shadowColor: const Color(0x661E3A8A),
+      scrolledUnderElevation: 4,
       centerTitle: centerTitle,
-      foregroundColor: ink(context),
-      iconTheme: IconThemeData(color: ink(context)),
+      foregroundColor: toolbarFg,
+      iconTheme: const IconThemeData(color: toolbarFg),
+      actionsIconTheme: const IconThemeData(color: toolbarFg),
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: toolbarGradient(context),
+          ),
+        ),
+      ),
       title: subtitle == null
-          ? Text(title, style: titleStyle(context))
+          ? Text(title, style: toolbarTitleStyle(context))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: titleStyle(context)),
-                Text(subtitle, style: mutedStyle(context)),
+                Text(title, style: toolbarTitleStyle(context)),
+                Text(subtitle, style: toolbarSubtitleStyle(context)),
               ],
             ),
       leading: leading,
       actions: actions,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: line(context)),
-      ),
     );
   }
 

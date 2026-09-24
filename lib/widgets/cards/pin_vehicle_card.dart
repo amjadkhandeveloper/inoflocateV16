@@ -10,7 +10,6 @@ import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 import 'package:infolocate/widgets/custom_webview.dart';
 import 'package:infolocate/widgets/grid_webview.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
@@ -173,16 +172,12 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
           title: LocaliazationKey.map_it.tr(),
           value: widget.location ?? '',
           onTap: () async {
-            if (widget.mapData?.latLng == null) {
+            final latLng = widget.mapData?.latLng;
+            if (!AppHelper.isValidLatLng(latLng?.latitude, latLng?.longitude)) {
               customToast(
                 message: LocaliazationKey.location_unavailable.tr(),
               );
               return;
-            }
-            try {
-              await Permission.location.request();
-            } catch (e) {
-              log('location permission: $e');
             }
             if (!mounted) return;
             Navigator.push(
@@ -275,8 +270,8 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                         fontSize: 16,
                                       ),
                                     ),
-                                    (widget.status!.toLowerCase() == inactive ||
-                                            (widget.status!.toLowerCase() ==
+                                      (widget.status?.toLowerCase() == inactive ||
+                                            (widget.status?.toLowerCase() ==
                                                     stopped &&
                                                 !widget.enableUrl))
                                         ? Text(

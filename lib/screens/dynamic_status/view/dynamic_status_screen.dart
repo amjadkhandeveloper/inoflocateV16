@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import '../../../utils/app_constants.dart';
 import '../../../utils/app_globals.dart';
+import '../../../utils/app_lifecycle.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../utils/app_styles.dart';
 import '../../../utils/app_ui.dart';
@@ -95,6 +96,7 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
 
     _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
       if (searchCtl.text.isNotEmpty) return;
+      if (!AppLifecycleTracker.instance.isStableForeground) return;
       //* when user is typing dont fetch data.
       await dynamicStatusState.fetchInBackground(
           dynamicListRequestModel: DynamicStatusRequestModel(
@@ -141,20 +143,23 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
     final dynamicStatusState = Provider.of<DynamicStatusProvider>(context);
     // log(dynamicStatusState.filterList!.length.toString());
     // log(dynamicStatusState.dynamicStatusList!.length.toString());
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: AppUi.pageBg(context),
-        appBar: AppUi.appBar(
-          context: context,
-          title: LocaliazationKey.dynamic_status.tr(),
-        ),
-        body: dynamicStatusState.state == NotifierState.loading
+    return Scaffold(
+      backgroundColor: AppUi.pageBg(context),
+      appBar: AppUi.appBar(
+        context: context,
+        title: LocaliazationKey.dynamic_status.tr(),
+      ),
+      body: dynamicStatusState.state == NotifierState.loading
             ? const ListShimmerEffect(
                 isDynamicStatus: true,
               )
             : dynamicStatusState.state == NotifierState.error
                 ? CustomErrorWidget(
-                    onPressed: () {},
+                    onPressed: () {
+                      pageNo = defaultPageN0;
+                      dynamicListRequestModel.PNo = pageNo;
+                      loadMoreData();
+                    },
                     errorMsg: dynamicStatusState.failure.message,
                   )
                 : dynamicStatusState.dynamicStatusList!.isEmpty
@@ -308,7 +313,6 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
                                 ),
                         ],
                       ),
-      ),
     );
   }
 }

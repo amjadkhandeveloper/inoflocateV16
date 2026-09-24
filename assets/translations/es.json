@@ -22,6 +22,7 @@
     "client": "Cliente",
     "user": "Usuario",
     "version": "Versión",
+    "last_updated": "Última actualización",
     "powered_by": "Energizado por",
     "switch_to_client_login": "Cambiar a inicio de sesión de cliente",
     "moving": "Moviente",
@@ -223,5 +224,7 @@
     "y_accel_end": "Fin de Aceleración en Y",
     "z_accel_end": "Fin de Aceleración en Z",
     "impact_end": "Fin de Impacto",    
-    "offline":"(Desconectado)"
+    "offline":"(Desconectado)",
+    "refresh": "Refresh",
+    "retrying_in_seconds": "Reintentando en {seconds}s"
 }

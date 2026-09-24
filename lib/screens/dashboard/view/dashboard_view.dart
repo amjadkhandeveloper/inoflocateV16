@@ -12,9 +12,11 @@ import 'package:infolocate/screens/dashboard/controller/ads_provider.dart';
 import 'package:infolocate/screens/dashboard/controller/dashboard_provider.dart';
 import 'package:infolocate/screens/dashboard/model/dashboard_request_model.dart';
 import 'package:infolocate/screens/splash/force_update_checker.dart';
+import 'package:infolocate/screens/fcm/fcm_token_registrar.dart';
 import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_extensions.dart';
 import 'package:infolocate/utils/app_globals.dart';
+import 'package:infolocate/utils/app_lifecycle.dart';
 import 'package:infolocate/utils/app_styles.dart';
 import 'package:infolocate/utils/app_ui.dart';
 import 'package:infolocate/utils/enums.dart';
@@ -137,10 +139,24 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.delayed(Duration.zero, () {
       getUserData();
       ForceUpdateChecker.checkFromDashboard(context);
+      FcmTokenRegistrar.registerAfterLogin();
     });
+    AppLifecycleTracker.instance.addResumeListener(_onAppResumed);
 
     // dashboardProvider.getDashboardData(
     //     dashboardRequestModel: dashboardRequestModel);
+  }
+
+  void _onAppResumed() {
+    if (!mounted || Global.savedUserAuthData == null) return;
+    Provider.of<DashboardProvider>(context, listen: false).getDashboardData(
+      dashboardRequestModel: DashboardRequestModel(
+        userId: Global.savedUserAuthData!.userid!,
+        pSize: pageSize,
+        pNo: defaultPageN0,
+      ),
+      backgroundFetch: true,
+    );
   }
 
   // @override
@@ -158,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    AppLifecycleTracker.instance.removeResumeListener(_onAppResumed);
     _timer!.cancel();
     _pageController.dispose();
     alertController.dispose();
@@ -172,6 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       _timer!.cancel();
       _timer = Timer.periodic(const Duration(seconds: 10), (_) {
+        if (!AppLifecycleTracker.instance.isStableForeground) return;
         if (dashBoardState.state == NotifierState.error && dashBoardState.dashboardResponseModelData == null) {
           _timer?.cancel();
         }
@@ -340,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
           leading: Builder(builder: (context) {
             return IconButton(
               onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: Icon(Icons.menu_rounded, color: AppUi.ink(context)),
+              icon: Icon(Icons.menu_rounded, color: AppUi.toolbarFg),
             );
           }),
           actions: [
@@ -349,9 +367,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: dashBoardState.state == NotifierState.loading
+        body: dashBoardState.state == NotifierState.loading && data == null
             ? const DasboardShimmerEffect()
-            : dashBoardState.state != NotifierState.error && data != null
+            : data != null
                 ? RefreshIndicator(
                     color: AppUi.accent,
                     onRefresh: () async {

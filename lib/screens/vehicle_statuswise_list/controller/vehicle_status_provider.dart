@@ -8,6 +8,7 @@ import 'package:infolocate/screens/vehicle_statuswise_list/repository/vehicle_st
 import 'package:infolocate/utils/app_colors.dart';
 import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_helper.dart';
+import 'package:infolocate/utils/app_lifecycle.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../app.dart';
@@ -126,11 +127,18 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
 
   @override
   void setFailure(Failure failure) {
+    if ((_vehicleList ?? []).isNotEmpty) {
+      _failure = failure;
+      setState(NotifierState.loaded);
+      return;
+    }
+    final alreadyError = _state == NotifierState.error;
     _vehicleStatusResponseModelData = null;
-    setState(NotifierState.error);
-    customToast(message: failure.message.toString());
     _failure = failure;
-    notifyListeners();
+    if (!alreadyError) {
+      customToast(message: failure.message.toString());
+    }
+    setState(NotifierState.error);
   }
 
   void setExpectedTotal(int? total, {bool notify = true}) {
@@ -196,6 +204,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     required VehicleStatusWiseListRequestModel
         vehicleStatusWiseListRequestModel,
   }) async {
+    if (!AppLifecycleTracker.instance.isStableForeground) return;
     //* fetch all vehicles in the background without lazy loading
     // clearVehicleList();
     try {
@@ -224,6 +233,10 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       setState(NotifierState.loaded);
       notifyListeners();
     } on Failure catch (err) {
+      if (_vehicleList != null && _vehicleList!.isNotEmpty) {
+        setState(NotifierState.loaded);
+        return;
+      }
       if (err.message == LocaliazationKey.no_internet_connection.tr()) {
         setFailure(err);
       }
@@ -236,7 +249,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       {required VehicleStatusWiseListRequestModel
           vehicleStatusWiseListRequestModel,
       bool backgroundFetch = false}) async {
-    if (backgroundFetch == false) {
+    if (backgroundFetch == false && _state != NotifierState.error) {
       setState(NotifierState.loading);
       clearVehicleList();
     }
@@ -268,9 +281,13 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       // generateMarker(context: context);
       notifyListeners();
     } on Failure catch (failure) {
-      backgroundFetch == false
-          ? setFailure(failure)
-          : customToast(message: failure.message.toString());
+      if (backgroundFetch) {
+        if ((_vehicleList ?? []).isEmpty) {
+          customToast(message: failure.message.toString());
+        }
+      } else {
+        setFailure(failure);
+      }
     } catch (err) {
       print(err.toString());
     }

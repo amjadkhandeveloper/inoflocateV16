@@ -26,6 +26,7 @@ class LocaliazationKey {
   static const client = "client";
   static const user = "user";
   static const version = "version";
+  static const last_updated = "last_updated";
   static const powered_by = "powered_by";
   static const switch_to_client_login = "switch_to_client_login";
   static const get_started = "get_started";
@@ -249,6 +250,9 @@ class LocaliazationKey {
   static const z_accel_end = "z_accel_end";
   static const impact_end = "impact_end";
   static const offline = "offline";
+  static const refresh = "refresh";
+  static const retrying_in_seconds = "retrying_in_seconds";
+  static const last_login = "last_login";
 
 // Now you can use these variables as keys in your code
 

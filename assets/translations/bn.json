@@ -22,6 +22,7 @@
     "client": "ক্লায়েন্ট",
     "user": "ব্যবহারকারী",
     "version": "সংস্করণ",
+    "last_updated": "সর্বশেষ আপডেট",
     "powered_by": "দ্বারা চালিত",
     "switch_to_client_login": "ক্লায়েন্ট লগইনে স্যুইচ করুন",
     "moving": "চলন্ত",
@@ -223,5 +224,7 @@
     "y_accel_end": "Y-ত্বরণ শেষ",
     "z_accel_end": "Z-ত্বরণ শেষ",
     "impact_end":   "প্রভাব শেষ",
-    "offline":"(অফলাইন)"
+    "offline":"(অফলাইন)",
+    "refresh": "Refresh",
+    "retrying_in_seconds": "Retrying in {seconds}s"
 }

@@ -1,9 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:infolocate/utils/app_helper.dart';
+import 'package:infolocate/utils/app_lifecycle.dart';
 
 import '../../../common_models/failure_model.dart';
-import '../../../utils/app_localization_key.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/custom_toast.dart';
 import '../model/dashboard_request_model.dart';
@@ -31,11 +30,17 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
 
   @override
   void setFailure(Failure failure) {
-    _dashboardResponseModelData = null;
-    setState(NotifierState.error);
-    customToast(message: failure.message.toString());
+    if (_dashboardResponseModelData != null) {
+      _failure = failure;
+      setState(NotifierState.loaded);
+      return;
+    }
+    final alreadyError = _state == NotifierState.error;
     _failure = failure;
-    notifyListeners();
+    if (!alreadyError) {
+      customToast(message: failure.message.toString());
+    }
+    setState(NotifierState.error);
   }
 
   // setLoading() {
@@ -45,6 +50,7 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
   /// Fetches dashboard payload; sets [NotifierState.error] on network/API failure.
   Future<void> getData(
       {required DashboardRequestModel dashboardRequestModel}) async {
+    if (!AppLifecycleTracker.instance.isStableForeground) return;
     try {
       final result = await DashboardService()
           .getDashboardData(dashboardRequestModel: dashboardRequestModel);
@@ -80,7 +86,12 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
   getDashboardData(
       {required DashboardRequestModel dashboardRequestModel,
       bool backgroundFetch = false}) async {
-    if (backgroundFetch == false) setState(NotifierState.loading);
+    if (backgroundFetch && !AppLifecycleTracker.instance.isResumed) {
+      return;
+    }
+    if (backgroundFetch == false && _state != NotifierState.error) {
+      setState(NotifierState.loading);
+    }
     try {
       final result = await DashboardService()
           .getDashboardData(dashboardRequestModel: dashboardRequestModel);
@@ -131,11 +142,16 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
       //         cardType: "D3",
       //         status: "Demo"));
     } on Failure catch (failure) {
-      if (!(backgroundFetch && _dashboardResponseModelData != null)) {
+      if (_dashboardResponseModelData != null) {
+        setState(NotifierState.loaded);
+      } else if (!(backgroundFetch && _dashboardResponseModelData != null)) {
         setFailure(failure);
       }
     } catch (err) {
       print(err.toString());
+      if (_dashboardResponseModelData != null) {
+        setState(NotifierState.loaded);
+      }
     }
     if (backgroundFetch == false) setState(NotifierState.loaded);
     notifyListeners();

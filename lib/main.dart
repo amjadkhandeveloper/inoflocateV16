@@ -3,13 +3,17 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:infolocate/screens/card_types_screen/model/card_type_model.dart';
 import 'package:infolocate/screens/card_types_screen/model/card_type_setting_model.dart';
 import 'package:infolocate/screens/login/model/client_model.dart';
 import 'package:infolocate/screens/login/model/user_login_response_model.dart';
+import 'package:infolocate/screens/fcm/fcm_token_registrar.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
+import 'package:infolocate/utils/app_lifecycle.dart';
 import 'package:path_provider/path_provider.dart';
 import 'app.dart';
 
@@ -26,6 +30,13 @@ class MyHttpOverrides extends HttpOverrides {
 /// App entry: initializes Hive, localization, theme, then runs [MyApp].
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppLifecycleTracker.instance.ensureAttached();
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    print('FCM: Firebase.initializeApp failed: $e');
+  }
   await initialiseData();
   HttpOverrides.global = MyHttpOverrides();
 
@@ -69,6 +80,10 @@ initialiseData() async {
     ),
     EasyLocalization.ensureInitialized()
   ]);
+  await FcmTokenRegistrar.initialize();
+  if (Global.savedUserAuthData != null) {
+    FcmTokenRegistrar.registerAfterLogin();
+  }
 }
 
 /// Opens Hive, registers type adapters, and hydrates [Global] from local storage.

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_extensions.dart';
 
@@ -33,13 +34,18 @@ class AppStyles {
         dividerColor: AppUi.lineLight,
         iconTheme: const IconThemeData(color: AppUi.inkLight),
         appBarTheme: AppBarTheme(
-          iconTheme: const IconThemeData(color: AppUi.inkLight),
-          titleTextStyle:
-              AppStyles.textStyle2(context: ctx, color: AppUi.inkLight),
-          elevation: 0,
-          backgroundColor: AppUi.cardLight,
-          foregroundColor: AppUi.inkLight,
+          iconTheme: const IconThemeData(color: AppUi.toolbarFg),
+          actionsIconTheme: const IconThemeData(color: AppUi.toolbarFg),
+          titleTextStyle: const TextStyle(
+            color: AppUi.toolbarFg,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+          elevation: 4,
+          backgroundColor: AppUi.toolbarLight,
+          foregroundColor: AppUi.toolbarFg,
           surfaceTintColor: Colors.transparent,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
         ),
         fontFamily: fontFamily,
         scaffoldBackgroundColor: AppUi.pageBgLight,
@@ -70,13 +76,18 @@ class AppStyles {
         dividerColor: AppUi.lineDark,
         iconTheme: const IconThemeData(color: AppUi.inkDark),
         appBarTheme: AppBarTheme(
-          iconTheme: const IconThemeData(color: AppUi.inkDark),
-          titleTextStyle:
-              AppStyles.textStyle2(context: ctx, color: AppUi.inkDark),
-          elevation: 0,
-          backgroundColor: AppUi.cardDark,
-          foregroundColor: AppUi.inkDark,
+          iconTheme: const IconThemeData(color: AppUi.toolbarFg),
+          actionsIconTheme: const IconThemeData(color: AppUi.toolbarFg),
+          titleTextStyle: const TextStyle(
+            color: AppUi.toolbarFg,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+          elevation: 4,
+          backgroundColor: AppUi.toolbarDark,
+          foregroundColor: AppUi.toolbarFg,
           surfaceTintColor: Colors.transparent,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
         ),
         scaffoldBackgroundColor: AppUi.pageBgDark,
         fontFamily: fontFamily,

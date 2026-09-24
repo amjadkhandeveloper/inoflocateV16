@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -71,17 +72,22 @@ class AppHelper {
   // --- Network connectivity & Dio error mapping ---
 
   /// Quick DNS lookup check (not used by all screens; repos use Dio directly).
+  /// Retries because Android often reports DNS failure for ~1s after resume.
   static Future<bool> checkInternetConnection() async {
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        return true;
-      } else {
-        return false;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final result = await InternetAddress.lookup('google.com')
+            .timeout(const Duration(seconds: 3));
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          return true;
+        }
+      } on SocketException catch (_) {
+      } on TimeoutException catch (_) {}
+      if (attempt < 2) {
+        await Future<void>.delayed(Duration(milliseconds: 350 * (attempt + 1)));
       }
-    } on SocketException catch (_) {
-      return false;
     }
+    return false;
   }
 
   /// True when Dio failed before getting a valid HTTP response (timeouts, sockets, etc.).
@@ -565,6 +571,13 @@ class AppHelper {
     Global.savedContryCode = Global.box.get(countryCodeKey);
     Global.savedClientAuthData = Global.box.get(clientAuthBoxKey);
     Global.savedUserAuthData = Global.box.get(userAuthBoxKey);
+    Global.savedLastLoginTime = Global.box.get(lastLoginTimeKey) as String?;
+    if (Global.savedUserAuthData != null &&
+        (Global.savedLastLoginTime == null ||
+            Global.savedLastLoginTime!.isEmpty)) {
+      Global.savedLastLoginTime = DateTime.now().toIso8601String();
+      await Global.box.put(lastLoginTimeKey, Global.savedLastLoginTime);
+    }
     Global.savedPrimeryColor = Global.box.get(primaryColorKey) != null
         ? Color(Global.box.get(primaryColorKey))
         : null;
@@ -574,6 +587,34 @@ class AppHelper {
         Global.box.get(alertStatusCardTypeIdKey);
     Global.locationPermission = Global.box.get(locationPermission) ?? false;
     // Global.cardTypeSetting = Global.box.get(cardTypeSettingKey);
+  }
+
+  /// Initials from [username], e.g. "Amjad Bibi Singh" → "ABS" or "A B S".
+  static String usernameInitials(String? username, {bool spaced = false}) {
+    final raw = (username ?? '').trim();
+    if (raw.isEmpty) return '';
+    final parts = raw
+        .split(RegExp(r'[\s._\-]+'))
+        .where((part) => part.trim().isNotEmpty)
+        .toList();
+    final letters = <String>[];
+    for (final part in parts) {
+      final match = RegExp(r'[A-Za-z0-9]').firstMatch(part);
+      if (match == null) continue;
+      letters.add(match.group(0)!.toUpperCase());
+      if (letters.length >= 3) break;
+    }
+    if (letters.isEmpty) {
+      return raw.substring(0, 1).toUpperCase();
+    }
+    return spaced ? letters.join(' ') : letters.join();
+  }
+
+  static String formatLastLogin(String? iso) {
+    if (iso == null || iso.trim().isEmpty) return '—';
+    final parsed = DateTime.tryParse(iso);
+    if (parsed == null) return iso;
+    return DateFormat('dd MMM yyyy, hh:mm a').format(parsed.toLocal());
   }
 
   // --- Localization assets: icons, flags, alert titles ---
@@ -683,12 +724,35 @@ class AppHelper {
 
   static Future<Uint8List> getBytesFromAsset(String path, int width) async {
     ByteData data = await rootBundle.load(path);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetHeight: 10.h.toInt());
+    final target = width > 0 ? width : 80;
+    ui.Codec codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: target,
+    );
     ui.FrameInfo fi = await codec.getNextFrame();
     return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
         .buffer
         .asUint8List();
+  }
+
+  static bool isValidLatLng(double? lat, double? lon) {
+    if (lat == null || lon == null) return false;
+    if (lat.isNaN || lon.isNaN || lat.isInfinite || lon.isInfinite) {
+      return false;
+    }
+    if (lat == 0 && lon == 0) return false;
+    return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+  }
+
+  static LatLng? latLngFrom({double? lat, double? lon, String? mapit}) {
+    if (isValidLatLng(lat, lon)) return LatLng(lat!, lon!);
+    if (mapit == null || !mapit.contains(',')) return null;
+    final parts = mapit.split(',');
+    if (parts.length < 2) return null;
+    final parsedLat = double.tryParse(parts[0].trim());
+    final parsedLon = double.tryParse(parts[1].trim());
+    if (!isValidLatLng(parsedLat, parsedLon)) return null;
+    return LatLng(parsedLat!, parsedLon!);
   }
 
   static imagePathByStatusName({required String? statusName}) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:infolocate/screens/dashboard/model/dashboard_request_model.dart';
 import 'package:infolocate/screens/dashboard/model/dashboard_response_model.dart';
@@ -5,6 +7,7 @@ import 'package:infolocate/screens/dashboard/repository/sequel_dashboard_repo.da
 import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
+import 'package:infolocate/utils/app_lifecycle.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 
@@ -107,7 +110,9 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
   @override
   void setFailure(Failure failure, {bool toast = true}) {
     _failure = failure;
-    if (toast) customToast(message: failure.message.toString());
+    if (toast && _state != NotifierState.error) {
+      customToast(message: failure.message.toString());
+    }
     if (_data == null) {
       setState(NotifierState.error);
     } else {
@@ -123,11 +128,22 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
       setFailure(Failure('User session not found'));
       return;
     }
+    if (!AppLifecycleTracker.instance.isStableForeground && !force) return;
     if (_fetching) return;
     if (!force && _lastFetchAt != null) {
       final elapsed = DateTime.now().difference(_lastFetchAt!);
       if (elapsed < kSequelDashRefreshInterval) return;
     }
+    await _fetchDashboard(
+      showLoader: showLoader && _data == null,
+      allowRetry: true,
+    );
+  }
+
+  Future<void> _fetchDashboard({
+    required bool showLoader,
+    required bool allowRetry,
+  }) async {
     _fetching = true;
     _pageNo = defaultPageN0;
     if (showLoader) setState(NotifierState.loading);
@@ -146,14 +162,33 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
       _lastFetchAt = DateTime.now();
       setState(NotifierState.loaded);
     } on Failure catch (failure) {
-      final keepShowing = _data != null && !showLoader;
-      setFailure(failure, toast: !keepShowing);
+      await _handleLoadFailure(failure, allowRetry: allowRetry);
     } catch (err) {
-      final keepShowing = _data != null && !showLoader;
-      setFailure(Failure(err.toString()), toast: !keepShowing);
+      await _handleLoadFailure(Failure(err.toString()), allowRetry: allowRetry);
     } finally {
       _fetching = false;
     }
+  }
+
+  Future<void> _handleLoadFailure(
+    Failure failure, {
+    required bool allowRetry,
+  }) async {
+    if (_data != null) {
+      setState(NotifierState.loaded);
+      return;
+    }
+    if (!AppLifecycleTracker.instance.isResumed) {
+      return;
+    }
+    if (allowRetry) {
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      if (!AppLifecycleTracker.instance.isResumed) return;
+      _fetching = false;
+      await _fetchDashboard(showLoader: true, allowRetry: false);
+      return;
+    }
+    setFailure(failure, toast: _state != NotifierState.error);
   }
 
   Future<void> loadNextPage() async {

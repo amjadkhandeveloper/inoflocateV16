@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/animation/custom_fade_animation.dart';
 import 'package:infolocate/screens/alerts/controller/alert_provider.dart';
 import 'package:infolocate/screens/alerts/model/alert_list_request_model.dart';
@@ -1014,7 +1013,10 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                                                       ? AppHelper.returnAlertStatus(
                                                           alertStatus: cardData.AlertType!)
                                                       : cardData.AlertType ?? '';
-                                                  final hasCoords = cardData.Lat != null && cardData.Lon != null;
+                                                  final mapLatLng = AppHelper.latLngFrom(
+                                                    lat: cardData.Lat,
+                                                    lon: cardData.Lon,
+                                                  );
                                                   return AnimationConfiguration.staggeredList(
                                                       duration: const Duration(milliseconds: 500),
                                                       position: index,
@@ -1029,9 +1031,7 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                                                             child: PinVehicleCard(
                                                               location: cardData.Location ?? '',
                                                               mapData: GoogleMapModel(
-                                                                  latLng: hasCoords
-                                                                      ? LatLng(cardData.Lat!, cardData.Lon!)
-                                                                      : null,
+                                                                  latLng: mapLatLng,
                                                                   vehicleId: cardData.VehicleID,
                                                                   statusName: alertTitle,
                                                                   vehicleNo: cardData.VehicleNo,

@@ -22,6 +22,7 @@
     "client": "క్లయింట్",
     "user": "వినియోగదారు",
     "version": "ఆవృతి",
+    "last_updated": "చివరి నవీకరణ",
     "powered_by": "ఆధారితం",
     "switch_to_client_login": "క్లయింట్ లాగిన్‌కు మార్చు",
     "moving": "మారుతున్నట్లయితే",
@@ -223,5 +224,7 @@
     "y_accel_end": "Y-వేగాక్కల ముగియింది",
     "z_accel_end": "Z-వేగాక్కల ముగియింది",
     "impact_end": "ప్రభావం ముగియింది",
-    "offline":"(ఆఫ్‌లైన్)"    
+    "offline":"(ఆఫ్‌లైన్)",
+    "refresh": "Refresh",
+    "retrying_in_seconds": "Retrying in {seconds}s"    
 }

@@ -46,10 +46,12 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
 
   @override
   void setFailure(Failure failure) {
-    setState(NotifierState.error);
-    customToast(message: failure.message.toString());
+    final alreadyError = _state == NotifierState.error;
     _failure = failure;
-    notifyListeners();
+    if (!alreadyError) {
+      customToast(message: failure.message.toString());
+    }
+    setState(NotifierState.error);
   }
 
   @override
@@ -100,19 +102,23 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
   /// Silent refresh while user is on screen (skipped when search box is non-empty).
   fetchInBackground(
       {required DynamicStatusRequestModel dynamicListRequestModel}) async {
-    final result = await DynamicStatusService().dynamicStatusListService(
-        dynamicListRequestModel: dynamicListRequestModel);
-    print(jsonEncode(result));
-    _dynamicStatusList = result?.data?.vehicledetails ?? [];
-    _filterList = _dynamicStatusList;
-    notifyListeners();
+    try {
+      final result = await DynamicStatusService().dynamicStatusListService(
+          dynamicListRequestModel: dynamicListRequestModel);
+      print(jsonEncode(result));
+      _dynamicStatusList = result?.data?.vehicledetails ?? [];
+      _filterList = _dynamicStatusList;
+      notifyListeners();
+    } catch (err) {
+      debugPrint(err.toString());
+    }
   }
 
   /// Initial load or load-more pagination via [dynamicListRequestModel.PNo].
   getDynamicStatusList(
       {required DynamicStatusRequestModel dynamicListRequestModel,
       bool loadMore = false}) async {
-    if (loadMore == false) {
+    if (loadMore == false && _state != NotifierState.error) {
       setState(NotifierState.loading);
       clearDynamicList();
     }
@@ -136,9 +142,11 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
       }
       notifyListeners();
     } on Failure catch (failure) {
-      loadMore == false
-          ? setFailure(failure)
-          : customToast(message: failure.message.toString());
+      if (loadMore == false) {
+        setFailure(failure);
+        return;
+      }
+      customToast(message: failure.message.toString());
     }
     if (loadMore == false) setState(NotifierState.loaded);
   }

@@ -1,3 +1,4 @@
+import '../../../utils/app_helper.dart';
 import '../../../utils/json_safe_parser.dart';
 import '../../login/model/client_model.dart';
 
@@ -146,15 +147,13 @@ class AlertListResponseModelDataAlertdetails with JsonSafeParser {
       'longitude',
       'Longitude',
     ]));
-    if (Lat == null || Lon == null) {
+    if (!AppHelper.isValidLatLng(Lat, Lon)) {
       final mapit =
           asStringOrNull(firstValue(json, ['Mapit', 'mapit', 'mapIt']));
-      if (mapit != null && mapit.contains(',')) {
-        final parts = mapit.split(',');
-        Lat ??= double.tryParse(parts[0].trim());
-        if (parts.length > 1) {
-          Lon ??= double.tryParse(parts[1].trim());
-        }
+      final fromMapit = AppHelper.latLngFrom(mapit: mapit);
+      if (fromMapit != null) {
+        Lat = fromMapit.latitude;
+        Lon = fromMapit.longitude;
       }
     }
     Location = asStringFrom(json, ['Location', 'location']);

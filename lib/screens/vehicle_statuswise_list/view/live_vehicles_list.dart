@@ -13,6 +13,7 @@ import 'package:sizer/sizer.dart';
 import '../../../utils/app_constants.dart';
 import '../../../utils/app_globals.dart';
 import '../../../utils/app_helper.dart';
+import '../../../utils/app_lifecycle.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../utils/app_styles.dart';
 import '../../../utils/app_ui.dart';
@@ -109,6 +110,7 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
 
     _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
       if (searchCtl.text.isNotEmpty) return;
+      if (!AppLifecycleTracker.instance.isStableForeground) return;
       //* when user is typing dont fetch data.
       await vehicleStatusState.fetchInBackground(
           vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
@@ -227,7 +229,7 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
                 child: SvgPicture.asset(
                   'assets/icons/filter.svg',
                   height: 3.h,
-                  color: Theme.of(context).iconTheme.color,
+                  color: AppUi.toolbarFg,
                 ),
               ),
               items: dropDownItems.map((e) => e.statusName).toList(),
@@ -236,7 +238,7 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
         ),
         body: vehicleStatusState.state == NotifierState.loading
             ? const ListShimmerEffect()
-            : vehicleStatusState.state != NotifierState.error && data != null
+            : data != null
                 ? vehicleStatusState.vehicleList!.isEmpty
                     ? Center(
                         child: Text(
@@ -369,7 +371,11 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
                         ),
                       )
                 : CustomErrorWidget(
-                    onPressed: () {},
+                    onPressed: () {
+                      pageNo = defaultPageN0;
+                      vehicleStatusResponseModelData.pNo = pageNo;
+                      loadMoreData();
+                    },
                     errorMsg: vehicleStatusState.failure.message,
                   ),
       ),

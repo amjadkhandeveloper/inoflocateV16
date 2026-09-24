@@ -313,10 +313,16 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
 
   setUpLocation({bool initaliseCamera = true}) async {
     markers = {};
-    if (widget.marker == null || widget.marker!.latLng == null) return;
-    currentLocation = widget.marker!.latLng!;
+    final marker = widget.marker;
+    final latLng = marker?.latLng;
+    if (marker == null ||
+        latLng == null ||
+        !AppHelper.isValidLatLng(latLng.latitude, latLng.longitude)) {
+      return;
+    }
+    currentLocation = latLng;
     final statusName = AppHelper.returnAlertStatus(
-      alertStatus: widget.marker!.statusName,
+      alertStatus: marker.statusName,
     );
     BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarkerWithHue(
       AppHelper.getMarkerColorByStatus(status: statusName) ??
@@ -325,80 +331,92 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
     try {
       final Uint8List data = await AppHelper.getBytesFromAsset(
           AppHelper.imagePathByStatusName(statusName: statusName), 80);
-      markerIcon = BitmapDescriptor.fromBytes(data);
+      if (data.isNotEmpty) {
+        markerIcon = BitmapDescriptor.fromBytes(data);
+      }
     } catch (e) {
       log('map marker asset failed: $e');
     }
 
     markers.add(
       Marker(
-        markerId: MarkerId(widget.marker!.vehicleId.toString()),
-        position: widget.marker!.latLng!,
+        markerId: MarkerId(marker.vehicleId?.toString() ?? 'alert-marker'),
+        position: latLng,
         icon: markerIcon,
-        infoWindow: InfoWindow(title: widget.marker!.vehicleNo),
+        infoWindow: InfoWindow(title: marker.vehicleNo ?? ''),
         onTap: widget.hideBackButton
             ? null
-            : () => onTapMarker(vehicleId: widget.marker!.vehicleId),
+            : () => onTapMarker(vehicleId: marker.vehicleId),
       ),
     );
     if (mounted) setState(() {});
     if (initaliseCamera) {
       await initialiseCamerController();
     }
-    moveCamera();
+    await moveCamera();
   }
 
   initialiseCamerController() async {
+    if (_cameraController != null) return;
     _cameraController = await _controller.future;
   }
 
   Future<void> moveCamera() async {
-    log(widget.marker?.vehicleId.toString() ?? '');
-    await Future.delayed(const Duration(seconds: 1));
-    final controller = _cameraController;
-    if (!mounted || controller == null) return;
-    await controller
-        .showMarkerInfoWindow(MarkerId(widget.marker!.vehicleId.toString()));
-    controller.moveCamera(CameraUpdate.newCameraPosition(CameraPosition(
+    try {
+      await Future.delayed(const Duration(milliseconds: 400));
+      final controller = _cameraController;
+      if (!mounted || controller == null) return;
+      await controller.moveCamera(CameraUpdate.newCameraPosition(CameraPosition(
         target: currentLocation,
-        zoom: 18)));
-  }
-
-  @override
-  void dispose() {
-    // SystemChrome.setPreferredOrientations(
-    //   [DeviceOrientation.portraitUp],
-    // );
-    // _cameraController.dispose();
-    super.dispose();
+        zoom: 16,
+      )));
+      final markerId = MarkerId(
+        widget.marker?.vehicleId?.toString() ?? 'alert-marker',
+      );
+      if (markers.any((m) => m.markerId == markerId)) {
+        await controller.showMarkerInfoWindow(markerId);
+      }
+    } catch (e) {
+      log('moveCamera failed: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    print(widget.marker?.statusName);
-    // print(markers.length);
-    return SafeArea(
-      child: Scaffold(
-        body: Stack(
+    return Scaffold(
+      backgroundColor: AppUi.pageBg(context),
+      body: SafeArea(
+        child: Stack(
           children: [
-            GoogleMap(
-              // mapType: MapType.hybrid,
-              markers: markers,
-              mapType: MapType.normal,
-              initialCameraPosition: CameraPosition(
-                target: currentLocation,
+            Positioned.fill(
+              child: GoogleMap(
+                markers: markers,
+                mapType: MapType.normal,
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: true,
+                compassEnabled: false,
+                mapToolbarEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  target: currentLocation,
+                  zoom: 16,
+                ),
+                onMapCreated: (GoogleMapController controller) {
+                  _cameraController = controller;
+                  if (!_controller.isCompleted) {
+                    _controller.complete(controller);
+                  }
+                },
               ),
-              onMapCreated: (GoogleMapController controller) {
-                _controller.complete(controller);
-              },
             ),
             if (widget.hideBackButton == false)
               Positioned(
-                top: 2.h,
-                left: 2.w,
+                top: 12,
+                left: 12,
                 child: Material(
                   color: AppUi.cardColor(context),
                   borderRadius: BorderRadius.circular(12),
+                  elevation: 2,
                   child: InkWell(
                     onTap: () => Navigator.pop(context),
                     borderRadius: BorderRadius.circular(12),

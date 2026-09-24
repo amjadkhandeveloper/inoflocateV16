@@ -257,9 +257,18 @@ class CustomNavigationDrawer extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: Text(
-                    '${LocaliazationKey.version.tr()} 1.0.0',
-                    style: AppUi.mutedStyle(context),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${LocaliazationKey.version.tr()} $kAppVersionName',
+                        style: AppUi.mutedStyle(context),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${LocaliazationKey.last_updated.tr()} $kAppLastUpdated',
+                        style: AppUi.mutedStyle(context),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -273,6 +282,7 @@ class CustomNavigationDrawer extends StatelessWidget {
   logout({required BuildContext context}) async {
     try {
       await Global.box.delete(userAuthBoxKey);
+      await Global.box.delete(lastLoginTimeKey);
       await AppHelper.getHiveBoxData();
 
       Navigator.pushNamedAndRemoveUntil(

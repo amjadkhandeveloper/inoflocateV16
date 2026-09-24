@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/screens/alerts/view/alert_screen.dart';
 import 'package:infolocate/screens/card_types_screen/controller/card_type_provider.dart';
@@ -24,6 +25,8 @@ import 'package:infolocate/widgets/google_map/google_map_screen.dart';
 import 'package:infolocate/widgets/google_map/map_model.dart';
 import 'package:infolocate/widgets/profile_dialog.dart';
 import 'package:infolocate/screens/splash/force_update_checker.dart';
+import 'package:infolocate/screens/fcm/fcm_token_registrar.dart';
+import 'package:infolocate/utils/app_lifecycle.dart';
 import 'package:provider/provider.dart';
 
 const Color _moving = Color(0xFF16A34A);
@@ -100,25 +103,30 @@ class SequelDashboardScreen extends StatefulWidget {
 class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
   Timer? _timer;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final _searchCtl = TextEditingController();
-  bool _showSearch = false;
 
   @override
   void initState() {
     super.initState();
+    AppLifecycleTracker.instance.addResumeListener(_onAppResumed);
     Future.delayed(Duration.zero, () {
       if (!mounted) return;
       context.read<CardTypeProvider>().setCurrentVehicleStatusCard();
       context.read<CardTypeProvider>().setCurrentAlertStatusCard();
       _loadDashboard(force: true);
       ForceUpdateChecker.checkFromDashboard(context);
+      FcmTokenRegistrar.registerAfterLogin();
     });
+  }
+
+  void _onAppResumed() {
+    if (!mounted) return;
+    _loadDashboard(showLoader: false, force: true);
   }
 
   @override
   void dispose() {
+    AppLifecycleTracker.instance.removeResumeListener(_onAppResumed);
     _timer?.cancel();
-    _searchCtl.dispose();
     super.dispose();
   }
 
@@ -139,7 +147,11 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
     if (_timer != null && _timer!.isActive) return;
     _timer?.cancel();
     _timer = Timer.periodic(kSequelDashRefreshInterval, (_) async {
-      if (!mounted || Global.savedUserAuthData == null) return;
+      if (!mounted ||
+          Global.savedUserAuthData == null ||
+          !AppLifecycleTracker.instance.isStableForeground) {
+        return;
+      }
       await context.read<SequelDashboardProvider>().loadDashboard(
             showLoader: false,
           );
@@ -188,13 +200,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
   List<DashboardResponseModelDataPinvehicle> _filteredPins(
     List<DashboardResponseModelDataPinvehicle> pins,
   ) {
-    final q = _searchCtl.text.trim().toLowerCase();
-    return pins.where((v) {
-      if (q.isEmpty) return true;
-      return (v.VehicleNo ?? '').toLowerCase().contains(q) ||
-          (v.DriverName ?? '').toLowerCase().contains(q) ||
-          (v.Location ?? '').toLowerCase().contains(q);
-    }).toList();
+    return pins;
   }
 
   @override
@@ -206,12 +212,13 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
       key: _scaffoldKey,
       backgroundColor: AppUi.pageBg(context),
       drawer: CustomNavigationDrawer(),
-      body: dash.state == NotifierState.loading
+      body: dash.state == NotifierState.loading && data == null
           ? const DasboardShimmerEffect()
-          : dash.state == NotifierState.error || data == null
+          : dash.data == null
               ? CustomErrorWidget(
                   errorMsg: dash.failure.message,
-                  onPressed: () => _loadDashboard(force: true),
+                  onPressed: () =>
+                      _loadDashboard(showLoader: false, force: true),
                 )
               : RefreshIndicator(
                   color: AppUi.accent,
@@ -291,174 +298,163 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
 
     return Column(
       children: [
-        Container(
-          color: AppUi.cardColor(context),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(4, 4, 8, 12),
-              child: Column(
-                children: [
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    icon: Icon(Icons.menu_rounded, color: AppUi.ink(context)),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          LocaliazationKey.fleet_dashboard.tr(),
-                          style: AppUi.titleStyle(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () =>
-                        setState(() => _showSearch = !_showSearch),
-                    icon: Icon(
-                      _showSearch ? Icons.close : Icons.search_rounded,
-                      color: AppUi.ink(context),
-                    ),
-                  ),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const AlertDashboardScreen(),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.notifications_outlined,
-                          color: AppUi.ink(context),
-                        ),
-                      ),
-                      if (dash.totalAlertCount > 0)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: _critical,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              dash.totalAlertCount > 99
-                                  ? '99+'
-                                  : '${dash.totalAlertCount}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ProfileAvatarButton(
-                      selectedLanguage: context
-                          .watch<LanguageProvider>()
-                          .selectedLanguage,
-                    ),
-                  ),
-                ],
+        AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.light,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: AppUi.toolbarGradient(context),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x661E3A8A),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 4, 8, 10),
                 child: Row(
                   children: [
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppUi.pageBg(context),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppUi.line(context)),
+                    IconButton(
+                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                      icon: const Icon(Icons.menu_rounded,
+                          color: AppUi.toolbarFg),
+                    ),
+                    Expanded(
+                      child: Text(
+                        LocaliazationKey.fleet_dashboard.tr(),
+                        style: AppUi.toolbarTitleStyle(context),
+                      ),
+                    ),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AlertDashboardScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.notifications_outlined,
+                            color: AppUi.toolbarFg,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.apartment_outlined,
-                                size: 16, color: AppUi.muted(context)),
-                            const SizedBox(width: 6),
-                            Flexible(
+                        if (dash.totalAlertCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: _critical,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: Text(
-                                client,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppUi.ink(context),
+                                dash.totalAlertCount > 99
+                                    ? '99+'
+                                    : '${dash.totalAlertCount}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      now,
-                      style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ProfileAvatarButton(
+                        selectedLanguage: context
+                            .watch<LanguageProvider>()
+                            .selectedLanguage,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: _moving,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _lastUpdatedLabel,
-                        style: TextStyle(fontSize: 11, color: AppUi.muted(context)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_showSearch)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-                  child: TextField(
-                    controller: _searchCtl,
-                    onChanged: (_) => setState(() {}),
-                    style: AppUi.body(context),
-                    decoration: AppUi.inputDecoration(
-                      context: context,
-                      hintText: 'Search vehicle, driver or location',
-                      prefixIcon: Icon(Icons.search_rounded,
-                          size: 20, color: AppUi.muted(context)),
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
+        Container(
+          width: double.infinity,
+          color: AppUi.cardColor(context),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppUi.pageBg(context),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppUi.line(context)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.apartment_outlined,
+                              size: 16, color: AppUi.muted(context)),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              client,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppUi.ink(context),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    now,
+                    style:
+                        TextStyle(fontSize: 11, color: AppUi.muted(context)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: _moving,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _lastUpdatedLabel,
+                    style:
+                        TextStyle(fontSize: 11, color: AppUi.muted(context)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         Container(height: 1, color: AppUi.line(context)),
       ],

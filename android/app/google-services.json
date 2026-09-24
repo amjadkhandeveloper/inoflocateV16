@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "173547633996",
+    "firebase_url": "https://infocabs-ksataxi.firebaseio.com",
+    "project_id": "infocabs-ksataxi",
+    "storage_bucket": "infocabs-ksataxi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:173547633996:android:235207b6df9f160e0de3e9",
+        "android_client_info": {
+          "package_name": "com.infotrack.infolocatev16"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUZSMGt34hU9hoWZF8jc54GJl-X-HvxsY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

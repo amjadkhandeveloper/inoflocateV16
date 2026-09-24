@@ -22,6 +22,7 @@
     "client": "வாடிக்கையாளர்",
     "user": "பயனர்",
     "version": "பதிப்பு",
+    "last_updated": "கடைசி புதுப்பிப்பு",
     "powered_by": "மின்வழங்கியாக",
     "switch_to_client_login": "வாடிக்கையாளர் உள்நுழைவுக்கு மாற்றவும்",
     "moving": "நகர்த்துகிறது",
@@ -223,5 +224,7 @@
     "y_accel_end": "வை-வேகாக்கல் முடி",
     "z_accel_end": "ஸ்ரூ-வேகாக்கல் முடி",
     "impact_end": "பரிபாகம் முடி",
-    "offline":"(ஆஃப்லைன்)"    
+    "offline":"(ஆஃப்லைன்)",
+    "refresh": "Refresh",
+    "retrying_in_seconds": "Retrying in {seconds}s"    
 }

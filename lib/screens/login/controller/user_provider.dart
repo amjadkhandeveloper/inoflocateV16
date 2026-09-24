@@ -8,6 +8,7 @@ import '../../../utils/app_constants.dart';
 import '../../../utils/app_helper.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../utils/enums.dart';
+import '../../fcm/fcm_token_registrar.dart';
 import '../model/user_login_request_model.dart';
 import '../model/user_login_response_model.dart';
 
@@ -66,6 +67,10 @@ class UserProvider extends ChangeNotifier with StateInterface {
           print("Saving user data: ${user.toJson()}");
           await Global.box.put(userAuthBoxKey, user);
           await Global.box.put(userAdvertisement, user.showAdvertise);
+          await Global.box.put(
+            lastLoginTimeKey,
+            DateTime.now().toIso8601String(),
+          );
           if (Global.isSequelClient &&
               savedClient != null &&
               user.clientid != null) {
@@ -75,6 +80,9 @@ class UserProvider extends ChangeNotifier with StateInterface {
         }
       }
       await AppHelper.getHiveBoxData();
+      if (Global.savedUserAuthData != null) {
+        FcmTokenRegistrar.registerAfterLogin();
+      }
     } on Failure catch (failure) {
       setFailure(failure);
     } catch (err) {

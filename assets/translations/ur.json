@@ -22,6 +22,7 @@
     "client": "کلائنٹ",
     "user": "صارف",
     "version": "ورژن",
+    "last_updated": "آخری اپ ڈیٹ",
     "powered_by": "کی طرف سے طاقت",
     "switch_to_client_login": "کلائنٹ لاگ ان پر سوئچ کریں",
     "moving": "حرکت پذیر",
@@ -223,5 +224,7 @@
     "y_accel_end": "Y-رفتاری ختم ہوگئی",
     "z_accel_end": "Z-رفتاری ختم ہوگئی",
     "impact_end": "ٹکر کی ختم ہوگئی",
-    "offline":"(آف لائن)"    
+    "offline":"(آف لائن)",
+    "refresh": "Refresh",
+    "retrying_in_seconds": "Retrying in {seconds}s"    
 }

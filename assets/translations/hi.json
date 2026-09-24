@@ -22,6 +22,7 @@
     "client": "क्लाइंट",
     "user": "उपयोगकर्ता",
     "version": "संस्करण",
+    "last_updated": "अंतिम अपडेट",
     "powered_by": "प्रदान करने वाला",
     "switch_to_client_login": "क्लाइंट लॉगिन पर स्विच करें",
     "moving": "चल रहा है",
@@ -224,5 +225,7 @@
     "y_accel_end": "वाई-त्वरण समाप्त",
     "z_accel_end": "जेड-त्वरण समाप्त",
     "impact_end": "प्रभाव समाप्त",
-    "offline":"(ऑफ़लाइन)"    
+    "offline":"(ऑफ़लाइन)",
+    "refresh": "Refresh",
+    "retrying_in_seconds": "Retrying in {seconds}s"    
 }
