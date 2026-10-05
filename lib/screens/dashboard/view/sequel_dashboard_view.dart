@@ -11,7 +11,6 @@ import 'package:infolocate/screens/dashboard/controller/sequel_dashboard_provide
 import 'package:infolocate/screens/dashboard/model/dashboard_response_model.dart';
 import 'package:infolocate/screens/language/controller/language_provider.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/view/vehicle_status_list.dart';
-import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
@@ -647,18 +646,13 @@ class _KpiGrid extends StatelessWidget {
           cardType: cardType,
         ),
       ),
-      ...statuses.where((s) {
-        final name = (s.status ?? '').toLowerCase();
-        return name == moving || name == idle;
-      }).map((s) {
+      ...statuses.map((s) {
         final statusTitle = s.status ?? '';
-        final name = statusTitle.toLowerCase();
         return GestureDetector(
           onTap: () => onStatus(s),
           child: VehicleStatusCard(
             count: '${s.Value ?? 0}',
-            icon: AppHelper.returnIcons(
-                title: name == idle ? 'Idle' : 'Moving'),
+            icon: AppHelper.returnIcons(title: statusTitle),
             title: AppHelper.returnJapaneseText(title: statusTitle),
             iconColor: sequelStatusColor(statusTitle),
             percentage: AppHelper.returnPercentage(

@@ -50,7 +50,7 @@ class ForgotPasswordService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response);
+        AppHelper.logApiTrace('Forgot password error: ${e.response}');
         var message = ForgotPasswordResponseModel.fromJson(e.response!.data)
             .data!
             .message

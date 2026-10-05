@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
-import 'dart:developer' as dev;
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -240,14 +238,18 @@ class AppHelper {
   }
 
   // --- Dio request/response logging (debugging support) ---
+  //
+  // Single switch for every API log (Dio interceptor and logApiCall).
+  // Leave false for test and release builds so responses are not formatted
+  // or printed. Set true locally when a call needs to be inspected.
+  static bool apiLogsEnabled = true;
 
   static int _apiTraceId = 0;
 
   /// Prints URL, request, and response without Flutter's debugPrint throttle.
   static void logApiTrace(String message) {
+    if (!apiLogsEnabled) return;
     debugPrintSynchronously(message, wrapWidth: 1024);
-    print(message);
-    dev.log(message, name: 'API');
   }
 
   /// Attaches a logger to [dio] that prints the full call:
@@ -364,6 +366,7 @@ class AppHelper {
     Object? response,
     Object? error,
   }) {
+    if (!apiLogsEnabled) return;
     final businessFailure = error == null && isApiBusinessFailure(response);
     logApiTrace('API_CALL [$tag] $method $url');
     logApiTrace('API_CALL [$tag] REQUEST: ${_compactJson(request)}');
@@ -619,55 +622,39 @@ class AppHelper {
 
   // --- Localization assets: icons, flags, alert titles ---
 
+  static String _iconKey(String title) {
+    return title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
   static returnIcons({required String title}) {
-    String path = 'assets/icons/default_alert.svg';
-    switch (title) {
-      case 'Idle':
-        path = 'assets/icons/idle.svg';
-        break;
-      case 'Stopped':
-        path = 'assets/icons/stopped.svg';
-        break;
-      case 'Moving':
-        path = 'assets/icons/moving.svg';
-        break;
-      case 'Inactive':
-        path = 'assets/icons/inactive.svg';
-        break;
-      case 'Working':
-        path = 'assets/icons/working.svg';
-        break;
-      case 'Operational':
-        path = 'assets/icons/working.svg';
-        break;
-      case 'Operation':
-        path = 'assets/icons/working.svg';
-        break;
-      case 'Over Speed':
-      case 'OverSpeed':
-      case 'Over Speed - Hwy':
-      case 'Over Speed - NonHwy':
-        path = "assets/icons/overspeed.svg";
-        break;
-      case 'Stop':
-        path = 'assets/icons/stopped.svg';
-        break;
-      case 'tilt end':
-        path = 'assets/icons/tilt_end.svg';
-        break;
-      case 'Tilt end':
-        path = 'assets/icons/tilt_end.svg';
-        break;
-      case "Sharp turn":
-        path = 'assets/icons/sharp_turn.svg';
-        break;
-      case "Harsh brake":
-        path = 'assets/icons/harsh_break.svg';
-        break;
+    switch (_iconKey(title)) {
+      case 'idle':
+        return 'assets/icons/idle.svg';
+      case 'stopped':
+      case 'stop':
+        return 'assets/icons/stopped.svg';
+      case 'moving':
+        return 'assets/icons/moving.svg';
+      case 'inactive':
+      case 'notworking':
+        return 'assets/icons/inactive.svg';
+      case 'working':
+      case 'operational':
+      case 'operation':
+        return 'assets/icons/working.svg';
+      case 'overspeed':
+      case 'overspeedhwy':
+      case 'overspeednonhwy':
+        return 'assets/icons/overspeed.svg';
+      case 'tiltend':
+        return 'assets/icons/tilt_end.svg';
+      case 'sharpturn':
+        return 'assets/icons/sharp_turn.svg';
+      case 'harshbrake':
+        return 'assets/icons/harsh_break.svg';
       default:
-        path = 'assets/icons/default_alert.svg';
+        return 'assets/icons/default_alert.svg';
     }
-    return path;
   }
 
   static returnLanguageTranslation({required String title}) {
@@ -742,6 +729,82 @@ class AppHelper {
     }
     if (lat == 0 && lon == 0) return false;
     return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+  }
+
+  /// Fits the camera to API coordinates. A single point or a zero-size
+  /// region is zoomed directly, because [CameraUpdate.newLatLngBounds] throws
+  /// on both Android and iOS when southwest and northeast are equal or inverted.
+  static Future<void> moveCameraToPoints(
+    GoogleMapController controller,
+    Iterable<LatLng> points, {
+    double padding = 60,
+    double singleZoom = 14,
+  }) async {
+    final valid = points
+        .where((point) => isValidLatLng(point.latitude, point.longitude))
+        .toList();
+    if (valid.isEmpty) return;
+    if (valid.length == 1) {
+      await controller.animateCamera(
+        CameraUpdate.newLatLngZoom(valid.first, singleZoom),
+      );
+      return;
+    }
+
+    var minLat = valid.first.latitude;
+    var maxLat = valid.first.latitude;
+    var minLng = valid.first.longitude;
+    var maxLng = valid.first.longitude;
+    for (final point in valid) {
+      minLat = min(minLat, point.latitude);
+      maxLat = max(maxLat, point.latitude);
+      minLng = min(minLng, point.longitude);
+      maxLng = max(maxLng, point.longitude);
+    }
+    const epsilon = 0.01;
+    if ((maxLat - minLat).abs() < epsilon) {
+      minLat -= epsilon;
+      maxLat += epsilon;
+    }
+    if ((maxLng - minLng).abs() < epsilon) {
+      minLng -= epsilon;
+      maxLng += epsilon;
+    }
+    minLat = minLat.clamp(-90.0, 90.0).toDouble();
+    maxLat = maxLat.clamp(-90.0, 90.0).toDouble();
+    minLng = minLng.clamp(-180.0, 180.0).toDouble();
+    maxLng = maxLng.clamp(-180.0, 180.0).toDouble();
+    final center = LatLng((minLat + maxLat) / 2, (minLng + maxLng) / 2);
+    if (minLat >= maxLat || minLng >= maxLng) {
+      await controller.animateCamera(
+        CameraUpdate.newLatLngZoom(center, singleZoom),
+      );
+      return;
+    }
+
+    final bounds = LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+    // newLatLngBounds throws on Android and iOS when the map has not been laid
+    // out yet. Wait a frame, then retry once before falling back to a point zoom.
+    await WidgetsBinding.instance.endOfFrame;
+    try {
+      await controller.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, padding),
+      );
+    } catch (_) {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      try {
+        await controller.animateCamera(
+          CameraUpdate.newLatLngBounds(bounds, padding),
+        );
+      } catch (_) {
+        await controller.animateCamera(
+          CameraUpdate.newLatLngZoom(center, singleZoom),
+        );
+      }
+    }
   }
 
   static LatLng? latLngFrom({double? lat, double? lon, String? mapit}) {
@@ -824,6 +887,42 @@ class AppHelper {
     return urlList;
   }
 
+  /// Moving, Idle, Stopped, Inactive, Not Working. Unknown statuses sort after these.
+  static const List<String> vehicleStatusOrder = [
+    'moving',
+    'idle',
+    'stopped',
+    'inactive',
+    'notworking',
+  ];
+
+  static String vehicleStatusKey(String? raw) {
+    final key = (raw ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (key == 'idel') return 'idle';
+    return key;
+  }
+
+  static int vehicleStatusRank(String? raw) {
+    final index = vehicleStatusOrder.indexOf(vehicleStatusKey(raw));
+    return index < 0 ? vehicleStatusOrder.length : index;
+  }
+
+  static List<T> sortVehicleStatuses<T>(
+    Iterable<T> items,
+    String? Function(T item) statusOf,
+  ) {
+    final list = items.toList();
+    list.sort((a, b) {
+      final rank = vehicleStatusRank(statusOf(a))
+          .compareTo(vehicleStatusRank(statusOf(b)));
+      if (rank != 0) return rank;
+      return (statusOf(a) ?? '')
+          .toLowerCase()
+          .compareTo((statusOf(b) ?? '').toLowerCase());
+    });
+    return list;
+  }
+
   static returnIconColor({required String? title}) {
     Color color = Colors.blue;
     switch ((title ?? '').toLowerCase().trim()) {
@@ -842,6 +941,8 @@ class AppHelper {
         color = const Color(0xff6c4bf1);
         break;
       case 'inactive':
+      case 'not working':
+      case 'notworking':
         color = const Color(0xff929292);
         break;
       default:
@@ -1192,6 +1293,10 @@ class _ApiLogInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    if (!AppHelper.apiLogsEnabled) {
+      handler.next(options);
+      return;
+    }
     final id = ++AppHelper._apiTraceId;
     options.extra[_startKey] = DateTime.now().millisecondsSinceEpoch;
     options.extra[_idKey] = id;
@@ -1224,6 +1329,10 @@ $body
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
+    if (!AppHelper.apiLogsEnabled) {
+      handler.next(response);
+      return;
+    }
     final started = response.requestOptions.extra[_startKey];
     final id = response.requestOptions.extra[_idKey];
     final duration = started is int
@@ -1253,6 +1362,10 @@ ${AppHelper._prettyJson(response.data)}
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (!AppHelper.apiLogsEnabled) {
+      handler.next(err);
+      return;
+    }
     final started = err.requestOptions.extra[_startKey];
     final id = err.requestOptions.extra[_idKey];
     final duration = started is int

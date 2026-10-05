@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -48,6 +49,10 @@ class FcmNotifications {
     _listening = true;
     FirebaseMessaging.onMessage.listen((message) {
       _logMessage('foreground', message);
+      // iOS already presents notification payloads via
+      // setForegroundNotificationPresentationOptions. Show a local
+      // notification only for data-only messages, same as Orix.
+      if (Platform.isIOS && message.notification != null) return;
       show(message);
     });
     FirebaseMessaging.onMessageOpenedApp.listen((message) {

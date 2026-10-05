@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/controller/vehicle_status_provider.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/widget/history_track_map.dart';
-import 'package:infolocate/screens/video_playback/controller/video_playback_provider.dart';
+import 'package:infolocate/screens/vehicle_statuswise_list/model/vehicle_status_request_model.dart';
+import 'package:infolocate/screens/vehicle_statuswise_list/model/vehicle_status_response_model.dart';
+import 'package:infolocate/screens/vehicle_statuswise_list/repository/vehicle_status_repo.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/buttons/custom_button.dart';
@@ -38,6 +40,9 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
   TimeOfDay selectedTime = TimeOfDay.now();
   int? vehicleId;
   int? userId;
+  bool _loadingVehicles = true;
+  String? _vehicleLoadError;
+  List<VehicleStatusResponseModelDataVehicleStatusdetails> _vehicles = [];
 
   String? selectedValue;
   @override
@@ -123,11 +128,31 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
   }
 
   getData() async {
-    final videoPlayBackState =
-        Provider.of<VideoPlayBackProvider>(context, listen: false);
-    await videoPlayBackState.getVehicleList();
-    // selectedValue = videoPlayBackState.allVehicles!.first!.VehicleNo.toString();
-    selectedValue = LocaliazationKey.select.tr();
+    setState(() {
+      _loadingVehicles = true;
+      _vehicleLoadError = null;
+    });
+    try {
+      final result = await VehicleStatusService().getVehicleList(
+        vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
+          userId: userId!,
+          statusId: 6,
+          pSize: 0,
+          pNo: defaultPageN0,
+          sSearch: '',
+        ),
+      );
+      _vehicles = (result?.vehicleStatusdetails ?? [])
+          .whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()
+          .where((vehicle) => (vehicle.VehicleNo ?? '').trim().isNotEmpty)
+          .toList();
+      selectedValue = LocaliazationKey.select.tr();
+    } catch (error) {
+      _vehicleLoadError = error.toString();
+    }
+    if (mounted) {
+      setState(() => _loadingVehicles = false);
+    }
   }
 
   bool endTimeAlwaysGreater(String startStr, String endStr) {
@@ -175,9 +200,7 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final videoPlayBackState = Provider.of<VideoPlayBackProvider>(context);
     final vehicleStatusState = Provider.of<VehicleStatusProvider>(context);
-    final data = videoPlayBackState.allVehicles;
 
     return Scaffold(
       backgroundColor: AppUi.pageBg(context),
@@ -185,12 +208,16 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
         context: context,
         title: LocaliazationKey.track_history.tr(),
       ),
-      body: videoPlayBackState.state == NotifierState.loading
+      body: _loadingVehicles
           ? const Center(
               child: CircularProgressIndicator(),
             )
-          : videoPlayBackState.state != NotifierState.error
-              ? SingleChildScrollView(
+          : _vehicleLoadError != null
+              ? CustomErrorWidget(
+                  onPressed: getData,
+                  errorMsg: _vehicleLoadError!,
+                )
+              : SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -231,7 +258,7 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                   ),
                                 ),
                               ),
-                              items: data
+                              items: _vehicles
                                   .map((e) => e.VehicleNo.toString())
                                   .toList(),
                               dropdownDecoratorProps: DropDownDecoratorProps(
@@ -251,10 +278,13 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                   selectedValue = value ?? "";
                                   if (selectedValue !=
                                       LocaliazationKey.select.tr()) {
-                                    vehicleId =
-                                        videoPlayBackState.returnVehicleId(
-                                            vehicleNo:
-                                                selectedValue.toString());
+                                    final match = _vehicles.where(
+                                      (vehicle) =>
+                                          vehicle.VehicleNo == selectedValue,
+                                    );
+                                    vehicleId = match.isEmpty
+                                        ? null
+                                        : match.first.Vehicleid;
                                     log("Vehicle Id: $vehicleId");
                                   }
                                 });
@@ -521,13 +551,7 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                 ),
                         ],
                       ),
-                    )
-              : CustomErrorWidget(
-                  onPressed: () {
-                    getData();
-                  },
-                  errorMsg: videoPlayBackState.failure.message,
-                ),
+                    ),
     );
   }
 }

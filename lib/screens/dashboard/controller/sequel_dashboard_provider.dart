@@ -52,9 +52,11 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
   }
 
   List<DashboardResponseModelDataVehicleStatus> get vehicleStatuses =>
-      (_data?.VehicleStatus ?? const [])
-          .whereType<DashboardResponseModelDataVehicleStatus>()
-          .toList();
+      AppHelper.sortVehicleStatuses(
+        (_data?.VehicleStatus ?? const [])
+            .whereType<DashboardResponseModelDataVehicleStatus>(),
+        (item) => item.status,
+      );
 
   List<DashboardResponseModelDataStatusCount> get rankedAlerts {
     final list = (_data?.StatusCount ?? const [])
@@ -210,8 +212,14 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
       _hasMorePins = newPins.length >= pageSize;
       if (page != null) {
         _applyColors(page);
-        _data?.VehicleStatus = page.VehicleStatus;
-        _data?.StatusCount = page.StatusCount;
+        // Later pin pages must not wipe the overview counts when the
+        // API omits vehicleStatus or statusCount.
+        if (page.VehicleStatus != null && page.VehicleStatus!.isNotEmpty) {
+          _data?.VehicleStatus = page.VehicleStatus;
+        }
+        if (page.StatusCount != null && page.StatusCount!.isNotEmpty) {
+          _data?.StatusCount = page.StatusCount;
+        }
       }
       _data?.Pinvehicle = [...?_data?.Pinvehicle, ...newPins];
     } on Failure catch (failure) {

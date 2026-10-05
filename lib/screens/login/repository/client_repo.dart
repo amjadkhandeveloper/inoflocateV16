@@ -54,7 +54,7 @@ class ClientService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('Client login error body: ${e.response!.data}');
         throw Failure(LocaliazationKey.could_not_login.tr());
       }
       throw await AppHelper.failureFromErrorAsync(e);

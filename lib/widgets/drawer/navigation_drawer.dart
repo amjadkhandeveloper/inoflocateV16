@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:infolocate/screens/alerts/view/alert_screen.dart';
+import 'package:infolocate/screens/dashboard/controller/sequel_dashboard_provider.dart';
 import 'package:infolocate/screens/dynamic_status/view/dynamic_status_screen.dart';
 import 'package:infolocate/screens/login/view/user_login_view.dart';
 import 'package:infolocate/screens/settings/view/settings_screen.dart';
@@ -11,8 +12,9 @@ import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_routes.dart';
 import 'package:infolocate/utils/app_ui.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import '../../screens/vehicle_statuswise_list/view/live_vehicles_list.dart';
+import '../../screens/vehicle_statuswise_list/widget/history_select_widget.dart';
 import '../../screens/video_playback/view/video_playback_screen.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/app_localization_key.dart';
@@ -24,26 +26,19 @@ class CustomNavigationDrawer extends StatelessWidget {
 
   bool isLoading = false;
 
-  navigateToTrackOnMap(BuildContext context) async {
-    if (await Permission.location.request().isGranted) {
-      Global.isVehicleListBackgroundFetching = true;
-
-      Navigator.of(context).pop();
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const TrackOnMapScreen(
-            showTrackHistory: true,
-          ),
-        ),
-      ).then((value) => Global.isVehicleListBackgroundFetching = false);
-      Global.locationPermission = Global.box.get(locationPermission);
-    }
+  navigateToTrackOnMap(BuildContext context) {
+    Global.isVehicleListBackgroundFetching = true;
+    Navigator.of(context).pop();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TrackOnMapScreen(),
+      ),
+    ).then((value) => Global.isVehicleListBackgroundFetching = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    log("Location permission ${Global.locationPermission}");
     final user = Global.savedUserAuthData?.username ?? '';
     final client = Global.savedClientAuthData?.clientName ?? '';
 
@@ -157,53 +152,25 @@ class CustomNavigationDrawer extends StatelessWidget {
                       _DrawerTile(
                         icon: Icons.map_outlined,
                         title: LocaliazationKey.track_on_map.tr(),
-                        onTap: () async {
-                          if (Global.locationPermission == true) {
-                            navigateToTrackOnMap(context);
-                          } else {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  backgroundColor: AppUi.cardColor(context),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(AppUi.radius),
-                                  ),
-                                  title: Text('Grant Permission',
-                                      style: AppUi.titleStyle(context)),
-                                  content: Text(
-                                    'Infolocate app collects location information for the loading of the map to view vehicle locations.',
-                                    style: AppUi.body(context),
-                                  ),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text('DENY',
-                                          style: TextStyle(
-                                              color: AppUi.muted(context))),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                    TextButton(
-                                      child: const Text('ACCEPT',
-                                          style: TextStyle(
-                                              color: AppUi.accent,
-                                              fontWeight: FontWeight.w700)),
-                                      onPressed: () async {
-                                        await Global.box
-                                            .put(locationPermission, true);
-                                        navigateToTrackOnMap(context);
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          }
+                        onTap: () => navigateToTrackOnMap(context),
+                      ),
+                      _DrawerTile(
+                        icon: Icons.timeline_outlined,
+                        title: LocaliazationKey.track_history.tr(),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const HistoryTrackWidget(),
+                            ),
+                          );
                         },
                       ),
-                      if (!Global.isSequelClient)
+                      if (!Global.isSequelClient ||
+                          context.watch<SequelDashboardProvider>().pinVehicles.any(
+                                (vehicle) =>
+                                    (vehicle.LiveUrl ?? '').trim().isNotEmpty,
+                              ))
                       _DrawerTile(
                         icon: Icons.videocam_outlined,
                         title: LocaliazationKey.video_playback.tr(),

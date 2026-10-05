@@ -532,13 +532,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _homeOverviewCards(DashboardResponseModelData data) {
     final cardTypeProvider = Provider.of<CardTypeProvider>(context);
-    final statuses = (data.VehicleStatus ?? [])
-        .whereType<DashboardResponseModelDataVehicleStatus>()
-        .where((s) {
-          final name = (s.status ?? '').toLowerCase();
-          return name == moving || name == idle;
-        })
-        .toList();
+    final statuses = AppHelper.sortVehicleStatuses(
+      (data.VehicleStatus ?? [])
+          .whereType<DashboardResponseModelDataVehicleStatus>(),
+      (item) => item.status,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -600,9 +598,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               title: AppHelper.returnJapaneseText(
                                 title: status.status.toString(),
                               ),
-                              statusId: AppHelper.returnStatusId(
-                                status: status.status.toString(),
-                              ),
+                              statusId: status.StatusID ??
+                                  AppHelper.returnStatusId(
+                                    status: status.status.toString(),
+                                  ),
                               isLiveVehicle: false,
                               totalCount: status.Value,
                             ),
@@ -613,9 +612,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: VehicleStatusCard(
                     count: status.Value.toString(),
                     icon: AppHelper.returnIcons(
-                      title: (status.status ?? '').toLowerCase() == idle
-                          ? 'Idle'
-                          : 'Moving',
+                      title: status.status ?? '',
                     ),
                     title: AppHelper.returnJapaneseText(
                       title: status.status.toString(),

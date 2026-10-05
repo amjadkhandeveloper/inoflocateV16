@@ -40,7 +40,7 @@ class LanguageService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('Language error body: ${e.response!.data}');
         throw Failure(GetCountriesResponseModel.fromJson(e.response!.data)
             .data!
             .error!
@@ -86,7 +86,7 @@ class LanguageService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('Language error body: ${e.response!.data}');
         throw Failure(LanguageResponseModel.fromJson(e.response!.data)
             .data!
             .error!

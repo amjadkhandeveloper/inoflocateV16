@@ -56,144 +56,133 @@ class _CardTypesScreenState extends State<CardTypesScreen> {
         context: context,
         title: LocaliazationKey.choose_cards.tr(),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SizedBox(
-              height: 85.h,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    LocaliazationKey.vehicle_status_card.tr(),
-                    style: AppStyles.textStyle4(context: context, isBold: true),
-                  ),
-                  2.h.height,
-                  Padding(
-                    padding: EdgeInsets.only(left: 1.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          alignment: WrapAlignment.center,
-                          direction: Axis.horizontal,
-                          children: [
-                            for (int index = 0;
-                                index <
-                                    cardTypeProvider
-                                        .vehicleStatusCardsList.length;
-                                index++)
-                              // i.isEven && i < displayList!.length - 1
-                              //     ?
-                              SizedBox(
-                                width: (index.isEven &&
-                                        index ==
-                                            cardTypeProvider
-                                                    .vehicleStatusCardsList
-                                                    .length -
-                                                1)
-                                    ? 82.w
-                                    : 42.w,
-                                // 18.h,
-
-                                child: GestureDetector(
-                                    onTap: () {
-                                      cardTypeProvider.selectVehicleStatusCard(
-                                          cardTypeId: cardTypeProvider
-                                              .vehicleStatusCardsList[index]
-                                              .cardTypeId);
-                                      // cardTypeProvider.vehicleStatusCardsList[index].isSelected =
-                                      //     !cardTypeProvider.vehicleStatusCardsList[index]
-                                      //         .isSelected;
-                                      // setState(() {});
-                                    },
-                                    child: VehicleStatusCard(
-                                      count: '12',
-                                      icon: AppHelper.returnIcons(
-                                          title: 'Moving'),
-                                      title: AppHelper.returnJapaneseText(
-                                        title: 'Moving',
-                                      ),
-                                      iconColor: AppHelper.returnIconColor(
-                                          title: 'Moving'),
-                                      cardType: cardTypeProvider
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 50),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      LocaliazationKey.vehicle_status_card.tr(),
+                      style:
+                          AppStyles.textStyle4(context: context, isBold: true),
+                    ),
+                    2.h.height,
+                    Padding(
+                      padding: EdgeInsets.only(left: 1.w),
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        alignment: WrapAlignment.center,
+                        direction: Axis.horizontal,
+                        children: [
+                          for (int index = 0;
+                              index <
+                                  cardTypeProvider
+                                      .vehicleStatusCardsList.length;
+                              index++)
+                            SizedBox(
+                              width: (index.isEven &&
+                                      index ==
+                                          cardTypeProvider
+                                                  .vehicleStatusCardsList
+                                                  .length -
+                                              1)
+                                  ? 82.w
+                                  : 42.w,
+                              child: GestureDetector(
+                                onTap: () {
+                                  cardTypeProvider.selectVehicleStatusCard(
+                                      cardTypeId: cardTypeProvider
                                           .vehicleStatusCardsList[index]
-                                          .cardTypeId!,
-                                      isSlelected: cardTypeProvider
-                                          .vehicleStatusCardsList[index]
-                                          .isSelected!,
-                                      enableBorder: true,
-                                    )),
+                                          .cardTypeId);
+                                },
+                                child: VehicleStatusCard(
+                                  count: '12',
+                                  icon: AppHelper.returnIcons(title: 'Moving'),
+                                  title: AppHelper.returnJapaneseText(
+                                    title: 'Moving',
+                                  ),
+                                  iconColor: AppHelper.returnIconColor(
+                                      title: 'Moving'),
+                                  cardType: cardTypeProvider
+                                      .vehicleStatusCardsList[index]
+                                      .cardTypeId!,
+                                  isSlelected: cardTypeProvider
+                                      .vehicleStatusCardsList[index]
+                                      .isSelected!,
+                                  enableBorder: true,
+                                ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    3.h.height,
+                    Text(
+                      LocaliazationKey.alert_status_card.tr(),
+                      style:
+                          AppStyles.textStyle4(context: context, isBold: true),
+                    ),
+                    2.h.height,
+                    Wrap(
+                      spacing: 9.w,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      alignment: WrapAlignment.start,
+                      direction: Axis.horizontal,
+                      children: [
+                        for (int i = 0;
+                            i < cardTypeProvider.alertStatusCardsList.length;
+                            i++)
+                          Padding(
+                            padding: EdgeInsets.only(left: 2.w),
+                            child: InkWell(
+                              onTap: () {
+                                cardTypeProvider.selectAlertStatusCard(
+                                    cardTypeId: cardTypeProvider
+                                        .alertStatusCardsList[i].cardTypeId);
+                              },
+                              child: AlertStatusCard(
+                                alertCount: 43,
+                                alertType: LocaliazationKey.sharp_turn.tr(),
+                                isSelected: cardTypeProvider
+                                    .alertStatusCardsList[i].isSelected!,
+                                cardType: cardTypeProvider
+                                    .alertStatusCardsList[i].cardTypeId!,
+                              ),
+                            ),
+                          )
                       ],
                     ),
-                  ),
-                  3.h.height,
-                  Text(
-                    LocaliazationKey.alert_status_card.tr(),
-                    style: AppStyles.textStyle4(context: context, isBold: true),
-                  ),
-                  2.h.height,
-                  Wrap(
-                    spacing: 9.w,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    alignment: WrapAlignment.start,
-                    direction: Axis.horizontal,
-                    children: [
-                      for (int i = 0;
-                          i < cardTypeProvider.alertStatusCardsList.length;
-                          i++)
-                        Padding(
-                          padding: EdgeInsets.only(left: 2.w),
-                          child: InkWell(
-                            onTap: () {
-                              cardTypeProvider.selectAlertStatusCard(
-                                  cardTypeId: cardTypeProvider
-                                      .alertStatusCardsList[i].cardTypeId);
-                            },
-                            child: AlertStatusCard(
-                              alertCount: 43,
-                              alertType: LocaliazationKey.sharp_turn.tr(),
-                              isSelected: cardTypeProvider
-                                  .alertStatusCardsList[i].isSelected!,
-                              cardType: cardTypeProvider
-                                  .alertStatusCardsList[i].cardTypeId!,
-                            ),
-                          ),
-                        )
-                    ],
-                  ),
-                  const Spacer(),
-                  CustomButton(
-                    onPressed: () async {
-                      await Global.box.put(
-                          vehicleStatusCardTypeIdKey,
-                          cardTypeProvider
-                              .currentSelectedVehicleStatusCard!.cardTypeId!);
-                      await Global.box.put(
-                          alertStatusCardTypeIdKey,
-                          cardTypeProvider
-                              .currentSelectedAlertStatusCard!.cardTypeId!);
-                      await AppHelper.getHiveBoxData();
-                      customToast(
-                        message: LocaliazationKey.card_settings_updated.tr(),
-                      );
-                      if (mounted) Navigator.pop(context);
-                    },
-                    title: LocaliazationKey.apply.tr(),
-                  )
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
+            CustomButton(
+              onPressed: () async {
+                await Global.box.put(
+                    vehicleStatusCardTypeIdKey,
+                    cardTypeProvider
+                        .currentSelectedVehicleStatusCard!.cardTypeId!);
+                await Global.box.put(
+                    alertStatusCardTypeIdKey,
+                    cardTypeProvider
+                        .currentSelectedAlertStatusCard!.cardTypeId!);
+                await AppHelper.getHiveBoxData();
+                customToast(
+                  message: LocaliazationKey.card_settings_updated.tr(),
+                );
+                if (mounted) Navigator.pop(context);
+              },
+              title: LocaliazationKey.apply.tr(),
+            ),
+          ],
         ),
       ),
     );

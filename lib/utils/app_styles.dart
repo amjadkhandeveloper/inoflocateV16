@@ -128,10 +128,14 @@ class AppStyles {
         VoidCallback? onPressed}) {
     return
       InputDecoration(
-          hintText: LocaliazationKey.search.tr(),
+          hintText: hintText ?? LocaliazationKey.search.tr(),
           suffixIcon: suffixIcon,
           prefixIcon: prefixIcon,
+          prefixIconConstraints:
+              const BoxConstraints(minWidth: 44, minHeight: 44),
           isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
           border: InputBorder.none);
   }
 

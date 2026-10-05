@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:infolocate/screens/vehicle_statuswise_list/widget/history_select_widget.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_styles.dart';
 import 'package:infolocate/utils/app_ui.dart';
@@ -28,11 +26,9 @@ import '../model/vehicle_status_request_model.dart';
 import '../model/vehicle_status_response_model.dart';
 
 class TrackOnMapScreen extends StatefulWidget {
-  const TrackOnMapScreen({super.key, this.showTrackHistory = false});
+  const TrackOnMapScreen({super.key});
 
   //  final List<GoogleMapModel?> markerList;
-
-  final bool showTrackHistory;
 
   @override
   State<TrackOnMapScreen> createState() => _TrackOnMapScreenState();
@@ -41,8 +37,8 @@ class TrackOnMapScreen extends StatefulWidget {
 class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
   final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
   late final GoogleMapController _cameraController;
-  late LatLngBounds bounds;
   late List<String?> choiceList = [];
+  final List<String> _rawStatuses = [];
   VehicleStatusResponseModelDataVehicleStatusdetails? selectedVehicle;
 
   String? selectedStatusValue;
@@ -57,38 +53,46 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
     super.didChangeDependencies();
   }
 
+  void _publishChoiceList() {
+    final unique = <String, String>{};
+    for (final raw in _rawStatuses) {
+      final key = AppHelper.vehicleStatusKey(raw);
+      if (key.isEmpty || key == 'null') continue;
+      unique.putIfAbsent(key, () => raw);
+    }
+    final ordered = AppHelper.sortVehicleStatuses(unique.values, (status) => status);
+    choiceList = [
+      LocaliazationKey.all.tr(),
+      ...ordered.map((status) => AppHelper.returnJapaneseText(title: status)),
+    ];
+    selectedStatusValue ??= choiceList.first;
+  }
+
   void _fillChoiceList() {
-    final statuses = <String>{};
+    _rawStatuses.clear();
     if (Global.isSequelClient) {
       final sequel = Provider.of<SequelDashboardProvider>(context, listen: false);
       for (final s in sequel.vehicleStatuses) {
-        final name = AppHelper.returnJapaneseText(title: s.status);
-        if (name.isNotEmpty && name != 'null') statuses.add(name);
+        final name = (s.status ?? '').trim();
+        if (name.isNotEmpty && name != 'null') _rawStatuses.add(name);
       }
     } else {
       final dashBoardState = Provider.of<DashboardProvider>(context, listen: false);
       final list = dashBoardState.dashboardResponseModelData?.VehicleStatus ?? [];
       for (final e in list) {
-        final name = AppHelper.returnJapaneseText(title: e?.status);
-        if (name.isNotEmpty && name != 'null') statuses.add(name);
+        final name = (e?.status ?? '').trim();
+        if (name.isNotEmpty && name != 'null') _rawStatuses.add(name);
       }
     }
-    choiceList = [
-      LocaliazationKey.all.tr(),
-      if (widget.showTrackHistory) LocaliazationKey.track_history.tr(),
-      ...statuses,
-    ];
-    selectedStatusValue ??= choiceList.first;
+    _publishChoiceList();
   }
 
   void _appendStatusesFromVehicles(VehicleStatusProvider provider) {
-    final extra = (provider.vehicleList ?? [])
-        .map((e) => AppHelper.returnJapaneseText(title: e?.Status))
-        .where((s) => s.isNotEmpty && s != 'null');
-    for (final s in extra) {
-      if (!choiceList.contains(s)) choiceList.add(s);
+    for (final vehicle in provider.vehicleList ?? const []) {
+      final name = (vehicle?.Status ?? '').trim();
+      if (name.isNotEmpty && name != 'null') _rawStatuses.add(name);
     }
-    selectedStatusValue ??= choiceList.first;
+    _publishChoiceList();
   }
 
   // moveCameraAlongToMarker() async {
@@ -110,7 +114,7 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
     // );
     Future.delayed(Duration.zero, () => setUpLocationData());
     choiceList = [];
-    choiceList = [LocaliazationKey.all.tr(), if (widget.showTrackHistory == true) LocaliazationKey.track_history.tr()];
+    choiceList = [LocaliazationKey.all.tr()];
     // setUpLocation();
     super.initState();
   }
@@ -136,8 +140,8 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
       _appendStatusesFromVehicles(vehicleStatusState);
       setState(() {});
 
-      generateMarker();
-      moveCamera();
+      await generateMarker();
+      await moveCamera();
     } catch (err) {
       debugPrint(err.toString());
     }
@@ -187,41 +191,14 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
     // provider.setMarker = markerList;
   }
 
-  LatLngBounds getLatLngBounds(List<LatLng> points) {
-    inspect(points.length);
-    double minLat = double.infinity;
-    double minLng = double.infinity;
-    double maxLat = double.negativeInfinity;
-    double maxLng = double.negativeInfinity;
-
-    for (LatLng point in points) {
-      if (point.latitude < minLat) minLat = point.latitude;
-      if (point.latitude > maxLat) maxLat = point.latitude;
-      if (point.longitude < minLng) minLng = point.longitude;
-      if (point.longitude > maxLng) maxLng = point.longitude;
-    }
-
-    return LatLngBounds(
-      southwest: LatLng(minLat, minLng),
-      northeast: LatLng(maxLat, maxLng),
-    );
+  Future<void> _fitMarkers(Iterable<LatLng> points) async {
+    _cameraController = await _controller.future;
+    await AppHelper.moveCameraToPoints(_cameraController, points);
   }
 
   Future<void> moveCamera() async {
     final provider = Provider.of<VehicleStatusProvider>(context, listen: false);
-    _cameraController = await _controller.future;
-    // for (var vehicle in widget.markerList) {
-    //   await _cameraController
-    //       .showMarkerInfoWindow(MarkerId(vehicle!.vehicleId.toString()));
-    // }
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    var data = await _cameraController.getVisibleRegion();
-    bounds = data;
-
-    await _cameraController.animateCamera(CameraUpdate.newLatLngBounds(data, 50.0));
-    _cameraController.animateCamera(CameraUpdate.newLatLng(provider.currentLocation));
+    await _fitMarkers(provider.filterMarkers.map((marker) => marker.position));
   }
 
   //*
@@ -259,6 +236,7 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
                     top: 4,
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         flex: 6,
@@ -278,29 +256,17 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
                                 if (selectedStatusValue!.contains(LocaliazationKey.all.tr())) {
                                   provider.resetMarkers();
                                   provider.resetStatusName();
-
-                                  await _cameraController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50.0));
-
+                                  await _fitMarkers(
+                                    provider.filterMarkers.map((marker) => marker.position),
+                                  );
                                   return;
-                                } else if (selectedStatusValue!.contains(LocaliazationKey.track_history.tr())) {
-                                  var res = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const HistoryTrackWidget(),
-                                      ));
-                                  print(res);
-                                  // if (res == null) return;
-                                  // res = res as VideoPlayBackRequestModel;
                                 } else {
                                   provider.showMarkersByStatusName(
                                     status: selectedStatusValue,
                                   );
-                                  var newBounds =
-                                      getLatLngBounds(provider.filterMarkers.map((e) => e.position).toList());
-                                  var isInactive = AppHelper.returnJapaneseText(title: selectedStatusValue) ==
-                                      AppHelper.returnJapaneseText(title: "Inactive");
-                                  await _cameraController.animateCamera(
-                                      CameraUpdate.newLatLngBounds(isInactive ? bounds : newBounds, 100.0));
+                                  await _fitMarkers(
+                                    provider.filterMarkers.map((marker) => marker.position),
+                                  );
                                 }
                               },
                               icon: SvgPicture.asset(
@@ -337,6 +303,7 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
           return TextField(
             controller: textEditingController,
             focusNode: focusNode,
+            textAlignVertical: TextAlignVertical.center,
             style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
             decoration: AppStyles.inputFieldTrackStyle(
                 prefixIcon: const Icon(Icons.search, size: 25),
@@ -361,7 +328,9 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
 
                     textEditingController.clear();
                     focusNode.unfocus();
-                    await _cameraController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50.0));
+                    await _fitMarkers(
+                      provider.filterMarkers.map((marker) => marker.position),
+                    );
                   },
                   icon: textEditingController.text.isNotEmpty
                       ? const Icon(

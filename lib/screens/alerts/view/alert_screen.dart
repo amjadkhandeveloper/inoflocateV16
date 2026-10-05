@@ -708,7 +708,7 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
       appBar: AppUi.appBar(
         context: context,
         title: LocaliazationKey.alerts.tr(),
-        subtitle: DateFormat("MM/dd/yyyy").format(
+        subtitle: DateFormat("dd/MM/yyyy").format(
             DateTime.parse(alertListRequestModel!.fromDate.toString())),
         actions: [
           if (alertState.state != NotifierState.error)

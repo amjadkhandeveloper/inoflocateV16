@@ -48,7 +48,7 @@ class SplashService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response);
+        AppHelper.logApiTrace('Splash error: ${e.response}');
         throw Failure(ForceUpdateModelData.fromJson(
                 Map<String, dynamic>.from(e.response!.data as Map))
             .error!

@@ -24,7 +24,6 @@ class _MapOverviewState extends State<MapOverview> {
   final Completer<GoogleMapController> _controller =
       Completer<GoogleMapController>();
   late final GoogleMapController _cameraController;
-  late LatLngBounds bounds;
   late List<String?> choiceList;
 
   String? selectedStatusValue;
@@ -110,14 +109,10 @@ class _MapOverviewState extends State<MapOverview> {
     //       .showMarkerInfoWindow(MarkerId(vehicle!.vehicleId.toString()));
     // }
 
-    await Future.delayed(const Duration(seconds: 1));
-
-    var data = await _cameraController.getVisibleRegion();
-    bounds = data;
-    await _cameraController
-        .animateCamera(CameraUpdate.newLatLngBounds(data, 50.0));
-    _cameraController
-        .animateCamera(CameraUpdate.newLatLng(provider.currentLocation));
+    await AppHelper.moveCameraToPoints(
+      _cameraController,
+      provider.overviewMarkers.map((marker) => marker.position),
+    );
   }
 
   @override

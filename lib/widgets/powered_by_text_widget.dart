@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_ui.dart';
 
 import '../utils/app_localization_key.dart';
@@ -30,12 +29,6 @@ class PoweredByTextWidget extends StatelessWidget {
               ),
             ),
           ]),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${LocaliazationKey.version.tr()} $kAppVersionName  ·  ${LocaliazationKey.last_updated.tr()} $kAppLastUpdated',
-          style: AppUi.mutedStyle(context),
-          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
         Text(

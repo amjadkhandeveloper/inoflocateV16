@@ -45,7 +45,7 @@ class VideoPlayBackService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('Video playback error body: ${e.response!.data}');
         throw Failure(VideoVehicleList.fromJson(e.response!.data)
             .data!
             .error!

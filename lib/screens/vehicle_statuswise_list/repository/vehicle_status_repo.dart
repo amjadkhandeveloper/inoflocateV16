@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
@@ -59,7 +58,7 @@ class VehicleStatusService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('VehicleStatus error body: ${e.response!.data}');
         throw Failure(VehicleStatusResponseModel.fromJson(e.response!.data)
             .data!
             .error!
@@ -88,8 +87,6 @@ class VehicleStatusService {
       final body = isSequel
           ? vehicleHistoryTrackRequestModel.toJson()
           : vehicleHistoryTrackRequestModel.toCommonJson();
-      log('History track $url');
-      log(jsonEncode(body));
       final response = await dio.post(
         url,
         data: body,
@@ -117,7 +114,7 @@ class VehicleStatusService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('VehicleStatus error body: ${e.response!.data}');
         throw Failure('Something went wrong!, please try later');
       }
       throw await AppHelper.failureFromErrorAsync(e);

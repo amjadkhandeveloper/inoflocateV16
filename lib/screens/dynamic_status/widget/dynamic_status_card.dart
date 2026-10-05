@@ -8,7 +8,6 @@ import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/app_styles.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 import 'package:infolocate/widgets/custom_webview.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../common_models/button_list_model.dart';
@@ -105,18 +104,15 @@ class DynamicStatusCard extends StatelessWidget {
           ),
           title: LocaliazationKey.map_it.tr(),
           value: dynamicStatusDetails!.Location,
-          onTap: () async {
-            if (await Permission.location.request().isGranted) {
-              // ignore: use_build_context_synchronously
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GoogleMapScreen(
-                      marker: mapData,
-                    ),
-                  ));
-              // Either the permission was already granted before or the user just granted it.
-            }
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GoogleMapScreen(
+                  marker: mapData,
+                ),
+              ),
+            );
           }),
       ButtonListModel(
           icon: SvgPicture.asset(

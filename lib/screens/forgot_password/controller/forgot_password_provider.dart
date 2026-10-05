@@ -47,10 +47,16 @@ class ForgotPasswordProvider extends ChangeNotifier with StateInterface {
       final result = await ForgotPasswordService().forgotPasswordService(
           forgotPasswordRequestModel: forgotPasswordRequestModel);
       if (result == null || result.isSuccess != true) {
+        final apiMessage = (result?.failureMessage ?? '').trim();
+        final lower = apiMessage.toLowerCase();
+        final userMissing = lower.contains('not') &&
+            (lower.contains('exist') || lower.contains('exsit'));
         throw Failure(
-          (result?.data?.message ?? '').trim().isNotEmpty
-              ? result!.data!.message!
-              : LocaliazationKey.could_not_login.tr(),
+          userMissing
+              ? LocaliazationKey.user_doesnt_exits.tr()
+              : (apiMessage.isNotEmpty
+                  ? apiMessage
+                  : LocaliazationKey.user_doesnt_exits.tr()),
         );
       }
       _forgotPasswordResponseModel = result;

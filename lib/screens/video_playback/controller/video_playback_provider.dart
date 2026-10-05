@@ -119,6 +119,16 @@ class VideoPlayBackProvider extends ChangeNotifier with StateInterface {
     }
   }
 
+  /// Uses vehicles that already have playback data, such as Sequel pins with a live URL.
+  void setVehicles(List<VideoVehicleListDataVehicles> vehicles) {
+    _allVehicles = vehicles
+        .where((v) => (v.VehicleNo ?? '').trim().isNotEmpty)
+        .toList();
+    _selectedVehicle = null;
+    _failure = null;
+    setState(NotifierState.loaded);
+  }
+
   void selectVehicle(VideoVehicleListDataVehicles? vehicle) {
     _selectedVehicle = vehicle;
     notifyListeners();

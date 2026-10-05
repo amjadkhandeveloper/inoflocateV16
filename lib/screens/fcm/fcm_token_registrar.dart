@@ -58,18 +58,57 @@ class FcmTokenRegistrar {
   }
 
   static Future<void> _logCurrentToken() async {
+    await _readToken(source: 'getToken');
+  }
+
+  static const int _maxTokenAttempts = 8;
+
+  /// On iOS, FCM token is empty until APNs has issued a device token.
+  static Future<String?> _readToken({
+    required String source,
+    int attempt = 0,
+  }) async {
     try {
-      await FirebaseMessaging.instance.requestPermission(
+      final messaging = FirebaseMessaging.instance;
+      await messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
-      final token = await FirebaseMessaging.instance.getToken();
-      _printToken(token, source: 'getToken');
+      if (Platform.isIOS) {
+        final apnsToken = await messaging.getAPNSToken();
+        if (apnsToken == null) {
+          _scheduleTokenRetry(source: source, attempt: attempt);
+          return null;
+        }
+      }
+      final token = await messaging.getToken();
+      _printToken(token, source: source);
+      return token;
     } catch (e) {
       log('FCM: could not read token: $e');
-      print('FCM: could not read token: $e');
+      print('FCM: could not read token (attempt ${attempt + 1}): $e');
+      _scheduleTokenRetry(source: source, attempt: attempt);
+      return null;
     }
+  }
+
+  static void _scheduleTokenRetry({
+    required String source,
+    required int attempt,
+  }) {
+    if (attempt >= _maxTokenAttempts) {
+      log('FCM: APNS token not ready; waiting for onTokenRefresh');
+      print('FCM: APNS token not ready; waiting for onTokenRefresh');
+      return;
+    }
+    final delaySeconds = attempt < 3 ? 1 : 2;
+    Future<void>.delayed(Duration(seconds: delaySeconds), () async {
+      final token = await _readToken(source: source, attempt: attempt + 1);
+      if (source == 'register' && token != null && token.isNotEmpty) {
+        await registerCurrentToken(token: token);
+      }
+    });
   }
 
   static void _printToken(String? token, {required String source}) {
@@ -99,19 +138,8 @@ class FcmTokenRegistrar {
     }
 
     String? fcmToken = token;
-    if (_initialized) {
-      try {
-        final messaging = FirebaseMessaging.instance;
-        await messaging.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-        fcmToken ??= await messaging.getToken();
-      } catch (e) {
-        log('FCM: could not read token: $e');
-        return;
-      }
+    if (fcmToken == null && _initialized) {
+      fcmToken = await _readToken(source: 'register');
     }
     if (fcmToken == null || fcmToken.isEmpty) return;
     _printToken(fcmToken, source: 'register');

@@ -34,12 +34,16 @@ class ForgotPasswordResponseModelDataData with JsonSafeParser {
     this.EmailId,
   });
   ForgotPasswordResponseModelDataData.fromJson(Map<String, dynamic> json) {
-    ResultID = asInt(json['ResultID']);
-    ResultMessage = asString(json['ResultMessage']);
-    Userid = asInt(json['Userid']);
-    Username = asString(json['Username']);
-    Authword = asString(json['Authword']);
-    EmailId = asString(json['EmailId']);
+    ResultID = JsonSafe.asIntOrNull(
+      JsonSafe.firstValue(json, ['ResultID', 'resultId', 'ResultId']),
+    );
+    ResultMessage = asStringFrom(json, ['ResultMessage', 'resultMessage']);
+    Userid = JsonSafe.asIntOrNull(
+      JsonSafe.firstValue(json, ['Userid', 'userid', 'UserId']),
+    );
+    Username = asStringFrom(json, ['Username', 'username']);
+    Authword = asStringFrom(json, ['Authword', 'authword']);
+    EmailId = asStringFrom(json, ['EmailId', 'emailId']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -81,11 +85,24 @@ class ForgotPasswordResponseModelData with JsonSafeParser {
   });
   ForgotPasswordResponseModelData.fromJson(Map<String, dynamic> json) {
     status = asIntFrom(json, ['status', 'Status']);
-    final inner = asMapOrNull(json['data']);
-    data = inner != null
-        ? ForgotPasswordResponseModelDataData.fromJson(inner)
-        : null;
     message = asStringFrom(json, ['message', 'Message']);
+    data = _resultRow(json['data'] ?? json['Data']);
+  }
+
+  static ForgotPasswordResponseModelDataData? _resultRow(dynamic raw) {
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is Map) {
+          return ForgotPasswordResponseModelDataData.fromJson(
+            Map<String, dynamic>.from(item),
+          );
+        }
+      }
+      return null;
+    }
+    final inner = JsonSafe.asMapOrNull(raw);
+    if (inner == null || inner.isEmpty) return null;
+    return ForgotPasswordResponseModelDataData.fromJson(inner);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -128,19 +145,45 @@ class ForgotPasswordResponseModel with JsonSafeParser {
     }
   }
 
+  /// User exists and the reset mail can be shown.
+  ///
+  /// Sequel returns `status: 1` and `message: Success` for both a real user
+  /// and a missing user. [ResultID] `1` means the user exists; `0` does not.
   bool get isSuccess {
+    final resultId = data?.data?.ResultID;
+    if (resultId != null) return resultId > 0;
     final status = data?.status;
-    if (status == 1 || status == 200) return true;
     final msg = '${data?.message ?? ''} ${data?.data?.ResultMessage ?? ''}'
         .toLowerCase();
+    if (msg.contains('not') &&
+        (msg.contains('exist') || msg.contains('exsit'))) {
+      return false;
+    }
+    if (status == 1 || status == 200) return true;
     if (msg.contains('success') ||
         msg.contains('sent') ||
         msg.contains('updated') ||
         msg.contains('reset')) {
       return true;
     }
-    final resultId = data?.data?.ResultID ?? 0;
-    return resultId > 0;
+    return false;
+  }
+
+  String get failureMessage {
+    final resultMessage = (data?.data?.ResultMessage ?? '').trim();
+    final lower = resultMessage.toLowerCase();
+    if (lower.contains('not') &&
+        (lower.contains('exist') || lower.contains('exsit'))) {
+      return resultMessage;
+    }
+    if (resultMessage.isNotEmpty && (data?.data?.ResultID ?? 1) <= 0) {
+      return resultMessage;
+    }
+    final message = (data?.message ?? '').trim();
+    if (message.isNotEmpty && message.toLowerCase() != 'success') {
+      return message;
+    }
+    return resultMessage;
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};

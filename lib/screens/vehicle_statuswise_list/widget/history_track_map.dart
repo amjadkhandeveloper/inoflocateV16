@@ -73,38 +73,14 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
   }
   // assets/images/car_marker.png
 
-  LatLngBounds computeBounds(List<LatLng> list) {
-    assert(list.isNotEmpty);
-    var firstLatLng = list.first;
-    var s = firstLatLng.latitude,
-        n = firstLatLng.latitude,
-        w = firstLatLng.longitude,
-        e = firstLatLng.longitude;
-    for (var i = 1; i < list.length; i++) {
-      var latlng = list[i];
-      s = min(s, latlng.latitude);
-      n = max(n, latlng.latitude);
-      w = min(w, latlng.longitude);
-      e = max(e, latlng.longitude);
-    }
-    return LatLngBounds(southwest: LatLng(s, w), northeast: LatLng(n, e));
-  }
-
   Future<void> moveCamera() async {
     _cameraController = await _controller.future;
-    LatLngBounds bounds = computeBounds(polyLineCoordinates);
-
-    // for (var vehicle in widget.markerList) {
-    //   await _cameraController
-    //       .showMarkerInfoWindow(MarkerId(vehicle!.vehicleId.toString()));
-    // }
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    // var data = await _cameraController.getVisibleRegion();
-    // // bounds = data;
-    await _cameraController!
-        .animateCamera(CameraUpdate.newLatLngBounds(bounds, 115.0));
+    if (polyLineCoordinates.isEmpty) return;
+    await AppHelper.moveCameraToPoints(
+      _cameraController!,
+      polyLineCoordinates,
+      padding: 80,
+    );
   }
 
   generatePolylines() {

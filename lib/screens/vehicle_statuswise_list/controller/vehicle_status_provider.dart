@@ -345,13 +345,8 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
         Marker(
           markerId: MarkerId(vehicle.Vehicleid.toString()),
           position: LatLng(vehicle.lat!, vehicle.lon!),
-          infoWindow: InfoWindow(
-            title: vehicle.VehicleNo,
-            snippet: vehicle.tracktime,
-          ),
+          consumeTapEvents: true,
           icon: markerIcon,
-
-          // BitmapDescriptor.fromBytes(customMarker),
           onTap: () => onTapMarker(vehicleId: vehicle.Vehicleid),
         ),
       );
@@ -375,9 +370,8 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
         // log(res.infoWindow.snippet.toString());
         res = res.copyWith(
           positionParam: LatLng(vehicle.lat!, vehicle.lon!),
-          infoWindowParam:
-              InfoWindow(title: vehicle.VehicleNo, snippet: vehicle.tracktime),
           iconParam: markerIcon,
+          consumeTapEventsParam: true,
         );
         // log("After");
         // log(res.infoWindow.snippet.toString());
@@ -582,163 +576,104 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     return showModalBottomSheet<void>(
       context: navigatorKey.currentContext!,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(14),
-        ),
-      ),
+      isScrollControlled: true,
       builder: (BuildContext context) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Padding(
-            //   padding: const EdgeInsets.only(top: 14, right: 14),
-            //   child: GestureDetector(
-            //     onTap: () {
-            //       Navigator.of(context).pop();
-            //     },
-            //     child: SvgPicture.asset("assets/icons/new_icons/cancel.svg",
-            //         // "assets/icons/new_icons/orange.svg",
-            //         height: 2.h,
-            //         // colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-            //         color: Theme.of(context).iconTheme.color),
-            //   ),
-            // ),
-            Stack(
-              children: [
-                Container(
-                  margin: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    border: Border.all(color: Colors.grey.shade300, width: 1),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                            color: AppHelper.returnIconColor(
-                              title: vehicle.Status.toString(),
-                            ),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(15),
-                              topRight: Radius.circular(15),
-                            )),
-                        width: double.infinity,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              width: 8,
-                            ),
-                            Text(
-                              "${LocaliazationKey.vehicle_status.tr()} : ",
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16),
-                            ),
-                            Expanded(
-                              child: Text(
-                                AppHelper.returnJapaneseText(
-                                  title: vehicle.Status.toString(),
-                                ),
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Text(
-                                vehicle.VehicleNo.toString(),
-                                style: AppStyles.textStyle4(
-                                    context: context, isBold: true, size: 20),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 5,
-                            // fit: FlexFit.tight,
-                            child: Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Text(
-                                vehicle.tracktime.toString(),
-                                style: AppStyles.textStyle5(context: context),
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          vehicle.location.toString(),
-                          style:
-                              AppStyles.textStyle4(context: context, size: 16),
-                        ),
-                      ),
-                      SizedBox(
-                        width: SizerUtil.width,
-                        height: 9.h,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                ...List.generate(
-                                  buttonList.length,
-                                  (index) => SizedBox(
-                                    // height: 45,
-                                    child: CustomIconBtn(
-                                        color: Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors.black.withOpacity(0.5)
-                                            : AppColors.grey,
-                                        onTap: buttonList[index].onTap,
-                                        icon: buttonList[index].icon,
-                                        title: buttonList[index].title,
-                                        direction: Axis.horizontal),
-                                  ),
-                                ),
-                              ],
+        final bottomInset = MediaQuery.paddingOf(context).bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(12, 0, 12, 12 + bottomInset),
+          child: SingleChildScrollView(
+            child: Material(
+              color: Theme.of(context).cardColor,
+              elevation: 8,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    color: AppHelper.returnIconColor(
+                      title: vehicle.Status.toString(),
+                    ),
+                    padding: const EdgeInsets.only(left: 14),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${LocaliazationKey.vehicle_status.tr()} : ${AppHelper.returnJapaneseText(title: vehicle.Status.toString())}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close, color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Positioned(
-                  right: 6.w,
-                  top: 3.h,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: SvgPicture.asset("assets/icons/new_icons/cancel.svg",
-                        // "assets/icons/new_icons/orange.svg",
-                        height: 2.h,
-                        colorFilter: const ColorFilter.mode(
-                            Colors.white, BlendMode.srcIn),
-                        color: Theme.of(context).iconTheme.color),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            vehicle.VehicleNo.toString(),
+                            style: AppStyles.textStyle4(
+                              context: context,
+                              isBold: true,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            vehicle.tracktime.toString(),
+                            textAlign: TextAlign.end,
+                            style: AppStyles.textStyle5(context: context),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      vehicle.location.toString(),
+                      style: AppStyles.textStyle4(context: context, size: 15),
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(6, 8, 6, 10),
+                    child: Row(
+                      children: [
+                        for (final button in buttonList)
+                          CustomIconBtn(
+                            color: Theme.of(context).brightness ==
+                                    Brightness.dark
+                                ? Colors.black.withOpacity(0.5)
+                                : AppColors.grey,
+                            onTap: button.onTap,
+                            icon: button.icon,
+                            title: button.title,
+                            direction: Axis.horizontal,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         );
       },
     );

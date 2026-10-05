@@ -41,7 +41,7 @@ class AdsService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('Ads error body: ${e.response!.data}');
         throw Failure(AdsResponseModel.fromJson(e.response!.data)
             .data!
             .error!

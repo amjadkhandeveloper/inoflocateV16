@@ -47,7 +47,7 @@ class DynamicStatusService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('Dynamic status error body: ${e.response!.data}');
         throw Failure(DynamicStatusModel.fromJson(
                 Map<String, dynamic>.from(e.response!.data as Map))
             .data!

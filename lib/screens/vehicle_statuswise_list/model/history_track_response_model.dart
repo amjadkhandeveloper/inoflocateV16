@@ -194,8 +194,28 @@ class VehicleHistoryTrackModel with JsonSafeParser {
     this.data,
   });
   VehicleHistoryTrackModel.fromJson(Map<String, dynamic> json) {
-    final dataMap = asMapOrNull(json['data']);
+    final raw = json['data'] ?? json['Data'];
+    if (raw is List) {
+      data = VehicleHistoryTrackModelData(
+        status: asIntFrom(json, ['status', 'Status']),
+        VehicleHistory: asListOfMaps(raw)
+            .map(VehicleHistoryTrackModelDataVehicleHistory.fromJson)
+            .toList(),
+      );
+      return;
+    }
+    final dataMap = asMapOrNull(raw);
     if (dataMap != null) {
+      final nested = dataMap['data'] ?? dataMap['Data'];
+      if (nested is List) {
+        data = VehicleHistoryTrackModelData(
+          status: asIntFrom(dataMap, ['status', 'Status']),
+          VehicleHistory: asListOfMaps(nested)
+              .map(VehicleHistoryTrackModelDataVehicleHistory.fromJson)
+              .toList(),
+        );
+        return;
+      }
       data = VehicleHistoryTrackModelData.fromJson(dataMap);
     } else if (json['VehicleHistory'] != null ||
         json['vehicleHistory'] != null ||

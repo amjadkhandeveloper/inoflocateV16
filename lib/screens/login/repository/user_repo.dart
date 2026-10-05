@@ -38,7 +38,7 @@ class UserService {
           : userLoginRequestModel.toJson();
 
       AppHelper.configureDio(dio, tag: 'UserService.userLoginService');
-      log('User login $url');
+      AppHelper.logApiTrace('User login $url');
       final response = await dio.post(
         url,
         data: body,

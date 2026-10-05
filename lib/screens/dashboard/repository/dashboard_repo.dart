@@ -47,7 +47,7 @@ class DashboardService {
           e.response!.statusCode! > 200 &&
           e.response!.statusCode! < 404 &&
           e.response!.data != null) {
-        print(e.response!.data);
+        AppHelper.logApiTrace('Dashboard error body: ${e.response!.data}');
         throw Failure(DashboardResponseModel.fromJson(e.response!.data)
             .data!
             .error!

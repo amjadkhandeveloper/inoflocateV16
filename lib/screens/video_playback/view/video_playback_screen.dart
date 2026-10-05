@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:infolocate/screens/dashboard/controller/sequel_dashboard_provider.dart';
 import 'package:infolocate/screens/video_playback/controller/video_playback_provider.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/enums.dart';
@@ -122,6 +123,24 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
   getData() async {
     final videoPlayBackState =
         Provider.of<VideoPlayBackProvider>(context, listen: false);
+    if (Global.isSequelClient) {
+      final withVideo = context
+          .read<SequelDashboardProvider>()
+          .pinVehicles
+          .where((vehicle) => (vehicle.LiveUrl ?? '').trim().isNotEmpty)
+          .map(
+            (vehicle) => VideoVehicleListDataVehicles(
+              VehicleId: vehicle.VehicleId,
+              VehicleNo: vehicle.VehicleNo,
+              DelayEnable: vehicle.DelayEnable,
+            ),
+          )
+          .toList();
+      if (withVideo.isNotEmpty) {
+        videoPlayBackState.setVehicles(withVideo);
+        return;
+      }
+    }
     await videoPlayBackState.getVehicleList();
   }
 
