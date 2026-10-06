@@ -127,7 +127,7 @@ const int kAppVersion = 13;
 const String kAppVersionName = '1.0.0';
 
 /// Bump this whenever you ship a build so you can tell which APK is on the device.
-const String kAppLastUpdated = '23 Sep 2026, 15:42';
+const String kAppLastUpdated = '06 Oct 2026, 11:00';
 
 /// Sample JSON only — not used at runtime (see grep). Kept for API contract reference.
 const Map<String, dynamic> pinVehicleListJson = {

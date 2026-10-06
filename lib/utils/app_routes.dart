@@ -11,18 +11,19 @@ import 'package:infolocate/screens/theme/view/theme_screen.dart';
 import '../screens/alerts/view/alert_screen.dart';
 import '../screens/dynamic_status/view/dynamic_status_screen.dart';
 import '../screens/trips/view/trip_dashboard.dart';
-import 'app_globals.dart';
 
 /// Named-route table for [MaterialApp.routes].
 ///
 /// Flow: Splash → Language → Client login → User login → dashboard.
-/// Sequel clients open [SequelDashboardScreen]; others open [HomeScreen].
+/// Sequel, Mitsui, Orix, and other clients share [SequelDashboardScreen].
 class AppRoutes {
-  /// Home after user login, based on the stored client name.
+  /// Home after user login. The sequel-only dashboard split is commented
+  /// so every client uses the same dashboard.
   static String dashboardRoute() {
-    return Global.isSequelClient
-        ? SequelDashboardScreen.routeName
-        : HomeScreen.routeName;
+    // return Global.isSequelClient
+    //     ? SequelDashboardScreen.routeName
+    //     : HomeScreen.routeName;
+    return SequelDashboardScreen.routeName;
   }
 
   /// Returns route name → screen builder map used by [MaterialApp].

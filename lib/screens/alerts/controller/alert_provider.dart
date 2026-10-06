@@ -146,6 +146,7 @@ class AlertProvider extends ChangeNotifier with StateInterface {
       } else {
         _totalCount = _alertList?.length ?? 0;
       }
+      _snapTotalToLoaded();
       _applyAlertTypes(result?.alerttypes);
 
       notifyListeners();
@@ -154,6 +155,14 @@ class AlertProvider extends ChangeNotifier with StateInterface {
     }
     _isMoreDataLoading = false;
     notifyListeners();
+  }
+
+  /// Last page can include a few extra rows, so 39/37 becomes 39/39.
+  void _snapTotalToLoaded() {
+    final loaded = _alertList?.length ?? 0;
+    if (!_hasMoreData && loaded > (_totalCount ?? 0)) {
+      _totalCount = loaded;
+    }
   }
 
   void _applyAlertTypes(
@@ -196,6 +205,7 @@ class AlertProvider extends ChangeNotifier with StateInterface {
       } else {
         _totalCount = _alertList?.length ?? 0;
       }
+      _snapTotalToLoaded();
       _applyAlertTypes(result?.alerttypes);
       setState(NotifierState.loaded);
       notifyListeners();

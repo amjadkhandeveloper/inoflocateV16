@@ -114,6 +114,14 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
     }
   }
 
+  /// Last page can include a few extra rows, so 39/37 becomes 39/39.
+  void _snapTotalToLoaded() {
+    final loaded = _dynamicStatusList?.length ?? 0;
+    if (!_hasMoreData && loaded > (_totalCount ?? 0)) {
+      _totalCount = loaded;
+    }
+  }
+
   /// Initial load or load-more pagination via [dynamicListRequestModel.PNo].
   getDynamicStatusList(
       {required DynamicStatusRequestModel dynamicListRequestModel,
@@ -140,6 +148,7 @@ class DynamicStatusProvider extends ChangeNotifier with StateInterface {
       } else {
         _totalCount = _dynamicStatusList?.length ?? 0;
       }
+      _snapTotalToLoaded();
       notifyListeners();
     } on Failure catch (failure) {
       if (loadMore == false) {

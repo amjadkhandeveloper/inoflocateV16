@@ -170,9 +170,14 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     if (_expectedTotalCount != null) {
       _totalCount = _expectedTotalCount;
       _hasMoreData = loaded < _expectedTotalCount! && fetchedCount > 0;
-      return;
+    } else {
+      _hasMoreData = fetchedCount >= pageSize;
     }
-    _hasMoreData = fetchedCount >= pageSize;
+    // Last page can return a few extra rows (39 loaded vs 37 reported).
+    if (!_hasMoreData && loaded > (_totalCount ?? 0)) {
+      _totalCount = loaded;
+      _expectedTotalCount = loaded;
+    }
   }
 
   VehicleStatusResponseModelDataVehicleStatusdetails? getVehicleById(
