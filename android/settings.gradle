@@ -1,4 +1,15 @@
 pluginManagement {
+    // AGP 8.9.1 ships an older R8 that cannot parse Kotlin 2.3 metadata.
+    buildscript {
+        repositories {
+            google()
+            mavenCentral()
+        }
+        dependencies {
+            classpath("com.android.tools:r8:8.13.19")
+        }
+    }
+
     def flutterSdkPath = {
         def properties = new Properties()
         file("local.properties").withInputStream { properties.load(it) }
