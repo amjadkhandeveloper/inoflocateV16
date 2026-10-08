@@ -192,7 +192,7 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
                                 // pageCount:
                                 //     '${alertListRequestModel!.pNo! - 1} / ${(alertState.totalCount).ceil()}',
                                 pageCount:
-                                    '${dynamicStatusState.filterList!.length} / ${(dynamicStatusState.totalCount)}',
+                                    '${LocaliazationKey.data_loaded.tr()}: ${dynamicStatusState.filterList!.length}',
                               ),
                             ),
 

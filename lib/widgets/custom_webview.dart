@@ -131,7 +131,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                               MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
                           useHybridComposition: true,
                           supportZoom: true,
-                          iframeAllow: 'camera; microphone; autoplay',
+                          iframeAllow: 'autoplay',
                           iframeAllowFullscreen: true,
                         ),
                         onWebViewCreated: (controller) {

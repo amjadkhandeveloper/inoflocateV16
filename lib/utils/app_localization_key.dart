@@ -138,6 +138,7 @@ class LocaliazationKey {
   static const no_matching_records_found = "no_matching_records_found";
   static const all = "all";
   static const no_records = "no_records";
+  static const data_loaded = "data_loaded";
   static const max_6_vehicles_can_be_pinned = "max_6_vehicles_can_be_pinned";
   static const selected_language = "selected_language";
   static const general = "general";

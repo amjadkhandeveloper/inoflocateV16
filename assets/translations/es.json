@@ -124,6 +124,7 @@
     "operational":"Operación",
     "all":"Todo",
     "no_records":"Sin registros",
+    "data_loaded":"Datos cargados",
     "max_6_vehicles_can_be_pinned":"Solo se pueden anclar un máximo de 6 vehículos",
     "selected_language":"Idioma seleccionado",
     "general":"General",

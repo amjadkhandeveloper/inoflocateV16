@@ -271,7 +271,7 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
                                   // pageCount:
                                   //     '${vehicleStatusResponseModelData.pNo} / ${(vehicleStatusState.totalCount / 10).ceil()}',
                                   pageCount:
-                                      '${vehicleStatusState.filterList!.length} / ${(vehicleStatusState.totalCount)}',
+                                      '${LocaliazationKey.data_loaded.tr()}: ${vehicleStatusState.filterList!.length}',
                                 ),
                               ),
                             vehicleStatusState.filterList!.isEmpty

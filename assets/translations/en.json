@@ -125,6 +125,7 @@
     "operational":"Operation",
     "all":"All",
     "no_records":"No Records",
+    "data_loaded":"Data Loaded",
     "max_6_vehicles_can_be_pinned":"Maximum 6 vehicles only can be pinned.",
     "selected_language":"Selected Language",
     "general":"General",

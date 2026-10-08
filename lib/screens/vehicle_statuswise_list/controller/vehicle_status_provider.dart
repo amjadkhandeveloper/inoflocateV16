@@ -165,18 +165,41 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     _totalCount = recCnt ?? (_vehicleList?.length ?? 0);
   }
 
-  void _updatePaging({required int fetchedCount}) {
+  /// Adds vehicles that are not already in the list. Returns how many were new.
+  int _appendNewVehicles(
+    List<VehicleStatusResponseModelDataVehicleStatusdetails?> details,
+  ) {
+    final existing = _vehicleList ?? [];
+    final ids = existing.map((vehicle) => vehicle?.Vehicleid).whereType<int>().toSet();
+    var added = 0;
+    for (final vehicle in details) {
+      final id = vehicle?.Vehicleid;
+      if (id != null && ids.contains(id)) continue;
+      existing.add(vehicle);
+      if (id != null) ids.add(id);
+      added++;
+    }
+    _vehicleList = existing;
+    _filterList = _vehicleList;
+    return added;
+  }
+
+  void _updatePaging({required int fetchedCount, bool keepHasMore = false}) {
     final loaded = _vehicleList?.length ?? 0;
-    if (_expectedTotalCount != null) {
-      _totalCount = _expectedTotalCount;
-      _hasMoreData = loaded < _expectedTotalCount! && fetchedCount > 0;
-    } else {
-      _hasMoreData = fetchedCount >= pageSize;
+    if (!keepHasMore) {
+      final knownTotal = _expectedTotalCount;
+      if (knownTotal != null && knownTotal > 0) {
+        _totalCount = knownTotal;
+        _hasMoreData = loaded < knownTotal && fetchedCount > 0;
+      } else {
+        // No reliable total. A short or repeated page means loading is finished.
+        _hasMoreData = fetchedCount >= pageSize;
+      }
     }
     // Last page can return a few extra rows (39 loaded vs 37 reported).
     if (!_hasMoreData && loaded > (_totalCount ?? 0)) {
       _totalCount = loaded;
-      _expectedTotalCount = loaded;
+      if (_expectedTotalCount != null) _expectedTotalCount = loaded;
     }
   }
 
@@ -215,6 +238,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     try {
       final result = await VehicleStatusService().getVehicleList(
           vehicleStatusWiseListRequestModel: vehicleStatusWiseListRequestModel);
+      final hadMore = _hasMoreData;
       _vehicleStatusResponseModelData = result;
       _vehicleList = result?.vehicleStatusdetails ?? [];
       _filterList = _vehicleList;
@@ -222,7 +246,15 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       _applyApiTotal(
         counts.isNotEmpty ? counts.first?.recCnt : null,
       );
-      _updatePaging(fetchedCount: _vehicleList?.length ?? 0);
+      final requested = vehicleStatusWiseListRequestModel.pSize;
+      final returned = _vehicleList?.length ?? 0;
+      // A full refresh must not bring Load more back after the last page.
+      if (requested > 0 && returned < requested) {
+        _hasMoreData = false;
+      } else {
+        _hasMoreData = hadMore;
+      }
+      _updatePaging(fetchedCount: returned, keepHasMore: true);
 
       final firstWithPoint = _vehicleList
           ?.whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()
@@ -263,13 +295,19 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
           vehicleStatusWiseListRequestModel: vehicleStatusWiseListRequestModel);
       _vehicleStatusResponseModelData = result;
       final details = result?.vehicleStatusdetails ?? [];
-      _vehicleList!.addAll(details);
-      _filterList = _vehicleList;
+      final int added;
+      if (backgroundFetch) {
+        added = _appendNewVehicles(details);
+      } else {
+        _vehicleList = List.of(details);
+        _filterList = _vehicleList;
+        added = details.length;
+      }
       final counts = result?.vehicleCount ?? [];
       _applyApiTotal(
         counts.isNotEmpty ? counts.first?.recCnt : null,
       );
-      _updatePaging(fetchedCount: details.length);
+      _updatePaging(fetchedCount: backgroundFetch ? added : details.length);
 
       final firstWithPoint = _vehicleList
           ?.whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()

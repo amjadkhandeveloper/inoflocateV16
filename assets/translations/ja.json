@@ -124,6 +124,7 @@
     "operational":"操作中",
     "all":"全て",
     "no_records":"レコードはありません",
+    "data_loaded":"読み込み済み",
     "max_6_vehicles_can_be_pinned":"最大6台の車両のみ固定出来ます",
     "selected_language":"選択された言語",
     "general":"一般",
