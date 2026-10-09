@@ -269,9 +269,10 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
                                                           odometer: data.odometer ?? 0,
                                                           speed: data.speed?.toString() ?? '0',
                                                           urlTitle: data.VehicleNo,
-                                                          enableUrl: !Global.isSequelClient &&
-                                                              (data.LiveUrl ?? '').trim().isNotEmpty,
-                                                              // && data.deviceType == "MDVR" || data.deviceType == "MDVR AI",
+                                                          enableUrl:
+                                                              (data.LiveUrl ?? '')
+                                                                  .trim()
+                                                                  .isNotEmpty,
                                                           liveUrlList: null,
                                                           showPinnedIcon: false,
                                                           statusId: data.id ?? -1,

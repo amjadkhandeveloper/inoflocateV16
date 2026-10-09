@@ -11,6 +11,7 @@ class LiveVehicleListWidget extends StatelessWidget {
   final String location;
   final String tracktime;
   final String? liveUrl;
+  /// Kept for callers; visibility is driven by [liveUrl] when non-empty.
   final bool enableVideo;
   const LiveVehicleListWidget({
     super.key,
@@ -20,6 +21,8 @@ class LiveVehicleListWidget extends StatelessWidget {
     this.liveUrl,
     this.enableVideo = false,
   });
+
+  bool get _canPlayVideo => (liveUrl ?? '').trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class LiveVehicleListWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (enableVideo)
+                if (_canPlayVideo)
                   InkWell(
                     onTap: () => Navigator.push(
                       context,

@@ -82,7 +82,15 @@ class DashboardResponseModelDataPinvehicle with JsonSafeParser {
         asIntFrom(json, ['Idleduration', 'idleduration', 'idleDuration']);
     Status = asStringFrom(json, ['Status', 'status']);
     DelayEnable = asIntFrom(json, ['DelayEnable', 'delayEnable']);
-    LiveUrl = asStringFrom(json, ['LiveUrl', 'liveUrl']);
+    LiveUrl = asStringFrom(json, [
+      'LiveUrl',
+      'liveUrl',
+      'LiveURL',
+      'live_url',
+      'LIVEURL',
+      'Purl',
+      'purl',
+    ]);
     Mapit = asStringFrom(json, ['Mapit', 'mapit', 'mapIt']);
     Cid = asIntFrom(json, ['Cid', 'cid']);
   }

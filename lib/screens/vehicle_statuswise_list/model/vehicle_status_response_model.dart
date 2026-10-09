@@ -183,7 +183,15 @@ class VehicleStatusResponseModelDataVehicleStatusdetails with JsonSafeParser {
     EngineOffdelay = asIntFrom(json, ['EngineOffdelay', 'engineOffdelay']);
     Directions = asInt(json['Directions']);
     Status = asStringFrom(json, ['Status', 'status', 'vstatus']);
-    LiveUrl = asStringFrom(json, ['LiveUrl', 'liveUrl']);
+    LiveUrl = asStringFrom(json, [
+      'LiveUrl',
+      'liveUrl',
+      'LiveURL',
+      'live_url',
+      'LIVEURL',
+      'Purl',
+      'purl',
+    ]);
     vstatus = asStringFrom(json, ['vstatus', 'vStatus']);
     IsPinVehicle = asIntFrom(json, ['IsPinVehicle', 'isPinVehicle']);
     devicetype = asStringFrom(json, ['devicetype', 'deviceType']);

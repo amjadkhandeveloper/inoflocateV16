@@ -123,7 +123,15 @@ class DynamicStatusModelDataVehicledetails with JsonSafeParser {
     odometer = asDouble(json['odometer']);
     Status = asStringFrom(json, ['Status', 'status']);
     DelayEnable = asIntFrom(json, ['DelayEnable', 'delayEnable']);
-    LiveUrl = asStringFrom(json, ['LiveUrl', 'liveUrl']);
+    LiveUrl = asStringFrom(json, [
+      'LiveUrl',
+      'liveUrl',
+      'LiveURL',
+      'live_url',
+      'LIVEURL',
+      'Purl',
+      'purl',
+    ]);
     Mapit = asStringFrom(json, ['Mapit', 'mapit', 'mapIt']);
     Idleduration =
         asIntFrom(json, ['Idleduration', 'idleduration', 'idleDuration']);

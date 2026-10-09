@@ -1051,9 +1051,8 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
                                                               trackTime: cardData.Alertdatetime ?? '',
                                                               vehicleNo: cardData.VehicleNo ?? '',
                                                               vehicleId: cardData.VehicleID ?? 0,
-                                                              enableUrl: !Global.isSequelClient &&
+                                                              enableUrl:
                                                                   videoUrls.isNotEmpty,
-                                                              // && cardData.deviceType == "MDVR" || cardData.deviceType == "MDVR AI",
                                                               showPinnedIcon: false,
                                                               // disableLiveUrl: cardData.Status!
                                                               //         .toLowerCase() ==

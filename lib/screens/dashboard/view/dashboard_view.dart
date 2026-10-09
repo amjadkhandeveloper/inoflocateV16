@@ -478,10 +478,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   odometer: pinCardData.odometer,
                                                   speed: pinCardData.speed.toString(),
                                                   urlTitle: pinCardData.VehicleNo,
-                                                  enableUrl: !Global.isSequelClient &&
-                                                      (pinCardData.LiveUrl ?? '').trim().isNotEmpty &&
-                                                      (pinCardData.Status!.toLowerCase() == moving ||
-                                                      pinCardData.Status!.toLowerCase() == idle),
+                                                  enableUrl:
+                                                      (pinCardData.LiveUrl ?? '')
+                                                          .trim()
+                                                          .isNotEmpty,
                                                   liveUrlList: null,
                                                   showPinnedIcon: true,
                                                   statusId: pinCardData.id,

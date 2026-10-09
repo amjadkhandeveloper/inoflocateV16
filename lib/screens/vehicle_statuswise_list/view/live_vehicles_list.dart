@@ -350,14 +350,6 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
                                                       .toString(),
                                                   location: cardData.location ?? "No location",
                                                   tracktime: cardData.tracktime ?? 'N/A',
-                                                  enableVideo: false
-                                                      //       cardData.Status!
-                                                      //         .toLowerCase() ==
-                                                      //     idle ||
-                                                      // cardData.Status!
-                                                      //         .toLowerCase() ==
-                                                      //     moving
-                                                  ,
                                                   liveUrl: cardData.LiveUrl,
                                                 )),
                                               ),

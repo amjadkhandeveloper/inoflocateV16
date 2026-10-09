@@ -70,8 +70,7 @@ class DynamicStatusCard extends StatelessWidget {
                 AppHelper.returnIconColor(title: dynamicStatusDetails!.Status)),
         title: dynamicStatusDetails!.Status,
       ),
-      if (!Global.isSequelClient &&
-          (dynamicStatusDetails!.LiveUrl ?? '').trim().isNotEmpty)
+      if ((dynamicStatusDetails!.LiveUrl ?? '').trim().isNotEmpty)
         ButtonListModel(
             icon: SvgPicture.asset(
               "assets/icons/new_icons/live-video.svg",
@@ -80,20 +79,17 @@ class DynamicStatusCard extends StatelessWidget {
             ),
             title: LocaliazationKey.live_video.tr(),
             value: dynamicStatusDetails!.LiveUrl,
-            onTap: dynamicStatusDetails!.Status!.toLowerCase() == idle ||
-                    dynamicStatusDetails!.Status!.toLowerCase() == moving
-                ? () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => VideoPlayerScreen(
-                            url: dynamicStatusDetails!.LiveUrl,
-                            title: dynamicStatusDetails!.VehicleNo,
-                          ),
-                        ));
-                  }
-                : () => customToast(
-                    message: LocaliazationKey.video_unavailable.tr())),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(
+                    url: dynamicStatusDetails!.LiveUrl,
+                    title: dynamicStatusDetails!.VehicleNo,
+                  ),
+                ),
+              );
+            }),
       ButtonListModel(
           icon: SvgPicture.asset(
             "assets/icons/new_icons/mapit.svg",

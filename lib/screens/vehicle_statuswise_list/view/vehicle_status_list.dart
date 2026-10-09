@@ -293,11 +293,6 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                                           vehicleNo: cardData.VehicleNo ?? "Unknown",
                                                           location: cardData.location ?? "",
                                                           tracktime: cardData.tracktime ?? "",
-                                                          enableVideo: !Global.isSequelClient &&
-                                                              (cardData.LiveUrl ?? '').trim().isNotEmpty &&
-                                                              (cardData.Status?.toLowerCase() == idle ||
-                                                              cardData.Status?.toLowerCase() == moving ||
-                                                              (cardData.Status?.toLowerCase() == stopped && (cardData.EngineOffdelay ?? 0) > 0)),
                                                           liveUrl: cardData.LiveUrl,
                                                         )
                                                       : Padding(
@@ -329,14 +324,10 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                                             odometer: cardData.odometer,
                                                             idelDuration: cardData.idleduration,
                                                             stopDuration: cardData.stopduration,
-                                                            enableUrl: !Global.isSequelClient &&
-                                                                (cardData.LiveUrl ?? '').trim().isNotEmpty &&
-                                                                (cardData.devicetype == "MDVR" ||
-                                                                    cardData.devicetype == "MDVR AI"),
-                                                            // enableUrl: cardData.Status != null &&
-                                                            //     (cardData.Status!.toLowerCase() == idle ||
-                                                            //         cardData.Status!.toLowerCase() == moving ||
-                                                            //         (cardData.Status!.toLowerCase() == stopped && (cardData.EngineOffdelay ?? 0) > 0)),
+                                                            enableUrl:
+                                                                (cardData.LiveUrl ?? '')
+                                                                    .trim()
+                                                                    .isNotEmpty,
                                                             engineOffdelay: cardData.EngineOffdelay.toString(),
                                                             isPinned: cardData.IsPinVehicle == 0 ? false : true,
                                                             showPinnedIcon: true,
