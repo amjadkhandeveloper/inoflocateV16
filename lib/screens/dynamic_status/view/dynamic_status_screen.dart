@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/screens/dynamic_status/controller/dyanmic_status_provider.dart';
 import 'package:infolocate/screens/dynamic_status/model/dynamic_status_request_model.dart';
 import 'package:infolocate/utils/app_extensions.dart';
@@ -11,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import '../../../utils/app_constants.dart';
 import '../../../utils/app_globals.dart';
+import '../../../utils/app_helper.dart';
 import '../../../utils/app_lifecycle.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../utils/app_styles.dart';
@@ -235,20 +235,11 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
                                                               : Container());
                                                 } else {
                                                   final data = dynamicStatusState.filterList![index]!;
-                                                  final latLng = (data.Mapit != null && data.Mapit!.contains(','))
-                                                      ? data.Mapit!.split(',')
-                                                      : null;
-
-                                                  final lat = latLng != null && latLng.isNotEmpty
-                                                      ? double.tryParse(latLng[0])
-                                                      : null;
-                                                  final long = latLng != null && latLng.length > 1
-                                                      ? double.tryParse(latLng[1])
-                                                      : null;
-
-                                                  if (lat == null || long == null) {
-                                                    print("Invalid latitude or longitude");
-                                                  }
+                                                  final mapLatLng = AppHelper.latLngFrom(
+                                                    lat: data.lat,
+                                                    lon: data.lon,
+                                                    mapit: data.Mapit,
+                                                  );
 
                                                   return AnimationConfiguration.staggeredList(
                                                     duration: const Duration(milliseconds: 500),
@@ -282,9 +273,7 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
                                                             odometer: data.odometer?.toString(),
                                                             speed: data.speed?.toString() ?? '0',
                                                             statusName: data.Status,
-                                                            latLng: (lat != null && long != null)
-                                                                ? LatLng(lat, long)
-                                                                : null,
+                                                            latLng: mapLatLng,
                                                             vehicleId: data.VehicleId,
                                                             vehicleNo: data.VehicleNo,
                                                             engineOffdelay: null,

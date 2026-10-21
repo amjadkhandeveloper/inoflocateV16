@@ -60,23 +60,36 @@ class VehicleHistoryTrackModelDataVehicleHistory with JsonSafeParser {
       this.uniqueId});
   VehicleHistoryTrackModelDataVehicleHistory.fromJson(
       Map<String, dynamic> json) {
-    VehicleId = asIntFrom(json, ['VehicleId', 'vehicleId']);
+    VehicleId = asIntFrom(json, ['VehicleId', 'vehicleId', 'VehicleID']);
     ClientID = asIntFrom(json, ['ClientID', 'clientId', 'ClientId']);
     VehicleNo = asStringFrom(json, ['VehicleNo', 'vehicleNo']);
     Unitno = asStringFrom(json, ['Unitno', 'unitno', 'unitNo']);
-    tracktime =
-        asStringFrom(json, ['tracktime', 'trackTime', 'TrackingTime']);
-    lat = asDoubleOrNull(firstValue(json, ['lat', 'latitude']));
-    lon = asDoubleOrNull(firstValue(json, ['lon', 'lng', 'longitude']));
-    location = asString(json['location']);
+    tracktime = asStringFrom(json, [
+      'tracktime',
+      'trackTime',
+      'TrackingTime',
+      'trackingTime',
+    ]);
+    lat = asDoubleOrNull(
+        firstValue(json, ['Lat', 'lat', 'latitude', 'Latitude']));
+    lon = asDoubleOrNull(firstValue(json, [
+      'Lon',
+      'lon',
+      'lng',
+      'Lng',
+      'longitude',
+      'Longitude',
+    ]));
+    location = asStringFrom(json, ['location', 'Location']);
     speed = asInt(json['speed']);
     odometer = asDouble(json['odometer']);
-    direction = asInt(json['direction']);
-    idleduration = asInt(json['idleduration']);
-    stopduration = asInt(json['stopduration']);
-    AlertInd = asInt(json['AlertInd']);
-    Directions = asInt(json['Directions']);
-    VehicleType = asString(json['VehicleType']);
+    direction = asIntFrom(json, ['direction', 'Direction', 'Directions']);
+    idleduration =
+        asIntFrom(json, ['idleduration', 'idleDuration', 'Idleduration']);
+    stopduration = asIntFrom(json, ['stopduration', 'stopDuration']);
+    AlertInd = asIntFrom(json, ['AlertInd', 'alertInd']);
+    Directions = asIntFrom(json, ['Directions', 'directions']);
+    VehicleType = asStringFrom(json, ['VehicleType', 'vehicleType']);
   }
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -136,8 +149,15 @@ class VehicleHistoryTrackModelData with JsonSafeParser {
   });
   VehicleHistoryTrackModelData.fromJson(Map<String, dynamic> json) {
     status = asIntFrom(json, ['status', 'Status']);
-    final raw = asListOrNull(
-        firstValue(json, ['VehicleHistory', 'vehicleHistory', 'history']));
+    final raw = asListOrNull(firstValue(json, [
+      'VehicleHistory',
+      'vehicleHistory',
+      'vehiclehistory',
+      'history',
+      'History',
+      'HistoryTrack',
+      'historyTrack',
+    ]));
     if (raw != null) {
       VehicleHistory = asListOfMaps(raw)
           .map(VehicleHistoryTrackModelDataVehicleHistory.fromJson)
@@ -217,9 +237,20 @@ class VehicleHistoryTrackModel with JsonSafeParser {
         return;
       }
       data = VehicleHistoryTrackModelData.fromJson(dataMap);
+      // Some APIs nest the list one level deeper under Result / result.
+      if ((data?.VehicleHistory ?? []).isEmpty) {
+        final deeper = asMapOrNull(
+          firstValue(dataMap, ['Result', 'result', 'Response', 'response']),
+        );
+        if (deeper != null) {
+          data = VehicleHistoryTrackModelData.fromJson(deeper);
+        }
+      }
     } else if (json['VehicleHistory'] != null ||
         json['vehicleHistory'] != null ||
-        json['history'] != null) {
+        json['vehiclehistory'] != null ||
+        json['history'] != null ||
+        json['History'] != null) {
       data = VehicleHistoryTrackModelData.fromJson(json);
     }
   }

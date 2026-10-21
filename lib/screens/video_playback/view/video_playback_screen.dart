@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:developer';
 
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:infolocate/screens/dashboard/controller/sequel_dashboard_provider.dart';
@@ -9,8 +8,8 @@ import 'package:infolocate/screens/video_playback/controller/video_playback_prov
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
+import 'package:infolocate/widgets/searchable_vehicle_dropdown.dart';
 import 'package:provider/provider.dart';
-import 'package:sizer/sizer.dart';
 
 import '../../../animation/custom_fade_animation.dart';
 import '../../../utils/app_constants.dart';
@@ -272,66 +271,63 @@ class _VideoPlayBackScreenState extends State<VideoPlayBackScreen> {
                                   context: context, size: 16),
                             ),
                           ),
-                          Container(
-                            width: 100.w,
-                            margin: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: AppUi.cardColor(context),
-                              border: Border.all(color: AppUi.line(context)),
-                              borderRadius: BorderRadius.circular(AppUi.radiusSm),
-                            ),
-                            child: DropdownSearch<VideoVehicleListDataVehicles>(
-                              popupProps: PopupProps.menu(
-                                showSearchBox: true,
-                                showSelectedItems: true,
-                                itemBuilder: (context, item, isSelected) {
-                                  final enabled = item.isPlaybackEnabled;
-                                  return Container(
-                                    margin: const EdgeInsets.all(1),
-                                    padding: const EdgeInsets.all(12),
-                                    color: enabled
-                                        ? (AppUi.isDark(context)
-                                            ? const Color(0xFF14532D)
-                                            : Colors.green.shade200)
-                                        : (AppUi.isDark(context)
-                                            ? AppUi.pageBg(context)
-                                            : Colors.grey.shade300),
-                                    child: Text(
-                                      item.VehicleNo ?? '',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: enabled
-                                            ? AppUi.ink(context)
-                                            : AppUi.muted(context),
+                          SearchableVehicleDropdown<VideoVehicleListDataVehicles>(
+                            items: [...vehicles]..sort((a, b) {
+                              final byEnabled = (b.isPlaybackEnabled ? 1 : 0)
+                                  .compareTo(a.isPlaybackEnabled ? 1 : 0);
+                              if (byEnabled != 0) return byEnabled;
+                              return (a.VehicleNo ?? '')
+                                  .toLowerCase()
+                                  .compareTo((b.VehicleNo ?? '').toLowerCase());
+                            }),
+                            selectedItem: videoPlayBackState.selectedVehicle,
+                            itemAsString: (item) => item.VehicleNo ?? '',
+                            compareFn: (a, b) => a.VehicleId == b.VehicleId,
+                            disabledItemFn: (item) => !item.isPlaybackEnabled,
+                            onChanged: videoPlayBackState.selectVehicle,
+                            itemBuilder: (context, item, isSelected) {
+                              final enabled = item.isPlaybackEnabled;
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: enabled
+                                      ? (AppUi.isDark(context)
+                                          ? const Color(0xFF14532D)
+                                          : Colors.green.shade200)
+                                      : (AppUi.isDark(context)
+                                          ? AppUi.pageBg(context)
+                                          : Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: isSelected
+                                      ? Border.all(color: AppUi.accent, width: 1.5)
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item.VehicleNo ?? '',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                          color: enabled
+                                              ? AppUi.ink(context)
+                                              : AppUi.muted(context),
+                                        ),
                                       ),
                                     ),
-                                  );
-                                },
-                                searchFieldProps: TextFieldProps(
-                                  style: AppUi.body(context),
-                                  decoration: AppUi.inputDecoration(
-                                    context: context,
-                                    hintText: LocaliazationKey.search.tr(),
-                                  ),
+                                    if (isSelected)
+                                      Icon(Icons.check_rounded,
+                                          color: AppUi.accent, size: 18),
+                                  ],
                                 ),
-                                disabledItemFn: (item) => !item.isPlaybackEnabled,
-                              ),
-                              items: vehicles,
-                              itemAsString: (item) => item.VehicleNo ?? '',
-                              compareFn: (a, b) => a.VehicleId == b.VehicleId,
-                              dropdownDecoratorProps: DropDownDecoratorProps(
-                                baseStyle: AppUi.body(context).copyWith(fontSize: 16),
-                                dropdownSearchDecoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.only(
-                                      left: 12, top: 12, bottom: 12),
-                                  hintText: LocaliazationKey.select.tr(),
-                                  hintStyle: AppUi.mutedStyle(context),
-                                ),
-                              ),
-                              onChanged: videoPlayBackState.selectVehicle,
-                              selectedItem: videoPlayBackState.selectedVehicle,
-                            ),
+                              );
+                            },
                           ),
                           Padding(
                             padding: const EdgeInsets.all(14.0),

@@ -30,6 +30,8 @@ class MyHttpOverrides extends HttpOverrides {
 /// App entry: initializes Hive, localization, theme, then runs [MyApp].
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Print every API URL + request + response in the debug console / logcat.
+  AppHelper.apiLogsEnabled = true;
   AppLifecycleTracker.instance.ensureAttached();
   try {
     await Firebase.initializeApp();

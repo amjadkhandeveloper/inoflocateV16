@@ -11,7 +11,7 @@ class LiveVehicleListWidget extends StatelessWidget {
   final String location;
   final String tracktime;
   final String? liveUrl;
-  /// Kept for callers; visibility is driven by [liveUrl] when non-empty.
+  /// Kept for callers; availability is driven by [liveUrl] when non-empty.
   final bool enableVideo;
   const LiveVehicleListWidget({
     super.key,
@@ -26,6 +26,12 @@ class LiveVehicleListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = AppUi.muted(context);
+    final chipColor = _canPlayVideo
+        ? AppUi.accent.withValues(alpha: 0.12)
+        : muted.withValues(alpha: 0.12);
+    final contentColor = _canPlayVideo ? AppUi.accent : muted;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: AppUi.card(
@@ -50,9 +56,14 @@ class LiveVehicleListWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (_canPlayVideo)
-                  InkWell(
-                    onTap: () => Navigator.push(
+                InkWell(
+                  onTap: () {
+                    if (!_canPlayVideo) {
+                      customToast(
+                          message: LocaliazationKey.video_unavailable.tr());
+                      return;
+                    }
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => VideoPlayerScreen(
@@ -60,39 +71,33 @@ class LiveVehicleListWidget extends StatelessWidget {
                           url: liveUrl,
                         ),
                       ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: chipColor,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppUi.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.play_circle_fill_rounded,
-                              size: 16, color: AppUi.accent),
-                          const SizedBox(width: 4),
-                          Text(
-                            LocaliazationKey.play_video.tr(),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppUi.accent,
-                            ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.play_circle_fill_rounded,
+                            size: 16, color: contentColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          LocaliazationKey.play_video.tr(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: contentColor,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  )
-                else
-                  GestureDetector(
-                    onTap: () => customToast(
-                        message: LocaliazationKey.video_unavailable.tr()),
-                    child: Icon(Icons.videocam_off_outlined,
-                        size: 18, color: AppUi.muted(context)),
                   ),
+                ),
               ],
             ),
             const SizedBox(height: 10),

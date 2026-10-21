@@ -342,22 +342,35 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
       {required HistoryTrackRequestModel
           vehicleHistoryTrackRequestModel}) async {
     setState(NotifierState.loading);
+    _historyTrackList = [];
+    _movingVehicleDetail = null;
     try {
       final result = await VehicleStatusService().vehicleHistoryTrackApi(
           vehicleHistoryTrackRequestModel: vehicleHistoryTrackRequestModel);
-      _historyTrackList = result?.VehicleHistory ?? [];
+      final rawList = result?.VehicleHistory ?? [];
+      // Keep only points with usable coordinates for map playback.
+      _historyTrackList = rawList
+          .whereType<VehicleHistoryTrackModelDataVehicleHistory>()
+          .where((point) =>
+              AppHelper.isValidLatLng(point.lat, point.lon))
+          .toList();
       if (_historyTrackList!.isEmpty) {
-        customToast(message: 'History data not available for selected period');
+        customToast(
+            message: 'History data not available for selected period');
       }
-      //* generate random id for each element for markers;
       for (var i = 0; i < _historyTrackList!.length; i++) {
-        // final id = i+1;
         _historyTrackList![i]!.uniqueId = i.toString();
       }
 
       notifyListeners();
     } on Failure catch (failure) {
-      setFailure(failure);
+      _historyTrackList = [];
+      customToast(message: failure.message.toString());
+      _failure = failure;
+    } catch (err) {
+      _historyTrackList = [];
+      customToast(message: err.toString());
+      debugPrint('getVehicleHistoryTrack error: $err');
     }
     setState(NotifierState.loaded);
   }
@@ -470,8 +483,13 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
   updateHistoryTrack(
       {required VehicleHistoryTrackModelDataVehicleHistory? data}) {
     try {
-      _historyCurrentLocation = LatLng(data!.lat!, data.lon!);
-      _markerRotation = data.direction!.toDouble();
+      if (data == null) return;
+      if (!AppHelper.isValidLatLng(data.lat, data.lon)) {
+        debugPrint('updateHistoryTrack skipped invalid lat/lon');
+        return;
+      }
+      _historyCurrentLocation = LatLng(data.lat!, data.lon!);
+      _markerRotation = (data.direction ?? data.Directions ?? 0).toDouble();
       _movingVehicleDetail = data;
       notifyListeners();
     } catch (err) {

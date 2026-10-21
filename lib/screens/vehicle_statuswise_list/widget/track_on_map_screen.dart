@@ -19,6 +19,7 @@ import '../../../utils/app_globals.dart';
 import '../../../utils/app_localization_key.dart';
 import '../../../widgets/custom_dropdown.dart';
 import '../../../widgets/custom_search_widget.dart';
+import '../../../widgets/google_map/map_zoom_controls.dart';
 import '../../dashboard/controller/dashboard_provider.dart';
 import '../../dashboard/controller/sequel_dashboard_provider.dart';
 import '../controller/vehicle_status_provider.dart';
@@ -36,7 +37,6 @@ class TrackOnMapScreen extends StatefulWidget {
 
 class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
   final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
-  late final GoogleMapController _cameraController;
   late List<String?> choiceList = [];
   final List<String> _rawStatuses = [];
   VehicleStatusResponseModelDataVehicleStatusdetails? selectedVehicle;
@@ -191,9 +191,12 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
     // provider.setMarker = markerList;
   }
 
+  Future<GoogleMapController> _mapController() => _controller.future;
+
   Future<void> _fitMarkers(Iterable<LatLng> points) async {
-    _cameraController = await _controller.future;
-    await AppHelper.moveCameraToPoints(_cameraController, points);
+    final controller = await _mapController();
+    if (!mounted) return;
+    await AppHelper.moveCameraToPoints(controller, points);
   }
 
   Future<void> moveCamera() async {
@@ -225,11 +228,15 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
                   mapToolbarEnabled: false,
                   myLocationEnabled: false,
                   myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
                   initialCameraPosition: CameraPosition(target: provider.currentLocation),
                   onMapCreated: (GoogleMapController controller) {
-                    _controller.complete(controller);
+                    if (!_controller.isCompleted) {
+                      _controller.complete(controller);
+                    }
                   },
                 ),
+                MapZoomControls(controller: _controller),
                 Padding(
                   padding: const EdgeInsets.only(
                     right: 4,
@@ -322,7 +329,8 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
                       if (provider.filterMarkers
                           .map((e) => e.markerId)
                           .contains(MarkerId(vehicle.Vehicleid.toString()))) {
-                        await _cameraController.hideMarkerInfoWindow(MarkerId(vehicle.Vehicleid.toString()));
+                        final controller = await _mapController();
+                        await controller.hideMarkerInfoWindow(MarkerId(vehicle.Vehicleid.toString()));
                       }
                     }
 
@@ -402,14 +410,16 @@ class _TrackOnMapScreenState extends State<TrackOnMapScreen> {
           }
           if (vehicle == null || vehicle.lat == null || vehicle.lon == null) return;
           selectedVehicle = vehicle;
-          await _cameraController.animateCamera(
+          final controller = await _mapController();
+          if (!mounted) return;
+          await controller.animateCamera(
             CameraUpdate.newCameraPosition(
               CameraPosition(target: LatLng(vehicle.lat!, vehicle.lon!), zoom: 100),
             ),
           );
           if (vehicle.Vehicleid != null &&
               provider.filterMarkers.map((e) => e.markerId).contains(MarkerId(vehicle.Vehicleid.toString()))) {
-            await _cameraController.showMarkerInfoWindow(MarkerId(vehicle.Vehicleid.toString()));
+            await controller.showMarkerInfoWindow(MarkerId(vehicle.Vehicleid.toString()));
           }
         },
       ),

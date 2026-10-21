@@ -13,12 +13,12 @@ import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/app_styles.dart';
 import 'package:infolocate/utils/app_ui.dart';
-import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../utils/app_constants.dart';
 import '../../../utils/app_helper.dart';
+import '../../../widgets/google_map/map_zoom_controls.dart';
 import '../controller/vehicle_status_provider.dart';
 import '../model/history_track_response_model.dart';
 
@@ -33,7 +33,7 @@ class VehicleHistoryTrackScreen extends StatefulWidget {
 
 class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
     with SingleTickerProviderStateMixin {
-  late final GoogleMapController? _cameraController;
+  GoogleMapController? _cameraController;
   final Completer<GoogleMapController> _controller =
       Completer<GoogleMapController>();
   Set<Marker> markers = <Marker>{};
@@ -84,15 +84,19 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
   }
 
   generatePolylines() {
-    for (var element in widget.historyTrackList!) {
-      polyLineCoordinates.add(LatLng(element!.lat!, element.lon!));
+    polyLineCoordinates.clear();
+    for (final element in widget.historyTrackList ?? const []) {
+      if (element == null) continue;
+      if (!AppHelper.isValidLatLng(element.lat, element.lon)) continue;
+      polyLineCoordinates.add(LatLng(element.lat!, element.lon!));
     }
   }
 
   generateMarkers() async {
     final provider = Provider.of<VehicleStatusProvider>(context, listen: false);
-    final firstMarkerData = widget.historyTrackList!.first;
-    // final secondMarkerData = widget.historyTrackList!.last;
+    final history = widget.historyTrackList ?? const [];
+    if (history.isEmpty || history.first == null) return;
+    final firstMarkerData = history.first;
     provider.updateHistoryTrack(data: firstMarkerData);
     // currentLocation = LatLng(firstMarkerData!.lat!, firstMarkerData.lon!);
     // endLocation = LatLng(secondMarkerData!.lat!, secondMarkerData.lon!);
@@ -148,40 +152,92 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
   double radiansToDegrees(double radians) => radians * (180 / pi);
 
 
+  void _updateProgress({required double fraction}) {
+    final total = widget.historyTrackList?.length ?? 0;
+    if (total <= 0) {
+      _progressValue = 0.0;
+      return;
+    }
+    // Each history record advances the bar equally:
+    // 2 records -> 50%, 100%; 10 records -> 10%, 20%, ... 100%.
+    final next = (count + fraction) / total;
+    _progressValue =
+        (!next.isFinite || next.isNaN) ? 0.0 : next.clamp(0.0, 1.0);
+  }
+
+  double get _safeProgress {
+    final value = _progressValue;
+    if (!value.isFinite || value.isNaN) return 0.0;
+    return value.clamp(0.0, 1.0);
+  }
+
   void startMoving({bool restart = false}) async {
     _timer.cancel();
-    if (widget.historyTrackList!.isEmpty) return;
+    final history = widget.historyTrackList;
+    if (history == null || history.isEmpty) return;
 
     final provider = Provider.of<VehicleStatusProvider>(context, listen: false);
+
+    if (restart) {
+      count = 0;
+      _progressValue = 0.0;
+      provider.updateHistoryTrack(data: history.first);
+      isPlaying = true;
+      _animationController.forward();
+    }
+
+    if (count >= history.length) {
+      _progressValue = 1.0;
+      isPlaying = false;
+      _animationController.reverse();
+      if (mounted) setState(() {});
+      return;
+    }
+
+    final current = history[count];
+    if (current?.lat == null || current?.lon == null) return;
+
     LatLng start = provider.historyCurrentLocation;
-    LatLng end = LatLng(
-        widget.historyTrackList![count]!.lat!, widget.historyTrackList![count]!.lon!);
+    LatLng end = LatLng(current!.lat!, current.lon!);
 
     double fraction = 0.0;
     const duration = Duration(milliseconds: 1000);
-    final totalSteps = 20; // Smoothness of the animation
+    const totalSteps = 20; // Smoothness of the animation
     final stepDuration = duration.inMilliseconds ~/ totalSteps;
 
     _timer = Timer.periodic(Duration(milliseconds: stepDuration), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
       fraction += 1 / totalSteps;
       if (fraction > 1.0) {
         fraction = 1.0;
-        timer.cancel();
-        count++;
-        if (count < widget.historyTrackList!.length) {
-          startMoving(); // Move to the next segment
-        }
       }
 
       LatLng newPosition = interpolatePosition(start, end, fraction);
-      double newBearing = getBearing(start, end);
 
       provider.updateHistoryTrack(
-        data: widget.historyTrackList![count],
+        data: history[count],
       );
 
       _cameraController?.moveCamera(CameraUpdate.newLatLng(newPosition));
+      _updateProgress(fraction: fraction);
       setState(() {});
+
+      if (fraction >= 1.0) {
+        timer.cancel();
+        count++;
+        if (count < history.length) {
+          startMoving(); // Move to the next segment
+        } else {
+          _progressValue = 1.0;
+          isPlaying = false;
+          _animationController.reverse();
+          if (mounted) setState(() {});
+        }
+      }
     });
   }
 
@@ -194,16 +250,14 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
     setState(() {
       isPlaying = !isPlaying;
       if (isPlaying) {
-        print('start moving');
-        startMoving();
+        final total = widget.historyTrackList?.length ?? 0;
+        final restart = total > 0 && count >= total;
+        startMoving(restart: restart);
         _animationController.forward();
       } else {
-        print('pause moving');
         _animationController.reverse();
         pauseTimer();
       }
-      // ?
-      // :
     });
   }
 
@@ -298,22 +352,6 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
     super.dispose();
   }
 
-  void startProgress() {
-    if (mounted) {
-      setState(() {
-        _progressValue = count.toDouble() / widget.historyTrackList!.length;
-      });
-    }
-
-    // _animationController.reset();
-    // _animationController.forward();
-    //   Future.delayed(const Duration(seconds: 1), () {
-    //     setState(() {
-    //       _progressValue = count / 10;
-    //     });
-    //   });
-  }
-
   @override
   Widget build(BuildContext context) {
     bool isDarkTheme = Theme.of(context).brightness == Brightness.dark;
@@ -333,36 +371,49 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
                       'vehicle_marker',
                     ),
                     icon: icon,
-                    rotation: provider.markerRotation!,
+                    rotation: provider.markerRotation ?? 0,
                     position: provider.historyCurrentLocation,
                     anchor: const Offset(0.5, 0.5),
                     // onTap: () => showSelectVehicleSheet(),
                     flat: true),
-                Marker(
-                  markerId: const MarkerId(
-                    'source_marker',
+                if ((widget.historyTrackList ?? []).isNotEmpty &&
+                    AppHelper.isValidLatLng(
+                      widget.historyTrackList!.last?.lat,
+                      widget.historyTrackList!.last?.lon,
+                    ))
+                  Marker(
+                    markerId: const MarkerId(
+                      'source_marker',
+                    ),
+                    icon: source_marker,
+                    position: LatLng(widget.historyTrackList!.last!.lat!,
+                        widget.historyTrackList!.last!.lon!),
                   ),
-                  icon: source_marker,
-                  position: LatLng(widget.historyTrackList!.last!.lat!,
-                      widget.historyTrackList!.last!.lon!),
-                ),
-                Marker(
-                  markerId: const MarkerId(
-                    'destination_marker',
+                if ((widget.historyTrackList ?? []).isNotEmpty &&
+                    AppHelper.isValidLatLng(
+                      widget.historyTrackList!.first?.lat,
+                      widget.historyTrackList!.first?.lon,
+                    ))
+                  Marker(
+                    markerId: const MarkerId(
+                      'destination_marker',
+                    ),
+                    icon: destination_marker,
+                    position: LatLng(widget.historyTrackList!.first!.lat!,
+                        widget.historyTrackList!.first!.lon!),
                   ),
-                  icon: destination_marker,
-                  position: LatLng(widget.historyTrackList!.first!.lat!,
-                      widget.historyTrackList!.first!.lon!),
-                ),
               },
               mapType: MapType.normal,
-              zoomGesturesEnabled: true, //enable Zoom in, out on map
-              minMaxZoomPreference: const MinMaxZoomPreference(10, 15),
+              zoomGesturesEnabled: true,
+              zoomControlsEnabled: false,
+              minMaxZoomPreference: const MinMaxZoomPreference(3, 20),
               initialCameraPosition:
                   CameraPosition(target: provider.historyCurrentLocation),
               onMapCreated: (GoogleMapController controller) {
-                _controller.complete(controller);
-                // provider.controller.complete(controller);
+                _cameraController = controller;
+                if (!_controller.isCompleted) {
+                  _controller.complete(controller);
+                }
               },
               polylines: {
                 Polyline(
@@ -421,26 +472,15 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
                                 ),
                                 Expanded(
                                   flex: 10,
-                                  child: LinearPercentIndicator(
-                                    barRadius: const Radius.circular(4),
-                                    animation: true,
-                                    lineHeight: 8.0,
-                                    animationDuration: 800,
-                                    percent: _progressValue,
-                                    animateFromLastPercent: true,
-                                    widgetIndicator: Container(
-                                      height: 14,
-                                      width: 14,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: const Color(0xffFE713A),
-                                        border: Border.all(
-                                            color: Colors.white, width: 2),
-                                      ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: _safeProgress,
+                                      minHeight: 8,
+                                      color: const Color(0xffFE713A),
+                                      backgroundColor:
+                                          Colors.white.withValues(alpha: 0.35),
                                     ),
-                                    // center: Text(
-                                    //     "${_progressValue.ceilToDouble()}"),
-                                    progressColor: const Color(0xffFE713A),
                                   ),
                                 ),
                                 Expanded(
@@ -455,14 +495,7 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
                                       child: IconButton(
                                         onPressed: () async {
                                           _timer.cancel();
-                                          _animationController.reverse();
-
-                                          // await _cameraController!.moveCamera(
-                                          //     CameraUpdate.newLatLng(
-                                          //         provider.historyCurrentLocation));
                                           startMoving(restart: true);
-                                          _progressValue = 0.0;
-                                          setState(() {});
                                         },
                                         icon: Icon(
                                           Icons.restart_alt,
@@ -607,18 +640,15 @@ class _VehicleHistoryTrackScreenState extends State<VehicleHistoryTrackScreen>
                   Navigator.pop(context);
                 },
                 icon: const Icon(Icons.arrow_back)),
-            // Positioned(
-            //   right: 10,
-            //   child: Card(
-            //     child: IconButton(
-            //         onPressed: () {
-            //           _timer.cancel();
-            //           _animationController.reverse();
-            //           startMoving(restart: true);
-            //         },
-            //         icon: const Icon(Icons.restart_alt)),
-            //   ),
-            // ),
+            MapZoomControls(
+              controller: _controller,
+              mapController: _cameraController,
+              // Keep clear of the bottom trip panel and back button.
+              top: 72,
+              right: 12,
+              minZoom: 3,
+              maxZoom: 20,
+            ),
           ],
         ),
       ),

@@ -17,6 +17,7 @@ import '../../utils/app_styles.dart';
 import '../../utils/app_ui.dart';
 import '../buttons/custom_icon_button.dart';
 import 'map_model.dart';
+import 'map_zoom_controls.dart';
 
 class GoogleMapScreen extends StatefulWidget {
   const GoogleMapScreen(
@@ -394,7 +395,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                 mapType: MapType.normal,
                 myLocationEnabled: false,
                 myLocationButtonEnabled: false,
-                zoomControlsEnabled: true,
+                zoomControlsEnabled: false,
                 compassEnabled: false,
                 mapToolbarEnabled: false,
                 initialCameraPosition: CameraPosition(
@@ -431,7 +432,8 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                     ),
                   ),
                 ),
-              )
+              ),
+            MapZoomControls(controller: _controller),
           ],
         ),
       ),

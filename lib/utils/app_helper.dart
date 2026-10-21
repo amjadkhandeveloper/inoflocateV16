@@ -239,32 +239,64 @@ class AppHelper {
 
   // --- Dio request/response logging (debugging support) ---
   //
-  // Single switch for every API log (Dio interceptor and logApiCall).
-  // Leave false for test and release builds so responses are not formatted
-  // or printed. Set true locally when a call needs to be inspected.
+  // Single switch for every API log (Dio interceptor, LogInterceptor, logApiCall).
+  // true  = print full URL + request + response in console / logcat
+  // false = silent (use for release/store builds)
   static bool apiLogsEnabled = true;
 
   static int _apiTraceId = 0;
 
-  /// Prints URL, request, and response without Flutter's debugPrint throttle.
+  /// Prints URL, request, and response in full (chunked for Android logcat).
   static void logApiTrace(String message) {
     if (!apiLogsEnabled) return;
-    debugPrintSynchronously(message, wrapWidth: 1024);
+    // print + chunking so long JSON bodies are not truncated / dropped.
+    const chunkSize = 800;
+    if (message.length <= chunkSize) {
+      // ignore: avoid_print
+      print(message);
+      debugPrintSynchronously(message, wrapWidth: 1024);
+      return;
+    }
+    for (var i = 0; i < message.length; i += chunkSize) {
+      final end =
+          (i + chunkSize < message.length) ? i + chunkSize : message.length;
+      final part = message.substring(i, end);
+      // ignore: avoid_print
+      print(part);
+      debugPrintSynchronously(part, wrapWidth: 1024);
+    }
   }
 
-  /// Attaches a logger to [dio] that prints the full call:
+  /// Attaches loggers to [dio] that print the full call:
   /// method, URL, query, request headers, request body, status, duration,
   /// response headers, and response body. Password fields are redacted.
   ///
   /// Safe to call multiple times. Tag is updated so reused Dio instances
   /// still show the correct API name.
   static void attachApiLogger(Dio dio, {String tag = 'API'}) {
+    if (!apiLogsEnabled) return;
+
     final existing = dio.interceptors.whereType<_ApiLogInterceptor>();
     if (existing.isNotEmpty) {
       existing.first.tag = tag;
-      return;
+    } else {
+      dio.interceptors.add(_ApiLogInterceptor(tag: tag));
     }
-    dio.interceptors.add(_ApiLogInterceptor(tag: tag));
+
+    final hasDioLogger = dio.interceptors.whereType<LogInterceptor>().isNotEmpty;
+    if (!hasDioLogger) {
+      dio.interceptors.add(
+        LogInterceptor(
+          request: true,
+          requestHeader: true,
+          requestBody: true,
+          responseHeader: false,
+          responseBody: true,
+          error: true,
+          logPrint: (object) => logApiTrace(object.toString()),
+        ),
+      );
+    }
   }
 
   static Object? _redact(Object? data) {

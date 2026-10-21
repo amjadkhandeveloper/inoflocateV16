@@ -10,6 +10,7 @@ import '../../../utils/app_globals.dart';
 import '../../../utils/app_helper.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/error_widget.dart';
+import '../../../widgets/google_map/map_zoom_controls.dart';
 import '../controller/vehicle_status_provider.dart';
 import '../model/vehicle_status_request_model.dart';
 
@@ -127,20 +128,26 @@ class _MapOverviewState extends State<MapOverview> {
           ? CustomErrorWidget(onPressed: () {
               setUpLocationData();
             })
-          : GoogleMap(
-              // mapType: MapType.hybrid,
-              markers: provider.overviewMarkers,
-              mapType: MapType.normal,
-              myLocationEnabled: false,
-              myLocationButtonEnabled: false,
-
-              mapToolbarEnabled: false,
-              initialCameraPosition:
-                  CameraPosition(target: provider.currentLocation),
-              onMapCreated: (GoogleMapController controller) {
-                _controller.complete(controller);
-                // provider.controller.complete(controller);
-              },
+          : Stack(
+              children: [
+                GoogleMap(
+                  // mapType: MapType.hybrid,
+                  markers: provider.overviewMarkers,
+                  mapType: MapType.normal,
+                  myLocationEnabled: false,
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
+                  mapToolbarEnabled: false,
+                  initialCameraPosition:
+                      CameraPosition(target: provider.currentLocation),
+                  onMapCreated: (GoogleMapController controller) {
+                    if (!_controller.isCompleted) {
+                      _controller.complete(controller);
+                    }
+                  },
+                ),
+                MapZoomControls(controller: _controller, bottom: 16, right: 8),
+              ],
             ),
     );
   }

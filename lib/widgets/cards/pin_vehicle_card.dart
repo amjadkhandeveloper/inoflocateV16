@@ -109,8 +109,11 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
         (widget.liveUrlList
                 ?.any((e) => (e ?? '').trim().isNotEmpty) ??
             false);
-    // Show live video whenever API provides a URL (any client / device type).
-    final showLiveVideo = hasLiveUrl;
+    final liveVideoTitle =
+        widget.alertType ?? LocaliazationKey.live_video.tr();
+    final liveVideoColor = hasLiveUrl
+        ? Theme.of(context).colorScheme.primary
+        : Colors.grey;
 
     final buttonList = [
       if (widget.status != null)
@@ -124,40 +127,44 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
           ),
           title: AppHelper.returnJapaneseText(title: widget.status),
         ),
-      if (showLiveVideo)
-        ButtonListModel(
-            icon: SvgPicture.asset(
-              "assets/icons/new_icons/live-video.svg",
-              height: 2.h,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            title: widget.alertType ?? LocaliazationKey.live_video.tr(),
-            value: widget.liveUrl,
-            onTap: () {
-              if (widget.liveUrlList != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GridVideoPlayerScreen(
-                      url: widget.liveUrlList,
-                      title: widget.vehicleNo,
-                    ),
+      ButtonListModel(
+          icon: SvgPicture.asset(
+            "assets/icons/new_icons/live-video.svg",
+            height: 2.h,
+            color: liveVideoColor,
+          ),
+          title: liveVideoTitle,
+          value: widget.liveUrl,
+          onTap: () {
+            if (!hasLiveUrl) {
+              customToast(
+                  message: LocaliazationKey.video_unavailable.tr());
+              return;
+            }
+            if (widget.liveUrlList != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GridVideoPlayerScreen(
+                    url: widget.liveUrlList,
+                    title: widget.vehicleNo,
                   ),
-                );
-                return;
-              }
-              if ((widget.liveUrl ?? '').trim().isNotEmpty) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VideoPlayerScreen(
-                      url: widget.liveUrl,
-                      title: widget.vehicleNo,
-                    ),
+                ),
+              );
+              return;
+            }
+            if ((widget.liveUrl ?? '').trim().isNotEmpty) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(
+                    url: widget.liveUrl,
+                    title: widget.vehicleNo,
                   ),
-                );
-              }
-            }),
+                ),
+              );
+            }
+          }),
       ButtonListModel(
           icon: SvgPicture.asset(
             "assets/icons/new_icons/mapit.svg",
@@ -342,9 +349,9 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                     onTap: buttonList[index].onTap,
                                     icon: buttonList[index].icon,
                                     title: buttonList[index].title,
-                                    color: !showLiveVideo &&
+                                    color: !hasLiveUrl &&
                                             buttonList[index].title ==
-                                                "Live Video"
+                                                liveVideoTitle
                                         ? Colors.grey.shade200
                                         : null,
                                   ),

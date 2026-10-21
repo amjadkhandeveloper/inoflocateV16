@@ -83,6 +83,8 @@ class DynamicStatusModelDataVehicledetails with JsonSafeParser {
   int? DelayEnable;
   String? LiveUrl;
   String? Mapit;
+  double? lat;
+  double? lon;
   int? Idleduration;
   String? deviceType;
 
@@ -99,6 +101,8 @@ class DynamicStatusModelDataVehicledetails with JsonSafeParser {
     this.DelayEnable,
     this.LiveUrl,
     this.Mapit,
+    this.lat,
+    this.lon,
     this.Idleduration,
     this.deviceType
   });
@@ -132,7 +136,11 @@ class DynamicStatusModelDataVehicledetails with JsonSafeParser {
       'Purl',
       'purl',
     ]);
-    Mapit = asStringFrom(json, ['Mapit', 'mapit', 'mapIt']);
+    lat = asDoubleOrNull(firstValue(json, ['Lat', 'lat', 'latitude']));
+    lon = asDoubleOrNull(
+        firstValue(json, ['lon', 'Lon', 'lng', 'Lng', 'longitude']));
+    Mapit = asStringOrNull(
+        firstValue(json, ['Mapit', 'mapit', 'mapIt', 'MapIt']));
     Idleduration =
         asIntFrom(json, ['Idleduration', 'idleduration', 'idleDuration']);
     deviceType = asStringFrom(json, ['devicetype', 'deviceType']);
@@ -151,6 +159,8 @@ class DynamicStatusModelDataVehicledetails with JsonSafeParser {
     data['DelayEnable'] = DelayEnable;
     data['LiveUrl'] = LiveUrl;
     data['Mapit'] = Mapit;
+    data['lat'] = lat;
+    data['lon'] = lon;
     data['devicetype'] = deviceType;
     return data;
   }

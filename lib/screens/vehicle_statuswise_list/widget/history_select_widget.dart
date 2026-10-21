@@ -2,21 +2,20 @@
 
 import 'dart:developer';
 
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/controller/vehicle_status_provider.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/widget/history_track_map.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/model/vehicle_status_request_model.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/model/vehicle_status_response_model.dart';
 import 'package:infolocate/screens/vehicle_statuswise_list/repository/vehicle_status_repo.dart';
+import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/enums.dart';
 import 'package:infolocate/widgets/buttons/custom_button.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
+import 'package:infolocate/widgets/searchable_vehicle_dropdown.dart';
 import 'package:provider/provider.dart';
-import 'package:sizer/sizer.dart';
 
 import '../../../animation/custom_fade_animation.dart';
 import '../../../utils/app_constants.dart';
@@ -145,8 +144,12 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
       _vehicles = (result?.vehicleStatusdetails ?? [])
           .whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()
           .where((vehicle) => (vehicle.VehicleNo ?? '').trim().isNotEmpty)
-          .toList();
-      selectedValue = LocaliazationKey.select.tr();
+          .toList()
+        ..sort((a, b) => (a.VehicleNo ?? '')
+            .toLowerCase()
+            .compareTo((b.VehicleNo ?? '').toLowerCase()));
+      selectedValue = null;
+      vehicleId = null;
     } catch (error) {
       _vehicleLoadError = error.toString();
     }
@@ -178,23 +181,25 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
     return true;
   }
 
-  List<VehicleHistoryTrackModelDataVehicleHistory?>? removeDuplicate(
+  List<VehicleHistoryTrackModelDataVehicleHistory> removeDuplicate(
       {required List<VehicleHistoryTrackModelDataVehicleHistory?>? list}) {
-    log('length before filter');
-    final originalList = list;
-    log(originalList!.length.toString());
-    log('length after filter');
-    var filteredLatLon =
-        originalList.map((e) => LatLng(e!.lat!, e.lon!)).toSet().toList();
+    final originalList = (list ?? [])
+        .whereType<VehicleHistoryTrackModelDataVehicleHistory>()
+        .where((e) => AppHelper.isValidLatLng(e.lat, e.lon))
+        .toList();
+    log('length before filter ${list?.length ?? 0}');
+    log('length after valid coords ${originalList.length}');
 
-    List<VehicleHistoryTrackModelDataVehicleHistory?>? filterList = [];
-    for (var element in filteredLatLon) {
-      filterList.add(
-          originalList.firstWhere((e) => LatLng(e!.lat!, e.lon!) == element));
+    final seen = <String>{};
+    final filterList = <VehicleHistoryTrackModelDataVehicleHistory>[];
+    for (final point in originalList) {
+      final key =
+          '${point.lat!.toStringAsFixed(6)},${point.lon!.toStringAsFixed(6)}';
+      if (seen.add(key)) {
+        filterList.add(point);
+      }
     }
-    // originalList.retainWhere((element) =>
-    //     filteredLatLon.contains(LatLng(element!.lat!, element.lon!)));
-    log(filterList.length.toString());
+    log('length after unique lat/lon ${filterList.length}');
     return filterList;
   }
 
@@ -232,114 +237,25 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                   context: context, size: 16),
                             ),
                           ),
-                          Container(
-                            // height: 40,
-                            width: 100.w,
-                            margin: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppUi.line(context)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: DropdownSearch<String>(
-                              popupProps: PopupProps.menu(
-                                showSearchBox: true,
-                                showSelectedItems: true,
-                                searchFieldProps: TextFieldProps(
-                                  decoration:
-                                      AppStyles.inputFieldStyle().copyWith(
-                                    hintText: LocaliazationKey.search.tr(),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          width: 2),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              items: _vehicles
-                                  .map((e) => e.VehicleNo.toString())
-                                  .toList(),
-                              dropdownDecoratorProps: DropDownDecoratorProps(
-                                // textAlign: TextAlign.left,
-                                baseStyle: const TextStyle(
-                                  fontSize: 18,
-                                ),
-                                dropdownSearchDecoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding:
-                                      const EdgeInsets.only(left: 8, top: 12),
-                                  hintText: LocaliazationKey.select.tr(),
-                                ),
-                              ),
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedValue = value ?? "";
-                                  if (selectedValue !=
-                                      LocaliazationKey.select.tr()) {
-                                    final match = _vehicles.where(
-                                      (vehicle) =>
-                                          vehicle.VehicleNo == selectedValue,
-                                    );
-                                    vehicleId = match.isEmpty
-                                        ? null
-                                        : match.first.Vehicleid;
-                                    log("Vehicle Id: $vehicleId");
-                                  }
-                                });
-                              },
-                              selectedItem: selectedValue,
-                            ),
+                          SearchableVehicleDropdown<String>(
+                            items: _vehicles
+                                .map((e) => e.VehicleNo.toString())
+                                .toList(),
+                            selectedItem: selectedValue,
+                            itemAsString: (value) => value,
+                            onChanged: (value) {
+                              setState(() {
+                                selectedValue = value;
+                                final match = _vehicles.where(
+                                  (vehicle) => vehicle.VehicleNo == value,
+                                );
+                                vehicleId = match.isEmpty
+                                    ? null
+                                    : match.first.Vehicleid;
+                                log("Vehicle Id: $vehicleId");
+                              });
+                            },
                           ),
-                          // Container(
-                          //   height: 45,
-                          //   width: 100.w,
-                          //   margin: const EdgeInsets.all(14),
-                          //   decoration: BoxDecoration(
-                          //     border: Border.all(color: Colors.grey),
-                          //     borderRadius: BorderRadius.circular(8),
-                          //   ),
-                          //   child: Padding(
-                          //     padding: const EdgeInsets.all(8.0),
-                          //     child: DropdownButton<String>(
-                          //       underline: Container(),
-                          //       value: selectedValue,
-                          //       isExpanded: true,
-                          //       elevation: 2,
-                          //       // iconEnabledColor: Colors.black,
-                          //       items: data
-                          //           .map((e) => e!.VehicleNo.toString())
-                          //           .map<DropdownMenuItem<String>>(
-                          //               (String value) {
-                          //         return DropdownMenuItem<String>(
-                          //           value: value,
-                          //           child: Text(
-                          //             value,
-                          //             style: AppStyles.textStyle4(
-                          //               context: context,
-                          //             ),
-                          //           ),
-                          //         );
-                          //       }).toList(),
-                          //       hint: const Text(
-                          //         select,
-                          //       ),
-                          //       onChanged: (value) {
-                          //         setState(() {
-                          //           selectedValue = value ?? "";
-                          //           if (selectedValue != select) {
-                          //             vehicleId =
-                          //                 videoPlayBackState.returnVehicleId(
-                          //                     vehicleNo:
-                          //                         selectedValue.toString());
-                          //             log("Vehicle Id: $vehicleId");
-                          //           }
-                          //         });
-                          //       },
-                          //     ),
-                          //   ),
-                          // ),
 
                           Padding(
                             padding: const EdgeInsets.all(14.0),
@@ -427,8 +343,9 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                   padding: const EdgeInsets.all(14),
                                   child: CustomButton(
                                     onPressed: () async {
-                                      if (selectedValue!.contains(
-                                          LocaliazationKey.select.tr())) {
+                                      if (selectedValue == null ||
+                                          selectedValue!.trim().isEmpty ||
+                                          vehicleId == null) {
                                         customToast(
                                             message: LocaliazationKey
                                                 .please_select_vehicle_no
@@ -514,28 +431,34 @@ class _HistoryTrackWidgetState extends State<HistoryTrackWidget> {
                                               vehicleHistoryTrackRequestModel:
                                                   videoPlayBackRequestModel);
 
-                                      if (vehicleStatusState.state !=
-                                              NotifierState.error &&
-                                          vehicleStatusState
-                                              .historyTrackList!.isNotEmpty) {
-                                        // final data = vehicleStatusState
-                                        //     .historyTrackList!;
-                                        if (mounted) {
-                                          log('length before set()');
-                                          log(vehicleStatusState
-                                              .historyTrackList!.length
-                                              .toString());
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    VehicleHistoryTrackScreen(
-                                                        historyTrackList:
-                                                            removeDuplicate(
-                                                                list: vehicleStatusState
-                                                                    .historyTrackList)),
-                                              ));
+                                      final historyPoints = removeDuplicate(
+                                        list: vehicleStatusState
+                                            .historyTrackList,
+                                      );
+                                      if (historyPoints.isEmpty) {
+                                        if ((vehicleStatusState
+                                                    .historyTrackList ??
+                                                [])
+                                            .isNotEmpty) {
+                                          customToast(
+                                            message: LocaliazationKey
+                                                .location_unavailable
+                                                .tr(),
+                                          );
                                         }
+                                        return;
+                                      }
+                                      if (mounted) {
+                                        log('history points ${historyPoints.length}');
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                VehicleHistoryTrackScreen(
+                                              historyTrackList: historyPoints,
+                                            ),
+                                          ),
+                                        );
                                       }
 
                                       // await videoPlayBackState.generateVideoPlayback(

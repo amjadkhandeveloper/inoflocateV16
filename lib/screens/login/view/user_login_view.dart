@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:infolocate/screens/forgot_password/view/forgot_password_screen.dart';
 import 'package:infolocate/screens/login/view/client_login_view.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
@@ -110,29 +109,6 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                 ),
               ),
               validator: (value) => AppHelper.passwordValidator(value),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const ForgotPasswordScreen(
-                        isForgotPassword: true,
-                      ),
-                    ),
-                  );
-                },
-                child: Text(
-                  LocaliazationKey.forgot_password.tr(),
-                  style: const TextStyle(
-                    color: AppUi.accent,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
             ),
             const SizedBox(height: 24),
             AppUi.primaryButton(

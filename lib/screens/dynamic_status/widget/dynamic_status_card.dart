@@ -3,7 +3,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/utils/app_styles.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
@@ -28,13 +27,14 @@ class DynamicStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final latLng = dynamicStatusDetails!.Mapit!.split(',');
-
-    final lat = double.tryParse(latLng[0]);
-    final long = double.tryParse(latLng[1]);
+    final mapLatLng = AppHelper.latLngFrom(
+      lat: dynamicStatusDetails!.lat,
+      lon: dynamicStatusDetails!.lon,
+      mapit: dynamicStatusDetails!.Mapit,
+    );
 
     final mapData = GoogleMapModel(
-        latLng: LatLng(lat!, long!),
+        latLng: mapLatLng,
         statusName: dynamicStatusDetails!.Status,
         vehicleId: dynamicStatusDetails!.VehicleId,
         vehicleNo: dynamicStatusDetails!.VehicleNo,
@@ -70,26 +70,32 @@ class DynamicStatusCard extends StatelessWidget {
                 AppHelper.returnIconColor(title: dynamicStatusDetails!.Status)),
         title: dynamicStatusDetails!.Status,
       ),
-      if ((dynamicStatusDetails!.LiveUrl ?? '').trim().isNotEmpty)
-        ButtonListModel(
-            icon: SvgPicture.asset(
-              "assets/icons/new_icons/live-video.svg",
-              height: 2.h,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            title: LocaliazationKey.live_video.tr(),
-            value: dynamicStatusDetails!.LiveUrl,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VideoPlayerScreen(
-                    url: dynamicStatusDetails!.LiveUrl,
-                    title: dynamicStatusDetails!.VehicleNo,
-                  ),
+      ButtonListModel(
+          icon: SvgPicture.asset(
+            "assets/icons/new_icons/live-video.svg",
+            height: 2.h,
+            color: (dynamicStatusDetails!.LiveUrl ?? '').trim().isNotEmpty
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey,
+          ),
+          title: LocaliazationKey.live_video.tr(),
+          value: dynamicStatusDetails!.LiveUrl,
+          onTap: () {
+            if ((dynamicStatusDetails!.LiveUrl ?? '').trim().isEmpty) {
+              customToast(
+                  message: LocaliazationKey.video_unavailable.tr());
+              return;
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VideoPlayerScreen(
+                  url: dynamicStatusDetails!.LiveUrl,
+                  title: dynamicStatusDetails!.VehicleNo,
                 ),
-              );
-            }),
+              ),
+            );
+          }),
       ButtonListModel(
           icon: SvgPicture.asset(
             "assets/icons/new_icons/mapit.svg",
@@ -101,6 +107,13 @@ class DynamicStatusCard extends StatelessWidget {
           title: LocaliazationKey.map_it.tr(),
           value: dynamicStatusDetails!.Location,
           onTap: () {
+            if (!AppHelper.isValidLatLng(
+                mapLatLng?.latitude, mapLatLng?.longitude)) {
+              customToast(
+                message: LocaliazationKey.location_unavailable.tr(),
+              );
+              return;
+            }
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -229,14 +242,26 @@ class DynamicStatusCard extends StatelessWidget {
                   children: [
                     ...List.generate(
                         buttonList.length,
-                        (index) => SizedBox(
-                              // height: 45,
-                              child: CustomIconBtn(
-                                  onTap: buttonList[index].onTap,
-                                  icon: buttonList[index].icon,
-                                  title: buttonList[index].title,
-                                  direction: Axis.horizontal),
-                            ))
+                        (index) {
+                          final isLiveVideoDisabled =
+                              buttonList[index].title ==
+                                      LocaliazationKey.live_video.tr() &&
+                                  (dynamicStatusDetails!.LiveUrl ?? '')
+                                      .trim()
+                                      .isEmpty;
+                          return SizedBox(
+                            // height: 45,
+                            child: CustomIconBtn(
+                              onTap: buttonList[index].onTap,
+                              icon: buttonList[index].icon,
+                              title: buttonList[index].title,
+                              direction: Axis.horizontal,
+                              color: isLiveVideoDisabled
+                                  ? Colors.grey.shade200
+                                  : null,
+                            ),
+                          );
+                        })
                   ],
                 ),
               ),
