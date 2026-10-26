@@ -240,9 +240,8 @@ class AppHelper {
   // --- Dio request/response logging (debugging support) ---
   //
   // Single switch for every API log (Dio interceptor, LogInterceptor, logApiCall).
-  // true  = print full URL + request + response in console / logcat
-  // false = silent (use for release/store builds)
-  static bool apiLogsEnabled = true;
+  // Keep false for Play Store / release builds.
+  static bool apiLogsEnabled = false;
 
   static int _apiTraceId = 0;
 

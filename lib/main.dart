@@ -30,8 +30,11 @@ class MyHttpOverrides extends HttpOverrides {
 /// App entry: initializes Hive, localization, theme, then runs [MyApp].
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Print every API URL + request + response in the debug console / logcat.
-  AppHelper.apiLogsEnabled = true;
+  // Debug-only API logs. Always off in release / Play Store builds.
+  assert(() {
+    AppHelper.apiLogsEnabled = true;
+    return true;
+  }());
   AppLifecycleTracker.instance.ensureAttached();
   try {
     await Firebase.initializeApp();
@@ -75,6 +78,17 @@ void main() async {
 /// Runs all startup work before [runApp]: theme mode, Hive, orientation, i18n.
 initialiseData() async {
   Global.savedThemeMode = await AdaptiveTheme.getThemeMode();
+  // Edge-to-edge without deprecated Window status/nav bar color APIs.
+  // Native enableEdgeToEdge() owns bar drawing; Flutter only sets icon style.
+  // AppBar / SafeArea keep content clear of system bars on older devices too.
+  if (Platform.isAndroid) {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+    ));
+  }
   await Future.wait([
     _openHiveBox(),
     SystemChrome.setPreferredOrientations(

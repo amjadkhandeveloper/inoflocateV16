@@ -298,7 +298,12 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
     return Column(
       children: [
         AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle.light,
+          value: const SystemUiOverlayStyle(
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+            systemNavigationBarIconBrightness: Brightness.dark,
+            systemNavigationBarContrastEnforced: false,
+          ),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

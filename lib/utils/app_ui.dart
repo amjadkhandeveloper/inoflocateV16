@@ -362,7 +362,12 @@ class AppUi {
       foregroundColor: toolbarFg,
       iconTheme: const IconThemeData(color: toolbarFg),
       actionsIconTheme: const IconThemeData(color: toolbarFg),
-      systemOverlayStyle: SystemUiOverlayStyle.light,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
+      ),
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
