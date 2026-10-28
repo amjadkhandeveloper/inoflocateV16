@@ -14,6 +14,7 @@ import '../../../utils/app_constants.dart';
 import '../../../utils/app_globals.dart';
 import '../../../utils/app_helper.dart';
 import '../../../widgets/buttons/custom_icon_button.dart';
+import '../../../widgets/dialog_box/map_icon_legend_dialog.dart';
 import '../../../widgets/google_map/google_map_screen.dart';
 import '../../../widgets/google_map/map_model.dart';
 import '../model/dynamic_status_response_model.dart';
@@ -219,9 +220,23 @@ class DynamicStatusCard extends StatelessWidget {
                             // SizedBox(
                             //   height: 2.h,
                             // ),
-                            Text(
-                              dynamicStatusDetails!.TrackingTime ?? '',
-                              style: AppStyles.textStyle5(context: context),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    dynamicStatusDetails!.TrackingTime ?? '',
+                                    style:
+                                        AppStyles.textStyle5(context: context),
+                                  ),
+                                ),
+                                MapIconLegendButton(
+                                  color:
+                                      Theme.of(context).colorScheme.primary,
+                                  padding: EdgeInsets.zero,
+                                  size: 20,
+                                ),
+                              ],
                             )
                           ],
                         ),

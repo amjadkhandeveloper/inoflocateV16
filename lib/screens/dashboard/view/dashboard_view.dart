@@ -189,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       _timer!.cancel();
       _timer = Timer.periodic(const Duration(seconds: 10), (_) {
-        if (!AppLifecycleTracker.instance.isStableForeground) return;
+        if (!AppLifecycleTracker.instance.allowBackgroundRefresh) return;
         if (dashBoardState.state == NotifierState.error && dashBoardState.dashboardResponseModelData == null) {
           _timer?.cancel();
         }

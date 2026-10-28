@@ -148,7 +148,7 @@ class _SequelDashboardScreenState extends State<SequelDashboardScreen> {
     _timer = Timer.periodic(kSequelDashRefreshInterval, (_) async {
       if (!mounted ||
           Global.savedUserAuthData == null ||
-          !AppLifecycleTracker.instance.isStableForeground) {
+          !AppLifecycleTracker.instance.allowBackgroundRefresh) {
         return;
       }
       await context.read<SequelDashboardProvider>().loadDashboard(

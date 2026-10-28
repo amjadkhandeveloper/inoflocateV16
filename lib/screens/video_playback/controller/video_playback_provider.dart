@@ -7,7 +7,11 @@ import 'package:infolocate/utils/app_localization_key.dart';
 import 'package:infolocate/widgets/custom_toast.dart';
 
 import '../../../common_models/failure_model.dart';
+import '../../../utils/app_constants.dart';
 import '../../../utils/enums.dart';
+import '../../vehicle_statuswise_list/model/vehicle_status_request_model.dart';
+import '../../vehicle_statuswise_list/model/vehicle_status_response_model.dart';
+import '../../vehicle_statuswise_list/repository/vehicle_status_repo.dart';
 import '../model/video_playback_request_model.dart';
 import '../model/video_playback_response_model.dart';
 import '../model/video_vehicle_list_response_model.dart';
@@ -62,16 +66,48 @@ class VideoPlayBackProvider extends ChangeNotifier with StateInterface {
   getVehicleList() async {
     setState(NotifierState.loading);
     try {
-      final result = await VideoPlayBackService()
-          .getVehicleList(userId: Global.savedUserAuthData!.userid!.toInt());
-      _vehicleList = result;
-      _allVehicles = (result?.vehicles ?? const [])
-          .whereType<VideoVehicleListDataVehicles>()
-          .where((v) => (v.VehicleNo ?? '').trim().isNotEmpty)
-          .toList();
-      _allVehicles.sort(
-        (a, b) => (b.DelayEnable ?? 0).compareTo(a.DelayEnable ?? 0),
-      );
+      final userId = Global.savedUserAuthData!.userid!.toInt();
+      if (Global.isSequelClient) {
+        // Sequel has no dedicated vehiclesList API; reuse status-wise list
+        // (same source as Track History) so the user can pick any vehicle.
+        final result = await VehicleStatusService().getVehicleList(
+          vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
+            userId: userId,
+            statusId: 6,
+            pSize: 0,
+            pNo: defaultPageN0,
+            sSearch: '',
+          ),
+        );
+        _allVehicles = (result?.vehicleStatusdetails ?? const [])
+            .whereType<VehicleStatusResponseModelDataVehicleStatusdetails>()
+            .where((vehicle) => (vehicle.VehicleNo ?? '').trim().isNotEmpty)
+            .map(
+              (vehicle) => VideoVehicleListDataVehicles(
+                VehicleId: vehicle.Vehicleid,
+                VehicleNo: vehicle.VehicleNo,
+                DelayEnable: 1,
+                deviceType: vehicle.devicetype,
+              ),
+            )
+            .toList()
+          ..sort(
+            (a, b) => (a.VehicleNo ?? '')
+                .toLowerCase()
+                .compareTo((b.VehicleNo ?? '').toLowerCase()),
+          );
+      } else {
+        final result =
+            await VideoPlayBackService().getVehicleList(userId: userId);
+        _vehicleList = result;
+        _allVehicles = (result?.vehicles ?? const [])
+            .whereType<VideoVehicleListDataVehicles>()
+            .where((v) => (v.VehicleNo ?? '').trim().isNotEmpty)
+            .toList();
+        _allVehicles.sort(
+          (a, b) => (b.DelayEnable ?? 0).compareTo(a.DelayEnable ?? 0),
+        );
+      }
       _selectedVehicle = null;
       log('Video vehicles stored: ${_allVehicles.length}');
       setState(NotifierState.loaded);

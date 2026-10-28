@@ -14,6 +14,7 @@ import 'package:infolocate/screens/fcm/fcm_token_registrar.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_lifecycle.dart';
+import 'package:infolocate/utils/orientation_helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'app.dart';
 
@@ -91,9 +92,7 @@ initialiseData() async {
   }
   await Future.wait([
     _openHiveBox(),
-    SystemChrome.setPreferredOrientations(
-      [DeviceOrientation.portraitUp],
-    ),
+    OrientationHelper.lockPortrait(),
     EasyLocalization.ensureInitialized()
   ]);
   await FcmTokenRegistrar.initialize();

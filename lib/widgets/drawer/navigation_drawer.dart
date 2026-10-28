@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:infolocate/screens/alerts/view/alert_screen.dart';
-import 'package:infolocate/screens/dashboard/controller/sequel_dashboard_provider.dart';
 import 'package:infolocate/screens/dynamic_status/view/dynamic_status_screen.dart';
 import 'package:infolocate/screens/login/view/user_login_view.dart';
 import 'package:infolocate/screens/settings/view/settings_screen.dart';
@@ -12,7 +11,6 @@ import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_routes.dart';
 import 'package:infolocate/utils/app_ui.dart';
-import 'package:provider/provider.dart';
 import '../../screens/vehicle_statuswise_list/view/live_vehicles_list.dart';
 import '../../screens/vehicle_statuswise_list/widget/history_select_widget.dart';
 import '../../screens/video_playback/view/video_playback_screen.dart';
@@ -166,15 +164,11 @@ class CustomNavigationDrawer extends StatelessWidget {
                           );
                         },
                       ),
-                      if (!Global.isSequelClient ||
-                          context.watch<SequelDashboardProvider>().pinVehicles.any(
-                                (vehicle) =>
-                                    (vehicle.LiveUrl ?? '').trim().isNotEmpty,
-                              ))
                       _DrawerTile(
                         icon: Icons.videocam_outlined,
                         title: LocaliazationKey.video_playback.tr(),
                         onTap: () {
+                          Navigator.of(context).pop();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) =>

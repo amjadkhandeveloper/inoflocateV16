@@ -50,7 +50,7 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
   /// Fetches dashboard payload; sets [NotifierState.error] on network/API failure.
   Future<void> getData(
       {required DashboardRequestModel dashboardRequestModel}) async {
-    if (!AppLifecycleTracker.instance.isStableForeground) return;
+    if (!AppLifecycleTracker.instance.allowBackgroundRefresh) return;
     try {
       final result = await DashboardService()
           .getDashboardData(dashboardRequestModel: dashboardRequestModel);
@@ -86,7 +86,8 @@ class DashboardProvider extends ChangeNotifier with StateInterface {
   getDashboardData(
       {required DashboardRequestModel dashboardRequestModel,
       bool backgroundFetch = false}) async {
-    if (backgroundFetch && !AppLifecycleTracker.instance.isResumed) {
+    if (backgroundFetch &&
+        !AppLifecycleTracker.instance.allowBackgroundRefresh) {
       return;
     }
     if (backgroundFetch == false && _state != NotifierState.error) {

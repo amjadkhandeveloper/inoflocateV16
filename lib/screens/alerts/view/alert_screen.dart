@@ -26,6 +26,7 @@ import '../../../widgets/cards/pin_vehicle_card.dart';
 import '../../../widgets/custom_search_widget.dart';
 import '../../../widgets/custom_shimmer_effects.dart';
 import '../../../widgets/custom_toast.dart';
+import '../../../widgets/dialog_box/map_icon_legend_dialog.dart';
 import '../../../widgets/google_map/map_model.dart';
 import '../../../widgets/page_count_widget.dart';
 import '../model/alert_list_response_model.dart';
@@ -856,6 +857,7 @@ class _AlertDashboardScreenState extends State<AlertDashboardScreen> {
           //     loadMoreData();
           //   },
           // ),
+          const MapIconLegendButton(color: AppUi.toolbarFg),
           5.w.width
         ],
       ),

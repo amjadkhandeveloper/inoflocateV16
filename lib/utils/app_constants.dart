@@ -79,22 +79,31 @@ const String clientAuthBaseUrl = clientAuthProductionUrl;
 //* Pre-login / client-gateway endpoints
 const String authClient = "${clientAuthBaseUrl}URLAuthorization";
 const String forceUpdateUrl = "$clientGatewayBaseUrl/forceUpdateClient";
-const String getCountryListUrl = "$clientGatewayBaseUrl/cntList"; // language screen — country dropdown
-const String getLanguageListUrl = "$clientGatewayBaseUrl/lngList"; // language screen — language list
+const String getCountryListUrl =
+    "$clientGatewayBaseUrl/cntList"; // language screen — country dropdown
+const String getLanguageListUrl =
+    "$clientGatewayBaseUrl/lngList"; // language screen — language list
 
 //* Post-login endpoints (full URL = saved clientUrl + path below)
 const String authUser = "auth/authUser";
-const String dashboardUrl = "vehicle/dashCnt"; // fleet counts / dashboard charts
+const String dashboardUrl =
+    "vehicle/dashCnt"; // fleet counts / dashboard charts
 const String alertwiseList = "vehicle/AlertwiseList"; // alert list screen
-const String currDashVehicle = "vehicle/currDashVehicle"; // dynamic status live list
-const String vehicleStatus = "vehicle/vehicleStatusWiseList"; // status-wise vehicles + map
+const String currDashVehicle =
+    "vehicle/currDashVehicle"; // dynamic status live list
+const String vehicleStatus =
+    "vehicle/vehicleStatusWiseList"; // status-wise vehicles + map
 const String pinVehicle = "vehicle/pinVehicleList"; // pin / unpin on dashboard
-const String videoVehicleList = "vehicle/vehiclesList"; // video playback vehicle dropdown
-const String vehicleVideoPlayback = "vehicle/vehicleVideoPlayback"; // playback URLs
-const String historyTrackVehicle = "vehicle/historyTrackVehicle"; // track history on map
+const String videoVehicleList =
+    "vehicle/vehiclesList"; // video playback vehicle dropdown
+const String vehicleVideoPlayback =
+    "vehicle/vehicleVideoPlayback"; // playback URLs
+const String historyTrackVehicle =
+    "vehicle/historyTrackVehicle"; // track history on map
 const String forgotPassword = "auth/verifyUser"; // password reset email
 const String adsUrl = "auth/getAdv"; // dashboard banner ads
-const String getCountry = "client/cntList"; // legacy path (prefer [getCountryListUrl])
+const String getCountry =
+    "client/cntList"; // legacy path (prefer [getCountryListUrl])
 
 //* Sequel client APIs
 const String sequelApiBaseUrl = "https://sequelmobapi.infotracktelematics.com/";
@@ -127,7 +136,7 @@ const int kAppVersion = 13;
 const String kAppVersionName = '1.0.0';
 
 /// Bump this whenever you ship a build so you can tell which APK is on the device.
-const String kAppLastUpdated = '26 Oct 2026, 11:00';
+const String kAppLastUpdated = '26 Oct 2026, 14:00';
 
 /// Sample JSON only — not used at runtime (see grep). Kept for API contract reference.
 const Map<String, dynamic> pinVehicleListJson = {

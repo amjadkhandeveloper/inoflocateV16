@@ -21,6 +21,7 @@ import '../../../widgets/cards/pin_vehicle_card.dart';
 import '../../../widgets/custom_search_widget.dart';
 import '../../../widgets/custom_shimmer_effects.dart';
 import '../../../widgets/custom_toast.dart';
+import '../../../widgets/dialog_box/map_icon_legend_dialog.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../widgets/google_map/map_model.dart';
 import '../../../widgets/page_count_widget.dart';
@@ -96,7 +97,7 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
 
     _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
       if (searchCtl.text.isNotEmpty) return;
-      if (!AppLifecycleTracker.instance.isStableForeground) return;
+      if (!AppLifecycleTracker.instance.allowBackgroundRefresh) return;
       //* when user is typing dont fetch data.
       await dynamicStatusState.fetchInBackground(
           dynamicListRequestModel: DynamicStatusRequestModel(
@@ -148,6 +149,9 @@ class _DynamicStatusScreenState extends State<DynamicStatusScreen> {
       appBar: AppUi.appBar(
         context: context,
         title: LocaliazationKey.dynamic_status.tr(),
+        actions: const [
+          MapIconLegendButton(color: AppUi.toolbarFg),
+        ],
       ),
       body: dynamicStatusState.state == NotifierState.loading
             ? const ListShimmerEffect(

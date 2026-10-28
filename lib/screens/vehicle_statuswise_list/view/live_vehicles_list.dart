@@ -19,12 +19,16 @@ import '../../../utils/app_styles.dart';
 import '../../../utils/app_ui.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/buttons/custom_button.dart';
-import '../../../widgets/cards/live_vehicle_list_widget.dart';
+import '../../../widgets/cards/pin_vehicle_card.dart';
 import '../../../widgets/custom_search_widget.dart';
 import '../../../widgets/custom_shimmer_effects.dart';
 import '../../../widgets/custom_toast.dart';
+import '../../../widgets/dialog_box/map_icon_legend_dialog.dart';
 import '../../../widgets/error_widget.dart';
+import '../../../widgets/google_map/map_model.dart';
 import '../../../widgets/page_count_widget.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import '../controller/vehicle_status_provider.dart';
 import '../model/vehicle_status_request_model.dart';
 
@@ -110,7 +114,7 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
 
     _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
       if (searchCtl.text.isNotEmpty) return;
-      if (!AppLifecycleTracker.instance.isStableForeground) return;
+      if (!AppLifecycleTracker.instance.allowBackgroundRefresh) return;
       //* when user is typing dont fetch data.
       await vehicleStatusState.fetchInBackground(
           vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
@@ -202,6 +206,7 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
           context: context,
           title: LocaliazationKey.live_vehicle.tr(),
           actions: [
+            const MapIconLegendButton(color: AppUi.toolbarFg),
             CustomDropDownButton(
               onChanged: (value) async {
                 final res = dropDownItems.firstWhere(
@@ -344,14 +349,80 @@ class _LiveVehicleListState extends State<LiveVehicleList> {
                                               child: SlideAnimation(
                                                 horizontalOffset: 100.0,
                                                 child: FadeInAnimation(
-                                                    child:
-                                                        LiveVehicleListWidget(
-                                                  vehicleNo: cardData!.VehicleNo
-                                                      .toString(),
-                                                  location: cardData.location ?? "No location",
-                                                  tracktime: cardData.tracktime ?? 'N/A',
-                                                  liveUrl: cardData.LiveUrl,
-                                                )),
+                                                  child: PinVehicleCard(
+                                                    mapData: GoogleMapModel(
+                                                      statusName:
+                                                          cardData!.Status,
+                                                      latLng: LatLng(
+                                                        cardData.lat ?? 0,
+                                                        cardData.lon ?? 0,
+                                                      ),
+                                                      vehicleId:
+                                                          cardData.Vehicleid ??
+                                                              0,
+                                                      vehicleNo:
+                                                          cardData.VehicleNo ??
+                                                              'Unknown',
+                                                      engineOffdelay: cardData
+                                                          .EngineOffdelay
+                                                          ?.toString(),
+                                                      ignition: cardData
+                                                          .ignition
+                                                          ?.toString(),
+                                                      speed: cardData.speed
+                                                          ?.toString(),
+                                                      odometer: cardData
+                                                          .odometer
+                                                          ?.toString(),
+                                                      idleduration: cardData
+                                                          .idleduration
+                                                          ?.toString(),
+                                                      stopduration: cardData
+                                                          .stopduration
+                                                          ?.toString(),
+                                                      vehicleLocation:
+                                                          cardData.location,
+                                                      vehicleTrackTime:
+                                                          cardData.tracktime,
+                                                    ),
+                                                    vehicleNo: cardData
+                                                            .VehicleNo
+                                                            ?.toString() ??
+                                                        'Unknown',
+                                                    vehicleId:
+                                                        cardData.Vehicleid ??
+                                                            0,
+                                                    location:
+                                                        cardData.location ??
+                                                            'No location',
+                                                    trackTime:
+                                                        cardData.tracktime ??
+                                                            'N/A',
+                                                    status: cardData.Status
+                                                            ?.toString() ??
+                                                        'Unknown',
+                                                    liveUrl: cardData.LiveUrl,
+                                                    urlTitle:
+                                                        cardData.VehicleNo,
+                                                    ignition: cardData.ignition
+                                                        ?.toString(),
+                                                    speed: cardData.speed
+                                                        ?.toString(),
+                                                    odometer: cardData.odometer,
+                                                    idelDuration:
+                                                        cardData.idleduration,
+                                                    stopDuration:
+                                                        cardData.stopduration,
+                                                    engineOffdelay: cardData
+                                                        .EngineOffdelay
+                                                        ?.toString(),
+                                                    enableUrl:
+                                                        (cardData.LiveUrl ?? '')
+                                                            .trim()
+                                                            .isNotEmpty,
+                                                    showPinnedIcon: false,
+                                                  ),
+                                                ),
                                               ),
                                             );
                                           }

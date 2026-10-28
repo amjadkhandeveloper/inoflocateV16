@@ -16,6 +16,7 @@ import '../../utils/app_localization_key.dart';
 import '../../utils/app_styles.dart';
 import '../../utils/app_ui.dart';
 import '../buttons/custom_icon_button.dart';
+import '../dialog_box/map_icon_legend_dialog.dart';
 import 'map_model.dart';
 import 'map_zoom_controls.dart';
 
@@ -159,9 +160,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
             //         color: Theme.of(context).iconTheme.color),
             //   ),
             // ),
-            Stack(
-              children: [
-                Container(
+            Container(
                   margin: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300, width: 1),
@@ -173,7 +172,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
                         decoration: BoxDecoration(
                             color: AppHelper.returnIconColor(
                               title: vehicle.statusName.toString(),
@@ -185,16 +184,12 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                         width: double.infinity,
                         child: Row(
                           children: [
-                            const SizedBox(
-                              width: 8,
-                            ),
-                            Text(
-                              widget.isAlertStatus
-                                  ? ''
-                                  : "${LocaliazationKey.vehicle_status.tr()} : ",
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 18),
-                            ),
+                            if (!widget.isAlertStatus)
+                              Text(
+                                "${LocaliazationKey.vehicle_status.tr()} : ",
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 16),
+                              ),
                             Expanded(
                               child: Text(
                                 widget.isAlertStatus
@@ -207,8 +202,28 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                                     : AppHelper.returnJapaneseText(
                                         title: vehicle.statusName.toString(),
                                       ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                    color: Colors.white, fontSize: 18),
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            const MapIconLegendButton(color: Colors.white),
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.of(context).pop(),
+                                borderRadius: BorderRadius.circular(20),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -289,23 +304,6 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
                     ],
                   ),
                 ),
-                Positioned(
-                  right: 6.w,
-                  top: 3.h,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: SvgPicture.asset("assets/icons/new_icons/cancel.svg",
-                        // "assets/icons/new_icons/orange.svg",
-                        height: 2.h,
-                        colorFilter: const ColorFilter.mode(
-                            Colors.white, BlendMode.srcIn),
-                        color: Theme.of(context).iconTheme.color),
-                  ),
-                ),
-              ],
-            ),
           ],
         );
       },

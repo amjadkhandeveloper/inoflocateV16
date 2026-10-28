@@ -130,7 +130,7 @@ class SequelDashboardProvider extends ChangeNotifier with StateInterface {
       setFailure(Failure('User session not found'));
       return;
     }
-    if (!AppLifecycleTracker.instance.isStableForeground && !force) return;
+    if (!AppLifecycleTracker.instance.allowBackgroundRefresh && !force) return;
     if (_fetching) return;
     if (!force && _lastFetchAt != null) {
       final elapsed = DateTime.now().difference(_lastFetchAt!);

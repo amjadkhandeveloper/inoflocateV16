@@ -5,6 +5,9 @@ import 'package:flutter/widgets.dart';
 /// Switching apps sends [AppLifecycleState.inactive] then [paused].
 /// Timers that fire in that window (or in the first second after [resumed])
 /// must not treat a DNS blip as a real offline failure.
+///
+/// Heavy screens (live video webview) call [beginSuppressBackgroundRefresh]
+/// so dashboard / list polling does not compete with video bandwidth.
 class AppLifecycleTracker with WidgetsBindingObserver {
   AppLifecycleTracker._();
   static final AppLifecycleTracker instance = AppLifecycleTracker._();
@@ -13,6 +16,7 @@ class AppLifecycleTracker with WidgetsBindingObserver {
   DateTime? _resumedAt;
   bool _attached = false;
   final List<VoidCallback> _resumeListeners = [];
+  int _suppressBackgroundRefreshDepth = 0;
 
   static const Duration resumeSettleDelay = Duration(milliseconds: 1200);
 
@@ -23,6 +27,25 @@ class AppLifecycleTracker with WidgetsBindingObserver {
     if (!isResumed) return false;
     if (_resumedAt == null) return true;
     return DateTime.now().difference(_resumedAt!) >= resumeSettleDelay;
+  }
+
+  /// Foreground is stable and no heavy screen has asked to pause polling.
+  bool get allowBackgroundRefresh =>
+      isStableForeground && _suppressBackgroundRefreshDepth == 0;
+
+  bool get isBackgroundRefreshSuppressed =>
+      _suppressBackgroundRefreshDepth > 0;
+
+  /// Call from video / media screens in [State.initState].
+  void beginSuppressBackgroundRefresh() {
+    _suppressBackgroundRefreshDepth++;
+  }
+
+  /// Call from video / media screens in [State.dispose].
+  void endSuppressBackgroundRefresh() {
+    if (_suppressBackgroundRefreshDepth > 0) {
+      _suppressBackgroundRefreshDepth--;
+    }
   }
 
   void ensureAttached() {

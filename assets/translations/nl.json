@@ -1,3 +1,10 @@
 {
-    "dutch":"dutch"
+    "dutch": "dutch",
+    "map_status_icons": "Statuspictogrammen",
+    "speed": "Snelheid",
+    "ignition": "Ontsteking",
+    "odometer": "Kilometerteller",
+    "engine_delay": "Motorvertraging",
+    "idle_duration": "Stationaire duur",
+    "stop_duration": "Stopduur"
 }

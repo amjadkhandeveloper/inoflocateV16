@@ -254,6 +254,13 @@ class LocaliazationKey {
   static const refresh = "refresh";
   static const retrying_in_seconds = "retrying_in_seconds";
   static const last_login = "last_login";
+  static const map_status_icons = "map_status_icons";
+  static const speed = "speed";
+  static const ignition = "ignition";
+  static const odometer = "odometer";
+  static const engine_delay = "engine_delay";
+  static const idle_duration = "idle_duration";
+  static const stop_duration = "stop_duration";
 
 // Now you can use these variables as keys in your code
 

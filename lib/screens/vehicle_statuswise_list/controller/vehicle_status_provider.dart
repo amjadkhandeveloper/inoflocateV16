@@ -20,6 +20,7 @@ import '../../../utils/app_styles.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/buttons/custom_icon_button.dart';
 import '../../../widgets/custom_toast.dart';
+import '../../../widgets/dialog_box/map_icon_legend_dialog.dart';
 import '../model/history_track_request_model.dart';
 import '../model/history_track_response_model.dart';
 import '../model/vehicle_status_request_model.dart';
@@ -232,7 +233,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
     required VehicleStatusWiseListRequestModel
         vehicleStatusWiseListRequestModel,
   }) async {
-    if (!AppLifecycleTracker.instance.isStableForeground) return;
+    if (!AppLifecycleTracker.instance.allowBackgroundRefresh) return;
     //* fetch all vehicles in the background without lazy loading
     // clearVehicleList();
     try {
@@ -656,7 +657,7 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
                     color: AppHelper.returnIconColor(
                       title: vehicle.Status.toString(),
                     ),
-                    padding: const EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
                     child: Row(
                       children: [
                         Expanded(
@@ -671,9 +672,21 @@ class VehicleStatusProvider extends ChangeNotifier with StateInterface {
                             ),
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close, color: Colors.white),
+                        const MapIconLegendButton(color: Colors.white),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.of(context).pop(),
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

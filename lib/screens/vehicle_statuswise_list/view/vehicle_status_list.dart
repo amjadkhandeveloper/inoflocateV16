@@ -20,11 +20,11 @@ import '../../../utils/app_styles.dart';
 import '../../../utils/app_ui.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/buttons/custom_button.dart';
-import '../../../widgets/cards/live_vehicle_list_widget.dart';
 import '../../../widgets/cards/pin_vehicle_card.dart';
 import '../../../widgets/custom_search_widget.dart';
 import '../../../widgets/custom_shimmer_effects.dart';
 import '../../../widgets/custom_toast.dart';
+import '../../../widgets/dialog_box/map_icon_legend_dialog.dart';
 import '../../../widgets/error_widget.dart';
 import '../../../widgets/google_map/map_model.dart';
 import '../../../widgets/page_count_widget.dart';
@@ -106,7 +106,7 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
 
     _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
       if (searchCtl.text.isNotEmpty) return;
-      if (!AppLifecycleTracker.instance.isStableForeground) return;
+      if (!AppLifecycleTracker.instance.allowBackgroundRefresh) return;
       //* when user is typing dont fetch data.
       await vehicleStatusState.fetchInBackground(
           vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
@@ -196,6 +196,9 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
         appBar: AppUi.appBar(
           context: context,
           title: widget.title,
+          actions: const [
+            MapIconLegendButton(color: AppUi.toolbarFg),
+          ],
         ),
         body: vehicleStatusState.state == NotifierState.loading
             ? const ListShimmerEffect()
@@ -288,14 +291,7 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                               child: SlideAnimation(
                                                 horizontalOffset: 100.0,
                                                 child: FadeInAnimation(
-                                                  child: widget.isLiveVehicle
-                                                      ? LiveVehicleListWidget(
-                                                          vehicleNo: cardData.VehicleNo ?? "Unknown",
-                                                          location: cardData.location ?? "",
-                                                          tracktime: cardData.tracktime ?? "",
-                                                          liveUrl: cardData.LiveUrl,
-                                                        )
-                                                      : Padding(
+                                                  child: Padding(
                                                           padding: const EdgeInsets.symmetric(horizontal: 8),
                                                           child: PinVehicleCard(
                                                             mapData: GoogleMapModel(
@@ -330,7 +326,7 @@ class _VehicleStatusScreenState extends State<VehicleStatusScreen> {
                                                                     .isNotEmpty,
                                                             engineOffdelay: cardData.EngineOffdelay.toString(),
                                                             isPinned: cardData.IsPinVehicle == 0 ? false : true,
-                                                            showPinnedIcon: true,
+                                                            showPinnedIcon: !widget.isLiveVehicle,
                                                             statusId: widget.statusId,
                                                             liveUrlList: null,
                                                           ),
