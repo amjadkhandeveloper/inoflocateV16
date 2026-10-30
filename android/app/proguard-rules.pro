@@ -1,4 +1,5 @@
-# Flutter
+# Flutter — keep embedding/plugins intact so release minify cannot break the engine.
+# Play's ~48% rates are largely from Flutter/plugin keep rules; do not loosen further.
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.** { *; }
 -keep class io.flutter.util.** { *; }
