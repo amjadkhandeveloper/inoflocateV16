@@ -12,7 +12,7 @@ import '../model/alert_list_response_model.dart';
 /// Alert list API.
 ///
 /// Common: `{clientUrl}` + [alertwiseList].
-/// Sequel: [sequelAlertwiseListUrl] with swagger camelCase body.
+/// Sequel: `{clientUrl}` + [sequelAlertwiseListUrl] with swagger camelCase body.
 class AlertService {
   var dio = Dio();
 
@@ -22,7 +22,7 @@ class AlertService {
       AppHelper.configureDio(dio, tag: 'AlertService.alertListService');
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelAlertwiseListUrl
+          ? Global.joinClientUrl(app_const.sequelAlertwiseListUrl)
           : Global.savedClientAuthData!.clientUrl! + app_const.alertwiseList;
       final body = isSequel
           ? alertListRequestModel!.toSequelJson()
@@ -52,7 +52,7 @@ class AlertService {
           tag: 'AlertService.alertListService',
           method: 'POST',
           url: Global.isSequelClient
-              ? app_const.sequelAlertwiseListUrl
+              ? Global.joinClientUrl(app_const.sequelAlertwiseListUrl)
               : Global.savedClientAuthData!.clientUrl! + app_const.alertwiseList,
           request: alertListRequestModel?.toJson(),
           status: e.response?.statusCode,

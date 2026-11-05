@@ -7,7 +7,7 @@ import 'package:infolocate/utils/app_helper.dart';
 import '../../../common_models/failure_model.dart';
 import '../model/force_update_request_model.dart';
 
-/// Force-update API: Sequel [sequelForceUpdateUrl], others [forceUpdateUrl].
+/// Force-update API: Sequel `{clientUrl}` + [sequelForceUpdateUrl], others [forceUpdateUrl].
 class SplashService {
   var dio = Dio();
 
@@ -17,7 +17,7 @@ class SplashService {
     try {
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelForceUpdateUrl
+          ? Global.joinClientUrl(app_const.sequelForceUpdateUrl)
           : app_const.forceUpdateUrl;
       final body = isSequel
           ? forceUpdateRequestModel.toSequelJson()

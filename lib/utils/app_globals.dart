@@ -25,7 +25,23 @@ class Global {
   static bool get isSequelClient {
     final name = (savedClientAuthData?.clientName ?? '').toLowerCase();
     final url = (savedClientAuthData?.clientUrl ?? '').toLowerCase();
-    return name.contains('sequel') || url.contains('sequel');
+    return name.contains('sequel') ||
+        url.contains('sequel') ||
+        url.contains('shellmobapi');
+  }
+
+  /// Builds a full API URL from the client-login [clientUrl] + relative [path].
+  /// Example: `https://shellmobapi.../api/` + `Auth/UserLogin`.
+  static String joinClientUrl(String path) {
+    var base = (savedClientAuthData?.clientUrl ?? '').trim();
+    if (base.isEmpty) {
+      throw StateError('Client URL missing. Complete client login first.');
+    }
+    if (!base.endsWith('/')) {
+      base = '$base/';
+    }
+    final relative = path.startsWith('/') ? path.substring(1) : path;
+    return '$base$relative';
   }
   // static CardTypeSetting? cardTypeSetting;
 

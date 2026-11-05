@@ -4,7 +4,7 @@
 /// - Pre-login: countries/languages/force-update use [clientGatewayBaseUrl];
 ///   client login uses [clientAuthBaseUrl] (`URLAuthorization`).
 /// - Post-login calls use `Global.savedClientAuthData.clientUrl` + relative paths
-///   such as [dashboardUrl], [currDashVehicle], etc.
+///   such as [dashboardUrl], [currDashVehicle], or Sequel [sequelUserLoginUrl], etc.
 ///
 /// **Persistence**
 /// - Hive box name: [myBox]
@@ -105,29 +105,20 @@ const String adsUrl = "auth/getAdv"; // dashboard banner ads
 const String getCountry =
     "client/cntList"; // legacy path (prefer [getCountryListUrl])
 
-//* Sequel client APIs
-const String sequelApiBaseUrl = "https://sequelmobapi.infotracktelematics.com/";
-const String sequelDashDataUrl = "${sequelApiBaseUrl}api/Vehicle/GetDashData";
-const String sequelUserLoginUrl = "${sequelApiBaseUrl}api/Auth/UserLogin";
-const String sequelHistoryTrackUrl =
-    "${sequelApiBaseUrl}api/Vehicle/historyTrackVehicle";
-const String sequelVehicleStatusUrl =
-    "${sequelApiBaseUrl}api/Vehicle/vehicleStatusWiseList";
-const String sequelCurrDashVehicleUrl =
-    "${sequelApiBaseUrl}api/Vehicle/currDashVehicle";
-const String sequelAlertwiseListUrl =
-    "${sequelApiBaseUrl}api/Vehicle/AlertwiseList";
-const String sequelVehicleVideoPlaybackUrl =
-    "${sequelApiBaseUrl}api/Vehicle/vehicleVideoPlayback";
-const String sequelPinVehicleUrl =
-    "${sequelApiBaseUrl}api/Vehicle/pinVehicleList";
-const String sequelResetPasswordUrl =
-    "${sequelApiBaseUrl}api/Auth/ResetPassword";
-const String sequelVerifyUserUrl = "${sequelApiBaseUrl}api/Auth/VerifyUser";
-const String sequelForceUpdateUrl =
-    "${sequelApiBaseUrl}api/Auth/ForceUpdateClient";
-const String sequelFcmRegisterTokenUrl =
-    "${sequelApiBaseUrl}api/FcmToken/RegisterToken";
+//* Sequel paths — full URL = saved clientUrl from client login + path
+//* Example clientUrl: https://shellmobapi.infotracktelematics.com/api/
+const String sequelDashDataUrl = "Vehicle/GetDashData";
+const String sequelUserLoginUrl = "Auth/UserLogin";
+const String sequelHistoryTrackUrl = "Vehicle/historyTrackVehicle";
+const String sequelVehicleStatusUrl = "Vehicle/vehicleStatusWiseList";
+const String sequelCurrDashVehicleUrl = "Vehicle/currDashVehicle";
+const String sequelAlertwiseListUrl = "Vehicle/AlertwiseList";
+const String sequelVehicleVideoPlaybackUrl = "Vehicle/vehicleVideoPlayback";
+const String sequelPinVehicleUrl = "Vehicle/pinVehicleList";
+const String sequelResetPasswordUrl = "Auth/ResetPassword";
+const String sequelVerifyUserUrl = "Auth/VerifyUser";
+const String sequelForceUpdateUrl = "Auth/ForceUpdateClient";
+const String sequelFcmRegisterTokenUrl = "FcmToken/RegisterToken";
 
 /// Integer app version sent to ForceUpdateClient and compared with the API.
 const int kAppVersion = 13;

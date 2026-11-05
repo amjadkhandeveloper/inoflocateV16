@@ -15,7 +15,7 @@ import '../model/user_login_response_model.dart';
 /// User authentication API (runs after client login).
 ///
 /// Common: `{clientUrl}` + [authUser].
-/// Sequel: [sequelUserLoginUrl] (`/api/Auth/UserLogin`).
+/// Sequel: `{clientUrl}` + [sequelUserLoginUrl] (`Auth/UserLogin`).
 class UserService {
   final dio = Dio();
 
@@ -26,7 +26,7 @@ class UserService {
     try {
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelUserLoginUrl
+          ? Global.joinClientUrl(app_const.sequelUserLoginUrl)
           : '${userLoginRequestModel.url}${app_const.authUser}';
       final body = isSequel
           ? {

@@ -23,7 +23,7 @@ class ForgotPasswordService {
       AppHelper.configureDio(dio, tag: 'ForgotPasswordService.forgotPasswordService');
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelVerifyUserUrl
+          ? Global.joinClientUrl(app_const.sequelVerifyUserUrl)
           : Global.savedClientAuthData!.clientUrl! + app_const.forgotPassword;
       final body = isSequel
           ? forgotPasswordRequestModel.toSequelVerifyJson()
@@ -77,7 +77,7 @@ class ForgotPasswordService {
       AppHelper.configureDio(
           dio, tag: 'ForgotPasswordService.resetPasswordService');
       final url = Global.isSequelClient
-          ? app_const.sequelResetPasswordUrl
+          ? Global.joinClientUrl(app_const.sequelResetPasswordUrl)
           : Global.savedClientAuthData!.clientUrl! + app_const.forgotPassword;
       final body = resetPasswordRequestModel.toJson();
       final response = await dio.post(

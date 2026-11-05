@@ -12,7 +12,7 @@ import '../model/pin_vehicle_response_model.dart';
 /// Pinned vehicles API (list / pin / unpin).
 ///
 /// Common: `{clientUrl}` + [pinVehicle].
-/// Sequel: [sequelPinVehicleUrl] (`insertMode` 0 = pin, 1 = unpin).
+/// Sequel: `{clientUrl}` + [sequelPinVehicleUrl] (`insertMode` 0 = pin, 1 = unpin).
 class PinVehicleService {
   var dio = Dio();
 
@@ -22,7 +22,7 @@ class PinVehicleService {
       AppHelper.configureDio(dio, tag: 'PinVehicleService.pinUnpinVehicle');
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelPinVehicleUrl
+          ? Global.joinClientUrl(app_const.sequelPinVehicleUrl)
           : Global.savedClientAuthData!.clientUrl! + app_const.pinVehicle;
       final body = isSequel
           ? pinVehicleRequestModel.toSequelJson()

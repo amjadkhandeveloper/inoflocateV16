@@ -26,7 +26,7 @@ class VehicleStatusService {
       AppHelper.configureDio(dio, tag: 'VehicleStatusService.getVehicleList');
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelVehicleStatusUrl
+          ? Global.joinClientUrl(app_const.sequelVehicleStatusUrl)
           : Global.savedClientAuthData!.clientUrl! + app_const.vehicleStatus;
       final body = isSequel
           ? vehicleStatusWiseListRequestModel.toSequelJson()
@@ -82,7 +82,7 @@ class VehicleStatusService {
           dio, tag: 'VehicleStatusService.vehicleHistoryTrackApi');
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelHistoryTrackUrl
+          ? Global.joinClientUrl(app_const.sequelHistoryTrackUrl)
           : '${Global.savedClientAuthData!.clientUrl}${app_const.historyTrackVehicle}';
       final body = isSequel
           ? vehicleHistoryTrackRequestModel.toJson()

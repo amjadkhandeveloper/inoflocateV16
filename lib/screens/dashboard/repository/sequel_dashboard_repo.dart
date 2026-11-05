@@ -4,11 +4,12 @@ import 'package:dio/dio.dart';
 import 'package:infolocate/screens/dashboard/model/dashboard_request_model.dart';
 import 'package:infolocate/screens/dashboard/model/sequel_dashboard_response_model.dart';
 import 'package:infolocate/utils/app_constants.dart' as app_const;
+import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_helper.dart';
 
 import '../../../common_models/failure_model.dart';
 
-/// Sequel dashboard API: POST [sequelDashDataUrl].
+/// Sequel dashboard API: POST `{clientUrl}` + [sequelDashDataUrl].
 class SequelDashboardService {
   final dio = Dio();
 
@@ -17,21 +18,22 @@ class SequelDashboardService {
   }) async {
     try {
       AppHelper.configureDio(dio, tag: 'SequelDashboardService.getDashData');
+      final url = Global.joinClientUrl(app_const.sequelDashDataUrl);
       final body = {
         'userId': request.userId,
         'pSize': request.pSize,
         'pNo': request.pNo,
       };
-      log('Sequel GetDashData ${app_const.sequelDashDataUrl} $body');
+      log('Sequel GetDashData $url $body');
       final response = await dio.post(
-        app_const.sequelDashDataUrl,
+        url,
         data: body,
         options: Options(contentType: Headers.jsonContentType),
       );
       AppHelper.logApiCall(
         tag: 'SequelDashboardService.getDashData',
         method: 'POST',
-        url: app_const.sequelDashDataUrl,
+        url: url,
         request: body,
         status: response.statusCode,
         response: response.data,

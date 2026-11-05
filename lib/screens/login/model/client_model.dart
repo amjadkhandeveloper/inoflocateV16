@@ -94,10 +94,20 @@ class ClientModelData with JsonSafeParser {
   });
   ClientModelData.fromJson(Map<String, dynamic> json) {
     status = asIntFrom(json, ['status', 'Status']);
-    final clientMap = asMapOrNull(json['client']);
+    // API may return `client` as object or as a one-item array.
+    final clientRaw = json['client'];
+    Map<String, dynamic>? clientMap = asMapOrNull(clientRaw);
+    if (clientMap == null && clientRaw is List && clientRaw.isNotEmpty) {
+      clientMap = asMapOrNull(clientRaw.first);
+    }
     client = clientMap != null
         ? ClientModelDataClient.fromJson(clientMap)
         : null;
+    if (client?.clientUrl != null &&
+        client!.clientUrl!.isNotEmpty &&
+        !client!.clientUrl!.endsWith('/')) {
+      client!.clientUrl = '${client!.clientUrl}/';
+    }
     if (json['error'] != null) {
       error = asListOfMaps(json['error']).map(DataError.fromJson).toList();
     }

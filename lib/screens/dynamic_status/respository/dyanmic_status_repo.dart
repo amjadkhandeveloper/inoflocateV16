@@ -10,7 +10,7 @@ import '../model/dynamic_status_request_model.dart';
 /// Dynamic (live) vehicle list API.
 ///
 /// Common: `{clientUrl}` + [currDashVehicle].
-/// Sequel: [sequelCurrDashVehicleUrl] with swagger camelCase body.
+/// Sequel: `{clientUrl}` + [sequelCurrDashVehicleUrl] with swagger camelCase body.
 class DynamicStatusService {
   var dio = Dio();
 
@@ -21,7 +21,7 @@ class DynamicStatusService {
           dio, tag: 'DynamicStatusService.dynamicStatusListService');
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelCurrDashVehicleUrl
+          ? Global.joinClientUrl(app_const.sequelCurrDashVehicleUrl)
           : Global.savedClientAuthData!.clientUrl! + app_const.currDashVehicle;
       final body = isSequel
           ? dynamicListRequestModel!.toSequelJson()

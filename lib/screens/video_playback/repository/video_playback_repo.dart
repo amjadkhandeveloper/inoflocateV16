@@ -69,7 +69,7 @@ class VideoPlayBackService {
           dio, tag: 'VideoPlayBackService.generateVideoPlayback');
       final isSequel = Global.isSequelClient;
       final url = isSequel
-          ? app_const.sequelVehicleVideoPlaybackUrl
+          ? Global.joinClientUrl(app_const.sequelVehicleVideoPlaybackUrl)
           : Global.savedClientAuthData!.clientUrl! +
               app_const.vehicleVideoPlayback;
       final body = isSequel

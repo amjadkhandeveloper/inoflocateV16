@@ -22,7 +22,6 @@ import '../../utils/app_globals.dart';
 import '../../utils/app_localization_key.dart';
 import '../../utils/app_ui.dart';
 import '../buttons/custom_icon_button.dart';
-import '../dialog_box/map_icon_legend_dialog.dart';
 import '../google_map/google_map_screen.dart';
 import '../google_map/map_model.dart';
 
@@ -268,27 +267,12 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            widget.vehicleNo ?? '',
-                                            style: AppUi.body(context).copyWith(
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                        MapIconLegendButton(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          padding: const EdgeInsets.only(
-                                            left: 4,
-                                          ),
-                                          size: 20,
-                                        ),
-                                      ],
+                                    Text(
+                                      widget.vehicleNo ?? '',
+                                      style: AppUi.body(context).copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                       (widget.status?.toLowerCase() == inactive ||
                                             (widget.status?.toLowerCase() ==
