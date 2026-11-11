@@ -9,7 +9,6 @@ import 'package:infolocate/utils/app_constants.dart';
 import 'package:infolocate/utils/app_globals.dart';
 import 'package:infolocate/utils/app_routes.dart';
 import 'package:infolocate/utils/app_ui.dart';
-import 'package:sizer/sizer.dart';
 
 import '../../../widgets/dialog_box/force_update_dialog.dart';
 import '../../language/view/select_language_screen.dart';
@@ -31,36 +30,44 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  /// Long enough for the brand to paint, short enough that launch is not a wait.
+  static const Duration _brandHold = Duration(milliseconds: 400);
+
+  /// Force-update must not hold the splash if the server is slow.
+  /// The dashboard runs the same check again after navigation.
+  static const Duration _forceUpdateBudget = Duration(seconds: 2);
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 5000), () async {
-      if (Global.savedClientAuthData != null && !Global.isSequelClient) {
-        log('inside force update');
-        await forceUpdate();
-      }
-      navigateTo();
-    });
+    Future<void>.delayed(_brandHold, _leaveSplash);
+  }
+
+  Future<void> _leaveSplash() async {
+    if (!mounted) return;
+    if (Global.savedClientAuthData != null && !Global.isSequelClient) {
+      log('inside force update');
+      await forceUpdate();
+    }
+    navigateTo();
   }
 
   /// Calls [SplashService.forceUpdateService] when a client session exists.
-  forceUpdate() async {
-    ForceUpdateRequestModel forceUpdateRequestModel = ForceUpdateRequestModel(
+  Future<void> forceUpdate() async {
+    final forceUpdateRequestModel = ForceUpdateRequestModel(
         clientId: Global.savedClientAuthData!.clientId,
         appversion: kAppVersion,
         appId: 1);
     try {
       final result = await SplashService()
-          .forceUpdateService(forceUpdateRequestModel: forceUpdateRequestModel);
+          .forceUpdateService(forceUpdateRequestModel: forceUpdateRequestModel)
+          .timeout(_forceUpdateBudget);
 
-      if (result!.client != null) {
-        // ignore: use_build_context_synchronously
-        await forceUpdateDialog(
-            context: context, isMandatory: result.client!.forceupdate == 1);
-        navigateTo();
-      }
+      if (!mounted || result?.client == null) return;
+      await forceUpdateDialog(
+          context: context, isMandatory: result!.client!.forceupdate == 1);
     } catch (e) {
-      print(e);
+      log('force update skipped: $e');
     }
   }
 
@@ -101,9 +108,10 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/animation/splash_animation.gif',
+              AppUi.logoAsset,
               fit: BoxFit.contain,
-              height: 28.h,
+              height: 120,
+              cacheHeight: 240,
               errorBuilder: (_, __, ___) => AppUi.brandMark(size: 88),
             ),
             const SizedBox(height: 28),

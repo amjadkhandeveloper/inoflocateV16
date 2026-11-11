@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:infolocate/utils/app_lifecycle.dart';
@@ -25,6 +27,42 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  /// Pulls the camera grid up so the empty band under the app bar is covered.
+  static const _coverTopScript = '''
+(function() {
+  var html = document.documentElement;
+  var body = document.body;
+  if (!html || !body) return;
+  html.style.background = '#000';
+  html.style.margin = '0';
+  html.style.padding = '0';
+  html.style.overflow = 'hidden';
+  body.style.background = '#000';
+  body.style.margin = '0';
+  body.style.padding = '0';
+  body.style.overflow = 'hidden';
+  body.style.transform = 'none';
+  body.style.width = '100%';
+  var vh = window.innerHeight || html.clientHeight;
+  var vw = window.innerWidth || html.clientWidth;
+  if (!vh || !vw) return;
+  var top = null;
+  var nodes = body.getElementsByTagName('*');
+  for (var i = 0; i < nodes.length; i++) {
+    var r = nodes[i].getBoundingClientRect();
+    if (r.top < 0) continue;
+    if (r.width < vw * 0.35 || r.width > vw * 0.65) continue;
+    if (r.height < vh * 0.18 || r.height > vh * 0.62) continue;
+    if (top === null || r.top < top) top = r.top;
+  }
+  if (top === null || top < 4) return;
+  if (top > vh * 0.22) top = vh * 0.22;
+  var scale = vh / (vh - top);
+  body.style.transformOrigin = 'top center';
+  body.style.transform = 'translateY(' + (-top) + 'px) scale(' + scale + ')';
+})();
+''';
+
   bool loadingWebView = true;
   double _progress = 0;
   InAppWebViewController? webController;
@@ -66,13 +104,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       supportZoom: true,
       builtInZoomControls: true,
       displayZoomControls: false,
-      useWideViewPort: true,
-      loadWithOverviewMode: true,
-      enableViewportScale: true,
-      ignoresViewportScaleLimits: true,
-      minimumZoomScale: 0.25,
+      // Overview scaling letterboxes the page and leaves a white strip
+      // under the app bar. Render at the page's own size instead.
+      useWideViewPort: false,
+      loadWithOverviewMode: false,
+      enableViewportScale: false,
+      ignoresViewportScaleLimits: false,
+      minimumZoomScale: 1.0,
       maximumZoomScale: 5.0,
       pageZoom: 1.0,
+      preferredContentMode: UserPreferredContentMode.MOBILE,
       // Portrait: no scroll. Landscape: allow scroll.
       horizontalScrollBarEnabled: !portrait,
       verticalScrollBarEnabled: !portrait,
@@ -80,9 +121,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       disableVerticalScroll: portrait,
       iframeAllow: 'autoplay; fullscreen',
       iframeAllowFullscreen: true,
-      preferredContentMode: UserPreferredContentMode.RECOMMENDED,
       transparentBackground: true,
+      underPageBackgroundColor: Colors.black,
     );
+  }
+
+  Future<void> _coverTopGap(InAppWebViewController controller) async {
+    for (final wait in [0, 350, 900, 1600]) {
+      if (wait > 0) {
+        await Future<void>.delayed(Duration(milliseconds: wait));
+      }
+      if (!mounted || webController != controller) return;
+      await controller.evaluateJavascript(source: _coverTopScript);
+    }
   }
 
   Future<void> _toggleRotation() async {
@@ -167,6 +218,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       key: ValueKey('live-video-$_webViewGeneration'),
                       initialUrlRequest: URLRequest(url: replayUri),
                       initialSettings: _settingsFor(_orientation),
+                      initialUserScripts: UnmodifiableListView<UserScript>([
+                        UserScript(
+                          source: _coverTopScript,
+                          injectionTime:
+                              UserScriptInjectionTime.AT_DOCUMENT_END,
+                        ),
+                      ]),
                       onWebViewCreated: (controller) {
                         webController = controller;
                       },
@@ -180,6 +238,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         setState(() => _progress = progress / 100);
                       },
                       onLoadStop: (controller, url) {
+                        _coverTopGap(controller);
                         setState(() {
                           loadingWebView = false;
                           _progress = 1;

@@ -46,9 +46,12 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
     print("Language Provider list ${languageProvider.langaugeList!}");
 
     if (Global.savedContryCode != null) {
-      selectedCountry = languageProvider.countryList.firstWhere(
-        (element) => element.countryCode == Global.savedContryCode,
-      );
+      for (final country in languageProvider.countryList) {
+        if (country.countryCode == Global.savedContryCode) {
+          selectedCountry = country;
+          break;
+        }
+      }
 
       if (selectedCountry != null) {
         await languageProvider.getLanguages(

@@ -63,9 +63,9 @@ const String kToken = "f02cfa1cd21138ac89f7f1a32f8339be";
 //* Client gateway — splash force-update, country list, language list.
 //* Switch to staging if prod is unreachable on your network.
 const String clientGatewayBaseUrl =
-    "https://iftclientstaging.infotracktelematics.com:7009/fms/mapp/client";
+    // "https://iftclientstaging.infotracktelematics.com:7009/fms/mapp/client";
 // const String clientGatewayBaseUrl =
-//     "https://iftclientprod.infotracktelematics.com:7009/fms/mapp/client";
+    "https://iftclientprod.infotracktelematics.com:7009/fms/mapp/client";
 
 //* Client login (`URLAuthorization`) — same hosts as the Android InfoLocate app.
 const String clientAuthStagingUrl =
@@ -127,7 +127,7 @@ const int kAppVersion = 13;
 const String kAppVersionName = '1.0.0';
 
 /// Bump this whenever you ship a build so you can tell which APK is on the device.
-const String kAppLastUpdated = '26 Oct 2026, 14:00';
+const String kAppLastUpdated = '11 Nov 2026, 17:20';
 
 /// Sample JSON only — not used at runtime (see grep). Kept for API contract reference.
 const Map<String, dynamic> pinVehicleListJson = {

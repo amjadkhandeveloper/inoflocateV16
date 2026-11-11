@@ -10,7 +10,7 @@ import 'package:infolocate/utils/app_helper.dart';
 import 'package:infolocate/utils/app_localization_key.dart';
 import '../../../utils/enums.dart';
 import '../../../widgets/custom_toast.dart';
-import '../model/get_countries_response_model.dart';
+import '../language_fallback.dart';
 
 /// State for country/language selection and persistence to Hive.
 ///
@@ -45,9 +45,8 @@ class LanguageProvider extends ChangeNotifier with StateInterface {
 
   List<LanguageResponseModelDataLangListData?>? _langaugeList = [];
 
-  GetCountriesResponseModelData? _getCountriesResponseModelData;
-  LanguageResponseModelData? _languageResponseModelData;
   List<CustomCountry> _countryList = [];
+  bool _offlineLists = false;
 
   String _selectedLanguage = "English";
 
@@ -58,52 +57,70 @@ class LanguageProvider extends ChangeNotifier with StateInterface {
   List<CustomCountry> get countryList => [..._countryList];
 
   /// Fetches countries from [getCountryListUrl] and maps flags via [AppHelper.returnCountryFlag].
+  ///
+  /// The gateway on port 7009 is often unreachable. A bundled list is shown
+  /// instead of leaving the screen on the server-error state.
   Future<void> getCountries() async {
     setState(NotifierState.loading);
     try {
-      // Fast path: notify immediately when device has no connectivity.
-      if (!await AppHelper.checkInternetConnection()) {
-        setFailure(Failure(LocaliazationKey.no_internet_connection.tr()));
-        return;
-      }
       final result = await LanguageService().getCountriesList();
-      _getCountriesResponseModelData = result;
-
-      _countryList = [];
-      if (_getCountriesResponseModelData?.countryList != null) {
-        // log("********2");
-        log(_getCountriesResponseModelData!.countryList!.length.toString());
-        for (var country in _getCountriesResponseModelData!.countryList!) {
-          // log("********3");
-          _countryList.add(
-            CustomCountry(
-                imageUrl: AppHelper.returnCountryFlag(title: country!.CountryName.toString()),
+      final apiCountries = result?.countryList;
+      if (apiCountries != null && apiCountries.isNotEmpty) {
+        _countryList = [
+          for (final country in apiCountries)
+            if (country != null)
+              CustomCountry(
+                imageUrl: AppHelper.returnCountryFlag(
+                    title: country.CountryName.toString()),
                 countryName: country.CountryName.toString(),
-                countryCode: country.id),
-          );
+                countryCode: country.id,
+              ),
+        ];
+        if (_countryList.isNotEmpty) {
+          _offlineLists = false;
+          setState(NotifierState.loaded);
+          return;
         }
       }
-    } on Failure catch (failure) {
-      setFailure(failure);
-      return;
+    } catch (err) {
+      log('Country list unavailable, using offline list: $err');
     }
+    _offlineLists = true;
+    _countryList = [
+      for (final country in LanguageFallback.countries)
+        CustomCountry(
+          imageUrl: AppHelper.returnCountryFlag(
+              title: country.CountryName.toString()),
+          countryName: country.CountryName.toString(),
+          countryCode: country.id,
+        ),
+    ];
     setState(NotifierState.loaded);
-    notifyListeners();
   }
 
   /// Fetches languages for [countryId] from [getLanguageListUrl].
+  /// Falls back to the bundled list for that country when the API fails.
   Future<void> getLanguages({required int? countryId}) async {
     setState(NotifierState.loading);
-    try {
-      final result = await LanguageService().getLanguageList(countryId: countryId);
-      _languageResponseModelData = result;
-      _langaugeList = _languageResponseModelData?.langListData ?? [];
-    } on Failure catch (failure) {
-      setFailure(failure);
+    if (_offlineLists) {
+      _langaugeList = LanguageFallback.languagesFor(countryId);
+      setState(NotifierState.loaded);
       return;
     }
+    try {
+      final result =
+          await LanguageService().getLanguageList(countryId: countryId);
+      final apiLanguages = result?.langListData;
+      if (apiLanguages != null && apiLanguages.isNotEmpty) {
+        _langaugeList = apiLanguages;
+        setState(NotifierState.loaded);
+        return;
+      }
+    } catch (err) {
+      log('Language list unavailable, using offline list: $err');
+    }
+    _langaugeList = LanguageFallback.languagesFor(countryId);
     setState(NotifierState.loaded);
-    notifyListeners();
   }
 
   Language? get currentLanguage {

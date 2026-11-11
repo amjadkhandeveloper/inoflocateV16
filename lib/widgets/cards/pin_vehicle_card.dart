@@ -64,7 +64,7 @@ class PinVehicleCard extends StatefulWidget {
       this.stopDuration,
       this.engineOffdelay,
       this.isPinned = false,
-      this.liveUrlList = const [],
+      this.liveUrlList,
       this.enableUrl = false,
       this.alertType,
       this.mapData,
@@ -141,12 +141,15 @@ class _PinVehicleCardState extends State<PinVehicleCard> {
                   message: LocaliazationKey.video_unavailable.tr());
               return;
             }
-            if (widget.liveUrlList != null) {
+            final gridUrls = widget.liveUrlList
+                ?.where((url) => (url ?? '').trim().isNotEmpty)
+                .toList();
+            if (gridUrls != null && gridUrls.isNotEmpty) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => GridVideoPlayerScreen(
-                    url: widget.liveUrlList,
+                    url: gridUrls,
                     title: widget.vehicleNo,
                   ),
                 ),

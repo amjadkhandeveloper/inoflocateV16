@@ -421,15 +421,18 @@ class AppHelper {
     return client;
   };
 
+  /// Fail a hung request into the existing error UI instead of spinning for half a minute.
+  static const Duration apiTimeout = Duration(seconds: 15);
+
   /// Configures [dio] for native HTTPS: trusts staging/self-signed certs on :7009
   /// hosts and attaches API logging. Call once before each request (idempotent).
   ///
   /// Root cause of "API works in browser but Dio fails": browser trusts/ignores
   /// the cert, while Dio 5.9 needs [IOHttpClientAdapter.createHttpClient].
   static void configureDio(Dio dio, {String tag = 'API'}) {
-    dio.options.connectTimeout = const Duration(seconds: 30);
-    dio.options.receiveTimeout = const Duration(seconds: 30);
-    dio.options.sendTimeout = const Duration(seconds: 30);
+    dio.options.connectTimeout = apiTimeout;
+    dio.options.receiveTimeout = apiTimeout;
+    dio.options.sendTimeout = apiTimeout;
     dio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         final client = HttpClient();
@@ -445,9 +448,9 @@ class AppHelper {
   static Dio createDio({String tag = 'API'}) {
     final dio = Dio(
       BaseOptions(
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        sendTimeout: const Duration(seconds: 30),
+        connectTimeout: apiTimeout,
+        receiveTimeout: apiTimeout,
+        sendTimeout: apiTimeout,
       ),
     );
     configureDio(dio, tag: tag);

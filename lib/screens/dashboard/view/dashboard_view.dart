@@ -44,8 +44,6 @@ import '../../card_types_screen/controller/card_type_provider.dart';
 import '../../language/controller/language_provider.dart';
 import '../../login/model/user_login_response_model.dart';
 import '../../pin_vehicles/controller/pin_vehicle_provider.dart';
-import '../../vehicle_statuswise_list/controller/vehicle_status_provider.dart';
-import '../../vehicle_statuswise_list/model/vehicle_status_request_model.dart';
 import '../../vehicle_statuswise_list/view/vehicle_status_list.dart';
 import '../../vehicle_statuswise_list/widget/map_overview.dart';
 import '../../vehicle_statuswise_list/widget/track_on_map_screen.dart';
@@ -182,69 +180,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   reloadData() {
-    // print("In reload data");
     final dashBoardState = Provider.of<DashboardProvider>(context, listen: false);
-    final vehicleStatusState = Provider.of<VehicleStatusProvider>(context, listen: false);
 
     try {
-      _timer!.cancel();
+      _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 10), (_) {
         if (!AppLifecycleTracker.instance.allowBackgroundRefresh) return;
-        if (dashBoardState.state == NotifierState.error && dashBoardState.dashboardResponseModelData == null) {
+        if (dashBoardState.state == NotifierState.error &&
+            dashBoardState.dashboardResponseModelData == null) {
           _timer?.cancel();
+          return;
         }
-        if (Global.savedUserAuthData != null) {
-          Future.wait([
-            if (Global.isVehicleListBackgroundFetching ==
-                false) //* this is to avoid duplicate fetch when another screen is feteching.
-              vehicleStatusState.fetchInBackground(
-                vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
-                  statusId: 6,
-                  userId: Global.savedUserAuthData!.userid!,
-                  // userId: 1,
-                  pSize: 0,
-                  //* 0 means all data
-                  pNo: defaultPageN0,
-                  sSearch: '',
-                ),
-              ),
-            getAds(),
-            dashBoardState.getData(
-                dashboardRequestModel: DashboardRequestModel(
-              userId: Global.savedUserAuthData!.userid!,
-              pSize: 100,
-              pNo: 1,
-            )),
-          ]);
-        }
-
-        // if (dashBoardState.dashboardResponseModelData!.Pinvehicle != null &&
-        //     dashBoardState.dashboardResponseModelData!.Pinvehicle!.isEmpty) {
-        //   expansionTileController.expand();
-        // }
-        // dashBoardState.getData(
-        //     dashboardRequestModel: DashboardRequestModel(
-        //   userId: Global.savedUserAuthData!.userid!,
-        //   pSize: 100,
-        //   pNo: 1,
-        // ));
+        if (Global.savedUserAuthData == null) return;
+        // Summary only. Vehicle lists load on their own screens.
+        dashBoardState.getData(
+          dashboardRequestModel: DashboardRequestModel(
+            userId: Global.savedUserAuthData!.userid!,
+            pSize: pageSize,
+            pNo: defaultPageN0,
+          ),
+        );
+        getAds();
       });
-      final data = dashBoardState.dashboardResponseModelData;
-      if (data == null || data.VehicleStatus == null || data.VehicleStatus == null) return;
-      totalFleetCount = 0;
-      // pieChartValue={};
-      for (final vehicleData in data.VehicleStatus!) {
-        totalFleetCount += vehicleData!.Value!.toInt();
-        String status = vehicleData.status.toString();
-        double value = vehicleData.Value!.toDouble();
-        pieChartValue[status] = value;
-      }
-
-      log("Total fleet count $totalFleetCount");
+      _applyFleetSummary(dashBoardState.dashboardResponseModelData);
     } catch (err) {
       _timer?.cancel();
       debugPrint(err.toString());
     }
+  }
+
+  void _applyFleetSummary(DashboardResponseModelData? data) {
+    if (data?.VehicleStatus == null) return;
+    totalFleetCount = 0;
+    for (final vehicleData in data!.VehicleStatus!) {
+      totalFleetCount += vehicleData!.Value!.toInt();
+      pieChartValue[vehicleData.status.toString()] =
+          vehicleData.Value!.toDouble();
+    }
+    log("Total fleet count $totalFleetCount");
   }
 
   Future<void> getAds() async {
@@ -259,31 +232,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   getUserData() async {
     final dashBoardState = Provider.of<DashboardProvider>(context, listen: false);
-    final vehicleStatusState = Provider.of<VehicleStatusProvider>(context, listen: false);
-
     final pinVehicleState = Provider.of<PinVehicleProvider>(context, listen: false);
-    CardTypeProvider cardTypeProvider =
-        // ignore: use_build_context_synchronously
+    final cardTypeProvider =
         Provider.of<CardTypeProvider>(context, listen: false);
 
     try {
-      // cardTypeProvider.initialiseCardSettings();
       cardTypeProvider.setCurrentVehicleStatusCard();
       cardTypeProvider.setCurrentAlertStatusCard();
       getAds();
-      //! uncomment this line during release of apk
-      reloadData();
-      // if (Global.savedClientAuthData == null) {
-      //* assuring base url is not null
-
-      // }
-
-      // userData = Global.box.get(userAuthBoxKey);
-      // log("Hive UserId ${userData.userid.toString()}");
-      // userId = userData.userid!.toInt();
-      // dashboardRequestModel.userId = userId;
-      // myFuture =
-      // displayList = [];
 
       await dashBoardState.getDashboardData(
           dashboardRequestModel: DashboardRequestModel(
@@ -291,35 +247,22 @@ class _HomeScreenState extends State<HomeScreen> {
         pSize: pageSize,
         pNo: defaultPageN0,
       ));
-      await vehicleStatusState.getVehicleList(
-        vehicleStatusWiseListRequestModel: VehicleStatusWiseListRequestModel(
-          statusId: 6,
-          userId: Global.savedUserAuthData!.userid!,
-          // userId: 1,
-          pSize: maxPageSize,
-          pNo: defaultPageN0,
-          sSearch: '',
-        ),
-      );
-
-      pinVehicleState.lengthOfPinVehicles = dashBoardState.dashboardResponseModelData!.Pinvehicle!.length;
-      // log("Length of PinVehicle ${pinVehicleState.lengthOfPinVehicles}");
+      if (!mounted) return;
 
       final data = dashBoardState.dashboardResponseModelData;
-      displayList = data!.VehicleStatus;
-
-      if (data.VehicleStatus == null || data.VehicleStatus == null) return;
-      totalFleetCount = 0;
-      for (final vehicleData in data.VehicleStatus!) {
-        totalFleetCount += vehicleData!.Value!.toInt();
-        String status = vehicleData.status.toString();
-        double value = vehicleData.Value!.toDouble();
-        pieChartValue[status] = value;
+      if (data?.Pinvehicle != null) {
+        pinVehicleState.lengthOfPinVehicles = data!.Pinvehicle!.length;
       }
-      if (data.StatusCount != null && data.StatusCount!.isNotEmpty) {
+      displayList = data?.VehicleStatus;
+      _applyFleetSummary(data);
+      if (data?.StatusCount != null &&
+          data!.StatusCount!.isNotEmpty &&
+          alertController.hasClients) {
         alertController.jumpTo(0.01);
       }
-      Future.delayed(const Duration(seconds: 1), () => setState(() {}));
+      // Poll only after the first summary is on screen.
+      reloadData();
+      setState(() {});
     } catch (err) {
       log("error on getUserData() methode-- ${err.toString()}");
     }
@@ -403,7 +346,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             data.Pinvehicle!.isEmpty
                                 ? Container()
                                 : Row(
-                                    key: UniqueKey(),
                                     children: [
                                       // Container(
                                       //   height: 25,
@@ -459,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           // print("Lat Long $lat $lon");
 
                                           return AnimationConfiguration.staggeredList(
-                                            duration: const Duration(milliseconds: 500),
+                                            duration: const Duration(milliseconds: 200),
                                             position: index,
                                             child: SlideAnimation(
                                               horizontalOffset: 100.0,

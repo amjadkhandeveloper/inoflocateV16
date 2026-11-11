@@ -17,6 +17,7 @@ class LanguageService {
   Future<GetCountriesResponseModelData?> getCountriesList() async {
     try {
       AppHelper.configureDio(dio, tag: 'LanguageService.getCountriesList');
+      _useShortTimeout();
       final response = await dio.get(
         getCountryListUrl,
         options: Options(contentType: Headers.jsonContentType),
@@ -48,11 +49,19 @@ class LanguageService {
             .message
             .toString());
       }
-      throw await AppHelper.failureFromErrorAsync(e);
+      throw Failure(e.message ?? 'Country list unavailable');
     } catch (error) {
       log(error.toString());
-      throw await AppHelper.failureFromErrorAsync(error);
+      if (error is Failure) rethrow;
+      throw Failure(error.toString());
     }
+  }
+
+  /// The language screen falls back locally, so a dead host must not sit on the 15s API timeout.
+  void _useShortTimeout() {
+    dio.options.connectTimeout = const Duration(seconds: 8);
+    dio.options.receiveTimeout = const Duration(seconds: 8);
+    dio.options.sendTimeout = const Duration(seconds: 8);
   }
 
   /// Fetches languages available for the selected [countryId].
@@ -61,6 +70,7 @@ class LanguageService {
       {required int? countryId}) async {
     try {
       AppHelper.configureDio(dio, tag: 'LanguageService.getLanguageList');
+      _useShortTimeout();
       final body = {"CountryId": countryId};
       final response = await dio.post(
         getLanguageListUrl,
@@ -94,10 +104,11 @@ class LanguageService {
             .message
             .toString());
       }
-      throw await AppHelper.failureFromErrorAsync(e);
+      throw Failure(e.message ?? 'Language list unavailable');
     } catch (error) {
       log(error.toString());
-      throw await AppHelper.failureFromErrorAsync(error);
+      if (error is Failure) rethrow;
+      throw Failure(error.toString());
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -37,13 +38,9 @@ void main() async {
     return true;
   }());
   AppLifecycleTracker.instance.ensureAttached();
-  try {
-    await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  } catch (e) {
-    print('FCM: Firebase.initializeApp failed: $e');
-  }
+  final firebaseReady = _initFirebase();
   await initialiseData();
+  await firebaseReady;
   HttpOverrides.global = MyHttpOverrides();
 
   runApp(
@@ -74,6 +71,35 @@ void main() async {
       child: const MyApp(),
     ),
   );
+  unawaited(_registerPushAfterFirstFrame());
+}
+
+/// Firebase init runs beside Hive and localization so neither waits on the other.
+Future<void> _initFirebase() async {
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    print('FCM: Firebase.initializeApp failed: $e');
+  }
+}
+
+/// Token fetch and the register API run after the first frame.
+/// They must not delay [runApp].
+Future<void> _registerPushAfterFirstFrame() async {
+  final ready = Completer<void>();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!ready.isCompleted) ready.complete();
+  });
+  await ready.future;
+  try {
+    await FcmTokenRegistrar.initialize();
+    if (Global.savedUserAuthData != null) {
+      await FcmTokenRegistrar.registerAfterLogin();
+    }
+  } catch (e) {
+    print('FCM: startup registration failed: $e');
+  }
 }
 
 /// Runs all startup work before [runApp]: theme mode, Hive, orientation, i18n.
@@ -95,10 +121,6 @@ initialiseData() async {
     OrientationHelper.lockPortrait(),
     EasyLocalization.ensureInitialized()
   ]);
-  await FcmTokenRegistrar.initialize();
-  if (Global.savedUserAuthData != null) {
-    FcmTokenRegistrar.registerAfterLogin();
-  }
 }
 
 /// Opens Hive, registers type adapters, and hydrates [Global] from local storage.
